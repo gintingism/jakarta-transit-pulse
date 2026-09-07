@@ -1,0 +1,419 @@
+'use client';
+
+import { create } from 'zustand';
+import {
+  Station,
+  LineIdentifier,
+  STATION_MAP,
+} from '@/src/data/transitNetwork';
+import {
+  RoutePlan,
+  PlaceTarget,
+  findTransitRoute,
+  findDoorToDoorRoute,
+  calculateHaversineDistance,
+} from '@/src/lib/transitEngine';
+
+export type TabType = 'planner' | 'alarm';
+export type RoutePreference = 'FASTEST' | 'CHEAPEST' | 'FEWEST_TRANSFERS';
+
+interface TransitStore {
+  // Navigation & Planning
+  originStopId: string | null;
+  destinationStopId: string | null;
+  originPlace: PlaceTarget | null;
+  destinationPlace: PlaceTarget | null;
+  isRoutingLoading: boolean;
+  routePlan: RoutePlan | null;
+  selectedLineId: LineIdentifier | 'ALL';
+  routePreference: RoutePreference;
+  activeTab: TabType;
+  isDrawerExpanded: boolean;
+  activeSegmentId: string | null;
+  setActiveSegmentId: (id: string | null) => void;
+
+  // Map state
+  mapCenter: [number, number];
+  mapZoom: number;
+
+  // Geolocation & Proximity Geo-Alarm
+  userCoords: [number, number] | null;
+  isLocating: boolean;
+  locationError: string | null;
+
+  // Geo-Alarm settings
+  alarmTargetStopId: string | null;
+  isAlarmArmed: boolean;
+  alarmThresholdMeters: number; // default 400m
+  currentDistanceMeters: number | null;
+  isAlarmTriggered: boolean;
+  alarmMuted: boolean;
+
+  // Simulation Mode
+  isSimulatingApproach: boolean;
+  simApproachProgress: number;
+
+  // Actions
+  setOriginStop: (id: string | null) => void;
+  setDestinationStop: (id: string | null) => void;
+  setOriginPlace: (place: PlaceTarget | null) => void;
+  setDestinationPlace: (place: PlaceTarget | null) => void;
+  useCurrentLocationAsOrigin: () => void;
+  swapStops: () => void;
+  calculateCurrentRoute: () => Promise<void>;
+  clearRoute: () => void;
+  setSelectedLine: (lineId: LineIdentifier | 'ALL') => void;
+  setRoutePreference: (pref: RoutePreference) => void;
+  setActiveTab: (tab: TabType) => void;
+  toggleDrawer: () => void;
+  setDrawerExpanded: (expanded: boolean) => void;
+  setMapCenter: (center: [number, number], zoom?: number) => void;
+
+  // Location & Alarm actions
+  setUserCoords: (coords: [number, number] | null) => void;
+  setLocationError: (err: string | null) => void;
+  armAlarm: (targetStopId?: string) => void;
+  disarmAlarm: () => void;
+  setAlarmThreshold: (meters: number) => void;
+  triggerAlarm: () => void;
+  silenceAlarm: () => void;
+  dismissAlarm: () => void;
+  updateDistanceToTarget: () => void;
+
+  // Simulation controls
+  startApproachSimulation: (targetStopId?: string) => void;
+  stopApproachSimulation: () => void;
+  stepApproachSimulation: (deltaProgress: number) => void;
+}
+
+export const useTransitStore = create<TransitStore>((set, get) => ({
+  originStopId: null,
+  destinationStopId: 'tj_monas',
+  originPlace: {
+    name: 'Lokasi Saya Saat Ini',
+    coords: [-6.1967, 106.8225],
+  },
+  destinationPlace: {
+    name: 'Monumen Nasional (Monas)',
+    coords: [-6.1754, 106.8272],
+    stationId: 'tj_monas',
+  },
+  isRoutingLoading: false,
+  routePlan: null,
+  selectedLineId: 'ALL',
+  routePreference: 'FASTEST',
+  activeTab: 'planner',
+  isDrawerExpanded: true,
+  activeSegmentId: null,
+
+  mapCenter: [-6.2088, 106.8456],
+  mapZoom: 12,
+
+  userCoords: null,
+  isLocating: false,
+  locationError: null,
+
+  alarmTargetStopId: 'tj_monas',
+  isAlarmArmed: false,
+  alarmThresholdMeters: 400,
+  currentDistanceMeters: null,
+  isAlarmTriggered: false,
+  alarmMuted: false,
+
+  isSimulatingApproach: false,
+  simApproachProgress: 0,
+
+  setOriginStop: (id) => {
+    const station = id ? STATION_MAP[id] : null;
+    const place: PlaceTarget | null = station
+      ? { name: station.name, coords: station.coords, stationId: station.id }
+      : null;
+    set({ originStopId: id, originPlace: place });
+    void get().calculateCurrentRoute();
+  },
+
+  setDestinationStop: (id) => {
+    const station = id ? STATION_MAP[id] : null;
+    const place: PlaceTarget | null = station
+      ? { name: station.name, coords: station.coords, stationId: station.id }
+      : null;
+    set({ destinationStopId: id, destinationPlace: place });
+    if (id && !get().alarmTargetStopId) {
+      set({ alarmTargetStopId: id });
+    }
+    void get().calculateCurrentRoute();
+  },
+
+  setOriginPlace: (place) => {
+    set({
+      originPlace: place,
+      originStopId: place?.stationId || null,
+    });
+    void get().calculateCurrentRoute();
+  },
+
+  setDestinationPlace: (place) => {
+    set({
+      destinationPlace: place,
+      destinationStopId: place?.stationId || null,
+    });
+    if (place?.stationId && !get().alarmTargetStopId) {
+      set({ alarmTargetStopId: place.stationId });
+    }
+    void get().calculateCurrentRoute();
+  },
+
+  useCurrentLocationAsOrigin: () => {
+    const coords = get().userCoords;
+    if (coords) {
+      set({
+        originPlace: {
+          name: 'Lokasi Saya Saat Ini',
+          coords,
+        },
+        originStopId: null,
+      });
+      void get().calculateCurrentRoute();
+      return;
+    }
+
+    if (typeof window !== 'undefined' && navigator.geolocation) {
+      set({ isLocating: true });
+      navigator.geolocation.getCurrentPosition(
+        (pos) => {
+          const newCoords: [number, number] = [pos.coords.latitude, pos.coords.longitude];
+          set({
+            userCoords: newCoords,
+            isLocating: false,
+            originPlace: {
+              name: 'Lokasi Saya Saat Ini',
+              coords: newCoords,
+            },
+            originStopId: null,
+          });
+          void get().calculateCurrentRoute();
+        },
+        () => {
+          const fallbackCoords: [number, number] = [-6.1967, 106.8225];
+          set({
+            userCoords: fallbackCoords,
+            isLocating: false,
+            originPlace: {
+              name: 'Lokasi Saya (Jakarta Pusat)',
+              coords: fallbackCoords,
+            },
+            originStopId: null,
+          });
+          void get().calculateCurrentRoute();
+        },
+        { enableHighAccuracy: true, timeout: 6000 }
+      );
+    }
+  },
+
+  swapStops: () => {
+    const { originStopId, destinationStopId, originPlace, destinationPlace } = get();
+    set({
+      originStopId: destinationStopId,
+      destinationStopId: originStopId,
+      originPlace: destinationPlace,
+      destinationPlace: originPlace,
+      alarmTargetStopId: destinationPlace?.stationId || originStopId || null,
+    });
+    void get().calculateCurrentRoute();
+  },
+
+  calculateCurrentRoute: async () => {
+    const { originPlace, destinationPlace, originStopId, destinationStopId } = get();
+
+    const effectiveOrigin: PlaceTarget | null =
+      originPlace ||
+      (originStopId && STATION_MAP[originStopId]
+        ? {
+            name: STATION_MAP[originStopId].name,
+            coords: STATION_MAP[originStopId].coords,
+            stationId: originStopId,
+          }
+        : null);
+
+    const effectiveDest: PlaceTarget | null =
+      destinationPlace ||
+      (destinationStopId && STATION_MAP[destinationStopId]
+        ? {
+            name: STATION_MAP[destinationStopId].name,
+            coords: STATION_MAP[destinationStopId].coords,
+            stationId: destinationStopId,
+          }
+        : null);
+
+    if (!effectiveOrigin || !effectiveDest) {
+      set({ routePlan: null });
+      return;
+    }
+
+    set({ isRoutingLoading: true });
+
+    try {
+      const { routePreference } = get();
+      const plan = await findDoorToDoorRoute(effectiveOrigin, effectiveDest, routePreference);
+      set({
+        routePlan: plan,
+        alarmTargetStopId: plan?.destination.id || effectiveDest.stationId || null,
+        isRoutingLoading: false,
+      });
+
+      if (plan && plan.polylineCoords.length > 0) {
+        const firstCoord = plan.polylineCoords[0];
+        set({ mapCenter: firstCoord, mapZoom: 13 });
+      }
+    } catch {
+      set({ isRoutingLoading: false });
+    }
+  },
+
+  clearRoute: () => {
+    set({
+      originStopId: null,
+      destinationStopId: null,
+      routePlan: null,
+      activeSegmentId: null,
+    });
+  },
+
+  setActiveSegmentId: (id) => set({ activeSegmentId: id }),
+
+  setSelectedLine: (lineId) => set({ selectedLineId: lineId }),
+  setRoutePreference: (pref) => {
+    set({ routePreference: pref });
+    get().calculateCurrentRoute();
+  },
+  setActiveTab: (tab) => set({ activeTab: tab, isDrawerExpanded: true }),
+  toggleDrawer: () => set((state) => ({ isDrawerExpanded: !state.isDrawerExpanded })),
+  setDrawerExpanded: (expanded) => set({ isDrawerExpanded: expanded }),
+  setMapCenter: (center, zoom) =>
+    set((state) => ({
+      mapCenter: center,
+      mapZoom: zoom !== undefined ? zoom : state.mapZoom,
+    })),
+
+  setUserCoords: (coords) => {
+    set({ userCoords: coords });
+    get().updateDistanceToTarget();
+  },
+
+  setLocationError: (err) => set({ locationError: err }),
+
+  armAlarm: (targetStopId) => {
+    const target = targetStopId || get().destinationStopId || get().alarmTargetStopId;
+    if (!target) return;
+    set({
+      alarmTargetStopId: target,
+      isAlarmArmed: true,
+      isAlarmTriggered: false,
+      alarmMuted: false,
+    });
+    get().updateDistanceToTarget();
+  },
+
+  disarmAlarm: () => {
+    set({
+      isAlarmArmed: false,
+      isAlarmTriggered: false,
+      isSimulatingApproach: false,
+    });
+  },
+
+  setAlarmThreshold: (meters) => {
+    set({ alarmThresholdMeters: meters });
+    get().updateDistanceToTarget();
+  },
+
+  triggerAlarm: () => {
+    set({ isAlarmTriggered: true, alarmMuted: false });
+  },
+
+  silenceAlarm: () => {
+    set({ alarmMuted: true });
+  },
+
+  dismissAlarm: () => {
+    set({
+      isAlarmTriggered: false,
+      isAlarmArmed: false,
+      isSimulatingApproach: false,
+    });
+  },
+
+  updateDistanceToTarget: () => {
+    const { userCoords, alarmTargetStopId } = get();
+    if (!userCoords || !alarmTargetStopId) {
+      set({ currentDistanceMeters: null });
+      return;
+    }
+
+    const targetStation = STATION_MAP[alarmTargetStopId];
+    if (!targetStation) return;
+
+    const distance = calculateHaversineDistance(userCoords, targetStation.coords);
+    set({ currentDistanceMeters: distance });
+
+    const { isAlarmArmed, alarmThresholdMeters, isAlarmTriggered } = get();
+    if (isAlarmArmed && !isAlarmTriggered && distance <= alarmThresholdMeters) {
+      get().triggerAlarm();
+    }
+  },
+
+  startApproachSimulation: (targetStopId) => {
+    const targetId = targetStopId || get().alarmTargetStopId || 'tj_harmoni';
+    const targetStation = STATION_MAP[targetId];
+    if (!targetStation) return;
+
+    const [targetLat, targetLng] = targetStation.coords;
+    const startLat = targetLat - 0.015;
+    const startLng = targetLng - 0.012;
+
+    set({
+      alarmTargetStopId: targetId,
+      isAlarmArmed: true,
+      isAlarmTriggered: false,
+      isSimulatingApproach: true,
+      simApproachProgress: 0,
+      userCoords: [startLat, startLng],
+      mapCenter: [startLat, startLng],
+      mapZoom: 14,
+    });
+
+    get().updateDistanceToTarget();
+  },
+
+  stopApproachSimulation: () => {
+    set({ isSimulatingApproach: false });
+  },
+
+  stepApproachSimulation: (deltaProgress) => {
+    const { isSimulatingApproach, simApproachProgress, alarmTargetStopId } = get();
+    if (!isSimulatingApproach || !alarmTargetStopId) return;
+
+    const newProgress = Math.min(1, simApproachProgress + deltaProgress);
+    const targetStation = STATION_MAP[alarmTargetStopId];
+    if (!targetStation) return;
+
+    const [targetLat, targetLng] = targetStation.coords;
+    const startLat = targetLat - 0.015;
+    const startLng = targetLng - 0.012;
+
+    const currentLat = startLat + (targetLat - startLat) * newProgress;
+    const currentLng = startLng + (targetLng - startLng) * newProgress;
+
+    set({
+      simApproachProgress: newProgress,
+      userCoords: [currentLat, currentLng],
+    });
+
+    get().updateDistanceToTarget();
+
+    if (newProgress >= 1) {
+      set({ isSimulatingApproach: false });
+    }
+  },
+}));
