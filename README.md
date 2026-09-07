@@ -1,107 +1,98 @@
 # Jakarta Transit Pulse (AntiBablas)
 
-Aplikasi rute multimoda Jabodetabek dan alarm GPS biar gak bablas ketiduran di kereta atau busway.
+Solusi buat lu yang sering niat merem lima menit di KRL Sudirman, tapi melek-melek udah disambut hawa sejuk Stasiun Citayam.
 
-Dibangun pakai Next.js 14, TypeScript, Tailwind CSS, Leaflet, dan Web Audio API, tanpa API key berbayar.
-
----
-
-## Kenapa Bikin Ini?
-
-Masalahnya klasik buat komuter Jakarta:
-1. Mau pulang kerja naik KRL, niat merem sebentar, tahu-tahu melek udah lewat tiga stasiun.
-2. Google Maps seringkali kaku buat transit lokal (terutama kalau mau kombinasi KRL sama TransJakarta atau MRT).
-3. Jam pulang kantor pas hujan, ojol langsung surge pricing sampai puluhan ribu, padahal halte busway atau stasiun KRL jaraknya cuma beberapa ratus meter.
-
-Aplikasi ini dibikin buat ngasih solusi praktis: rute transit yang akurat, rincian tarif resmi, perbandingan biaya vs ojek online, dan alarm bangun tidur berbasis GPS yang bunyi otomatis sebelum stasiun tujuan.
+Web app rute multimoda (KRL, TransJakarta, MRT, LRT Jabodebek, KA Bandara) plus alarm GPS yang bakal bangunin lu sebelum stasiun tujuan kelewat.
 
 ---
 
-## Fitur Utama
+### Kenapa app ini ada?
 
-### 1. Perencana Rute 5 Moda Transit
-Mendukung rute terintegrasi untuk:
-* KRL Commuterline (Lin Bogor & Lin Cikarang Loop)
-* TransJakarta BRT (Koridor 1 dan koridor utama)
-* MRT Jakarta (Lin Bundaran HI - Lebak Bulus)
-* LRT Jabodebek (Lin Cibubur & Lin Bekasi via Dukuh Atas / Halim)
-* Kereta Bandara Soekarno-Hatta (Lin Basoetta)
+Kalo lu tinggal di Jabodetabek, lu pasti pernah ngalamin minimal salah satu dari ini:
+1. **Bablas ketiduran**: Badan capek abis lembur, niat turun Tebet malah kebablasan sampe Depok. Mau puter balik udah gak ada kereta.
+2. **Labirin transit**: Nyambung antar moda di Jakarta tuh kadang kayak main game RPG tanpa mini-map. Mau pindah dari KRL Cikarang ke busway Harmoni aja bingung harus turun di mana.
+3. **Surge pricing ojol**: Jam 5 sore pas gerimis setetes, tarif ojol yang biasanya 18 ribu tiba-tiba melonjak jadi 72 ribu. Padahal stasiun KRL deket, tapi males mikir rutenya.
 
-Mendukung pencarian titik populer (mall, gedung perkantoran, tempat wisata) dengan perhitungan jalan kaki (first-mile dan last-mile) ke halte atau stasiun terdekat.
-
-### 2. Hitungan Tarif Resmi
-Semua tarif dihitung secara deterministik sesuai aturan operasional:
-* KRL: Rp 3.000 untuk 25 km pertama, tambah Rp 1.000 tiap 10 km berikutnya.
-* TransJakarta: Flat Rp 3.500.
-* Kereta Bandara: Skema tarif resmi relasi stasiun (Rp 70.000 ke Bandara dari Manggarai/BNI City/Duri, Rp 35.000 dari Rawa Buaya/Batu Ceper, dan Rp 10.000 - Rp 35.000 antarstasiun kota).
-* Rincian tarif per moda ditampilkan transparan di kartu hasil rute.
-
-### 3. Alarm Anti-Bablas (Geo-Alarm)
-* Memanfaatkan HTML5 Geolocation API untuk memantau posisi perangkat.
-* Radius alarm bisa diatur fleksibel (misalnya 400 meter sebelum stasiun tujuan).
-* Suara alarm disintesis langsung lewat browser menggunakan Web Audio API, jadi tidak tergantung koneksi untuk mengunduh file MP3.
-* Mendukung getar (haptic feedback) pada perangkat mobile yang mendukung.
-* Tersedia tombol simulasi untuk mencoba jalannya alarm tanpa harus berada langsung di atas kereta.
-
-### 4. Sorot Segmen di Peta (Interactive Focus)
-Setiap potongan rute di kartu navigasi bisa diklik. Peta akan otomatis memusatkan kamera dan memperbesar jalur yang dipilih dengan efek garis bercahaya, sementara jalur lain akan meredup.
-
-### 5. Komparasi Biaya & Penghematan Emisi
-Menghitung estimasi selisih biaya perjalanan dibanding tarif ojol motor (mengacu ke regulasi tarif batas Kepmenhub Zona II), perkiraan emisi karbon yang berhasil ditekan, serta estimasi kalori dari langkah kaki transit.
-
-### 6. Berbagi Rute (Deep Link)
-Tersedia tombol salin tautan rute. Parameter pencarian otomatis tersimpan di URL, sehingga rute yang sama bisa langsung dibuka oleh teman atau disimpan di bookmark.
+Makanya project ini dibikin: biar ada navigator transit yang beneran ngerti kondisi lapangan Jakarta dan punya alarm anti-bablas yang gak manja.
 
 ---
 
-## Arsitektur & Prinsip Kode
+### Apa aja yang bisa dilakuin?
 
-Project ini ditulis dengan disiplin engineering yang rapi:
-* **Strict TypeScript**: Bebas dari tipe `any`. Semua objek domain, halte, rute, dan argumen fungsi memiliki tipe yang jelas.
-* **Fungsi Murni (Pure Domain Engine)**: Perhitungan jarak (Haversine), pencarian jalur graf transit, dan formula tarif dipisahkan sepenuhnya di `src/lib/` tanpa ketergantungan pada React hook maupun DOM Leaflet.
-* **TDD & Unit Testing**: Dilengkapi 78 unit test otomatis menggunakan Vitest untuk memastikan logika tarif dan rute selalu akurat.
-* **Peta Tanpa Biaya API**: Menggunakan tile CartoDB Dark Matter dan OpenStreetMap via Leaflet, berjalan penuh tanpa perlu kartu kredit untuk billing Google Maps API.
+- **Peta & Rute 5 Moda Sekaligus**
+  Bisa nyambungin rute KRL (Lin Bogor & Cikarang), TransJakarta (Koridor 1 dan koridor utama), MRT, LRT Jabodebek, sampe Kereta Bandara Basoetta. Kalo titik awal atau tujuan lu mall atau gedung perkantoran (misal: Grand Indonesia atau Blok M Plaza), app ini bakal ngitungin jarak jalan kakinya juga ke halte terdekat.
+
+- **Hitungan Tarif Riil (Gak Asal Nembak)**
+  - KRL: Rp 3.000 buat 25 km pertama, nambah Rp 1.000 tiap kelipatan 10 km.
+  - TransJakarta: Flat Rp 3.500.
+  - Kereta Bandara: Sesuai tarif relasi resmi (Rp 70.000 buat rute dari Manggarai/BNI City/Duri ke Bandara Soetta, Rp 35.000 dari Rawa Buaya/Batu Ceper, dan Rp 10.000 - Rp 35.000 buat rute antarstasiun dalam kota).
+  - Rincian pecahan ongkosnya dibongkar transparan di kartu rute.
+
+- **Alarm Turun (Geo-Alarm)**
+  Nyalain GPS, set stasiun tujuan, dan tentuin radius alarmnya (misal 400 meter sebelum stasiun). Pas lu masuk radius itu, alarm bakal bunyi kenceng dan HP bakal getar. Audionya dibikin langsung lewat Web Audio API browser (procedural synth), jadi gak pake download file MP3 eksternal yang rawan macet pas sinyal ilang di gorong-gorong terowongan.
+  *(Ada tombol simulasi juga buat yang mau nyoba alarmnya sambil rebahan di kamar).*
+
+- **Interactive Segment Focus di Peta**
+  Pusing liat garis rute yang ruwet? Klik aja salah satu segmen perjalanan di kartu kiri (misal: segmen jalan kaki atau segmen MRT). Peta bakal otomatis nge-zoom ke jalur itu pake garis neon bercahaya, dan jalur yang lain bakal otomatis redup.
+
+- **Kalkulator Hemat vs Ojol & Karbon**
+  Langsung ngasih liat estimasi berapa puluh ribu uang yang berhasil lu selamatkan dibanding naik motor ojol (ngikut regulasi Kepmenhub Zona II), plus berapa kilogram emisi karbon yang gak jadi lu buang ke langit Jakarta.
+
+- **Share Rute via URL (Deep Link)**
+  Tinggal klik tombol Bagikan di kartu rute. Parameter stasiun asal dan tujuan otomatis nempel di URL, jadi temen lu tinggal buka linknya dan langsung dapet rute yang sama persis.
 
 ---
 
-## Cara Menjalankan Project
+### Di Balik Layar (Engineering Stuff)
 
-Syarat: Node.js versi 18 ke atas.
+Project ini dibikin bukan cuma buat pajangan:
+- **No `any` club**: TypeScript-nya strictly typed dari ujung kepala sampe ujung kaki.
+- **Pure domain logic**: Algoritma graf rute, hitungan tarif, dan formula jarak (Haversine) dipisah total di folder `src/lib/`. Gak dicampur aduk sama komponen UI atau Leaflet, jadi enteng dan gampang dites.
+- **81 automated unit tests**: Dites menyeluruh pake Vitest. Dari mulai skenario jarak per pecahan kilometer KRL, tarif relasi KA Bandara bolak-balik, sampe rute transit multi-moda.
+- **Peta gratisan rasa premium**: Gak pake Google Maps API yang rawan bikin developer kena tagihan kartu kredit mendadak. Peta jalan pake kombinasi Leaflet, CartoDB Dark Matter, dan OpenStreetMap tiles dengan custom dark styling.
+
+---
+
+### Cara Pasang di Laptop Sendiri
+
+Pastikan udah install Node.js minimal v18.
 
 ```bash
-# 1. Clone repository
+# Clone repo
 git clone https://github.com/gintingism/jakarta-transit-pulse.git
 cd jakarta-transit-pulse
 
-# 2. Install dependencies
+# Install dependencies
 npm install
 
-# 3. Jalankan unit test
+# Jalanin unit tests (buktiin sendiri kalo logikanya solid)
 npm test
 
-# 4. Cek validasi TypeScript
+# Cek typecheck TypeScript
 npm run type-check
 
-# 5. Jalankan development server
+# Nyalain server lokal
 npm run dev
 ```
 
-Buka [http://localhost:3000](http://localhost:3000) di browser kamu.
+Tinggal buka `http://localhost:3000` di browser.
 
 ---
 
-## Menjalankan Pengujian
-
-Seluruh pengujian unit test menggunakan Vitest:
+### Menjalankan Test Suite
 
 ```bash
 npm test
 ```
 
-Semua 78 test mencakup perhitungan tarif KRL progresif, flat rate TransJakarta, matriks tarif KA Bandara, formula penghematan biaya, dan algoritma routing transit.
+Output bakal nunjukin 81 test ijo semua:
+```
+Test Files  4 passed (4)
+Tests       81 passed (81)
+```
 
 ---
 
-## Lisensi
+### Lisensi
 
-Didistribusikan di bawah lisensi MIT. Silakan digunakan, dimodifikasi, atau dijadikan referensi belajar.
+MIT License. Mau dipake buat referensi portfolio, difork, atau dikembangin lagi, silakan. Kalo ada bug atau ide rute baru, langsung bikin issue atau PR aja.
