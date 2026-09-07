@@ -13,6 +13,9 @@ import {
   ArrowRight,
   Maximize2,
   Minimize2,
+  Linkedin,
+  Github,
+  Info,
 } from 'lucide-react';
 
 export default function BottomDrawer() {
@@ -22,6 +25,7 @@ export default function BottomDrawer() {
   const toggleDrawer = useTransitStore((s) => s.toggleDrawer);
   const isAlarmArmed = useTransitStore((s) => s.isAlarmArmed);
   const routePlan = useTransitStore((s) => s.routePlan);
+  const setAboutModalOpen = useTransitStore((s) => s.setAboutModalOpen);
 
   const handleTabClick = (tab: 'planner' | 'alarm') => {
     setActiveTab(tab);
@@ -183,6 +187,46 @@ export default function BottomDrawer() {
         <div className="flex-1 overflow-y-auto p-3 sm:p-3.5 space-y-4">
           {activeTab === 'planner' && <RouteFinder />}
           {activeTab === 'alarm' && <GeoAlarmPanel />}
+
+          {/* Sleek Professional Drawer Footer */}
+          <div className="pt-3 pb-1 border-t border-slate-200 dark:border-zinc-800/80 flex flex-col items-center justify-center gap-2 text-center select-none">
+            <div className="flex items-center gap-3 text-xs text-slate-500 dark:text-zinc-400 font-medium">
+              <button
+                type="button"
+                onClick={() => setAboutModalOpen(true)}
+                className="hover:text-sky-600 dark:hover:text-sky-400 transition cursor-pointer flex items-center gap-1"
+                aria-label="Buka profil pengembang dan lisensi"
+              >
+                <Info className="w-3.5 h-3.5 text-sky-500" />
+                <span>Tentang Pengembang</span>
+              </button>
+              <span className="text-slate-300 dark:text-zinc-700">•</span>
+              <a
+                href="https://www.linkedin.com/in/gintingism"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="hover:text-[#0077b5] dark:hover:text-[#38bdf8] transition flex items-center gap-1"
+                aria-label="Profil LinkedIn pengembang"
+              >
+                <Linkedin className="w-3.5 h-3.5 text-[#0077b5] fill-current" />
+                <span>LinkedIn</span>
+              </a>
+              <span className="text-slate-300 dark:text-zinc-700">•</span>
+              <a
+                href="https://github.com/gintingism/jakarta-transit-pulse"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="hover:text-slate-900 dark:hover:text-white transition flex items-center gap-1"
+                aria-label="Repositori GitHub proyek"
+              >
+                <Github className="w-3.5 h-3.5" />
+                <span>GitHub</span>
+              </a>
+            </div>
+            <div className="text-[10px] text-slate-400 dark:text-zinc-500">
+              © {new Date().getFullYear()} Jakarta Transit Pulse • Developed by @gintingism
+            </div>
+          </div>
         </div>
       )}
     </div>

@@ -68,6 +68,8 @@ interface TransitStore {
   toggleDrawer: () => void;
   setDrawerExpanded: (expanded: boolean) => void;
   setMapCenter: (center: [number, number], zoom?: number) => void;
+  isAboutModalOpen: boolean;
+  setAboutModalOpen: (open: boolean) => void;
 
   // Location & Alarm actions
   setUserCoords: (coords: [number, number] | null) => void;
@@ -101,6 +103,7 @@ export const useTransitStore = create<TransitStore>((set, get) => ({
   activeTab: 'planner',
   isDrawerExpanded: true,
   activeSegmentId: null,
+  isAboutModalOpen: false,
 
   mapCenter: [-6.2088, 106.8456],
   mapZoom: 12,
@@ -293,6 +296,7 @@ export const useTransitStore = create<TransitStore>((set, get) => ({
       mapCenter: center,
       mapZoom: zoom !== undefined ? zoom : state.mapZoom,
     })),
+  setAboutModalOpen: (open) => set({ isAboutModalOpen: open }),
 
   setUserCoords: (coords) => {
     set({ userCoords: coords });

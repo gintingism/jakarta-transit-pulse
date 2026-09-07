@@ -96,6 +96,15 @@ Tests       81 passed (81)
 
 ---
 
+### Author & Pengembang
+
+Dibuat oleh **gintingism** untuk seluruh pejuang komuter Jabodetabek:
+- 💼 **LinkedIn**: [linkedin.com/in/gintingism](https://www.linkedin.com/in/gintingism)
+- 🐙 **GitHub**: [@gintingism](https://github.com/gintingism)
+- 🚀 **Live App**: [jakarta-transit-pulse.vercel.app](https://jakarta-transit-pulse.vercel.app)
+
+---
+
 ### Lisensi
 
-MIT License. Mau dipake buat referensi portfolio, difork, atau dikembangin lagi, silakan. Kalo ada bug atau ide rute baru, langsung bikin issue atau PR aja.
+MIT License. Bebas dipakai buat referensi portfolio, difork, atau dikembangkan lagi. Kalau ada ide fitur atau perbaikan rute transit, silakan buka issue atau submit pull request.

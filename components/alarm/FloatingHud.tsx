@@ -11,6 +11,7 @@ import {
   Compass,
   LocateFixed,
   Loader2,
+  Info,
 } from 'lucide-react';
 import { ThemeToggle } from '@/components/ThemeToggle';
 
@@ -27,6 +28,7 @@ export default function FloatingHud() {
   const userCoords = useTransitStore((s) => s.userCoords);
   const setMapCenter = useTransitStore((s) => s.setMapCenter);
   const isLocating = useTransitStore((s) => s.isLocating);
+  const setAboutModalOpen = useTransitStore((s) => s.setAboutModalOpen);
 
   const targetStation = alarmTargetStopId ? STATION_MAP[alarmTargetStopId] : null;
 
@@ -155,6 +157,17 @@ export default function FloatingHud() {
 
         {/* Theme Toggle Button */}
         <ThemeToggle />
+
+        {/* About Developer & App Info Modal Trigger */}
+        <button
+          type="button"
+          onClick={() => setAboutModalOpen(true)}
+          className="p-2 sm:p-2.5 rounded-2xl bg-white/95 dark:bg-zinc-900/90 border border-slate-200/80 dark:border-zinc-800/80 backdrop-blur-md shadow-xl text-slate-700 dark:text-zinc-300 hover:text-sky-600 dark:hover:text-sky-400 hover:scale-105 active:scale-95 transition cursor-pointer"
+          title="Tentang Pengembang & Aplikasi"
+          aria-label="Tentang Pengembang & Aplikasi"
+        >
+          <Info className="w-4 h-4 text-slate-600 dark:text-zinc-300 hover:text-sky-500" />
+        </button>
       </div>
     </div>
   );

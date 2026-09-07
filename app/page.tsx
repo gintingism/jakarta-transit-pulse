@@ -5,6 +5,7 @@ import MapWrapper from '@/components/map/MapWrapper';
 import FloatingHud from '@/components/alarm/FloatingHud';
 import BottomDrawer from '@/components/layout/BottomDrawer';
 import GeoAlarmModal from '@/components/alarm/GeoAlarmModal';
+import AboutModal from '@/components/AboutModal';
 import UrlSync from '@/components/UrlSync';
 import { useGeoAlert } from '@/hooks/useGeoAlert';
 import { useTransitStore } from '@/stores/useTransitStore';
@@ -52,6 +53,9 @@ export default function HomePage() {
 
       {/* High-Contrast Proximity Geo-Alarm Alert Modal */}
       <GeoAlarmModal />
+
+      {/* Professional About Developer & Copyright Modal */}
+      <AboutModal />
     </main>
   );
 }
