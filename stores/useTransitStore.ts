@@ -88,16 +88,12 @@ interface TransitStore {
 
 export const useTransitStore = create<TransitStore>((set, get) => ({
   originStopId: null,
-  destinationStopId: 'tj_monas',
+  destinationStopId: null,
   originPlace: {
     name: 'Lokasi Saya Saat Ini',
     coords: [-6.1967, 106.8225],
   },
-  destinationPlace: {
-    name: 'Monumen Nasional (Monas)',
-    coords: [-6.1754, 106.8272],
-    stationId: 'tj_monas',
-  },
+  destinationPlace: null,
   isRoutingLoading: false,
   routePlan: null,
   selectedLineId: 'ALL',
@@ -113,7 +109,7 @@ export const useTransitStore = create<TransitStore>((set, get) => ({
   isLocating: false,
   locationError: null,
 
-  alarmTargetStopId: 'tj_monas',
+  alarmTargetStopId: null,
   isAlarmArmed: false,
   alarmThresholdMeters: 400,
   currentDistanceMeters: null,
@@ -275,6 +271,8 @@ export const useTransitStore = create<TransitStore>((set, get) => ({
     set({
       originStopId: null,
       destinationStopId: null,
+      originPlace: null,
+      destinationPlace: null,
       routePlan: null,
       activeSegmentId: null,
     });

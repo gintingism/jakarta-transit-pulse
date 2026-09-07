@@ -218,6 +218,10 @@ export default function RouteFinder() {
         <div className="bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-xl p-4 text-center text-xs text-slate-600 dark:text-zinc-400">
           Tidak ditemukan rute transit yang terhubung. Coba pilih stasiun transit perantara.
         </div>
+      ) : (originPlace || originStopId) ? (
+        <div className="bg-white dark:bg-zinc-900/50 border border-dashed border-slate-200 dark:border-zinc-800 rounded-xl p-5 text-center text-slate-500 dark:text-zinc-500 text-xs leading-relaxed">
+          Lokasi asal sudah siap. Ketik stasiun atau tempat tujuan pada kolom <strong>Mau ke Mana?</strong> di atas, atau klik salah satu rekomendasi tujuan cepat untuk melihat rute transit!
+        </div>
       ) : (
         <div className="bg-white dark:bg-zinc-900/50 border border-dashed border-slate-200 dark:border-zinc-800 rounded-xl p-5 text-center text-slate-500 dark:text-zinc-500 text-xs leading-relaxed">
           Pilih lokasi asal dan tujuan di atas atau gunakan tombol <strong>Lokasi Saya</strong> untuk langsung merencanakan perjalanan dari tempat Anda berdiri!
