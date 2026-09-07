@@ -4,6 +4,9 @@ Solusi buat lu yang sering niat merem lima menit di KRL Sudirman, tapi melek-mel
 
 Web app rute multimoda (KRL, TransJakarta, MRT, LRT Jabodebek, KA Bandara) plus alarm GPS yang bakal bangunin lu sebelum stasiun tujuan kelewat.
 
+🌐 **Live Demo (Langsung buka di browser HP/Laptop):**  
+👉 **[https://jakarta-transit-pulse-a6wf.vercel.app](https://jakarta-transit-pulse-a6wf.vercel.app)**
+
 ---
 
 ### Kenapa app ini ada?
