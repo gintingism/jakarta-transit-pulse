@@ -161,10 +161,10 @@ export default function RouteCard({
         <div className="flex items-center justify-between font-semibold text-emerald-900 dark:text-emerald-300">
           <span className="flex items-center gap-1.5">
             <Leaf className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
-            Dampak Hemat & Lingkungan (Eco-Impact)
+            Dampak Hemat & Lingkungan
           </span>
-          <span className="text-[10px] font-mono px-2 py-0.5 rounded-md bg-emerald-100 dark:bg-emerald-950/80 text-emerald-800 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-800/60 font-bold">
-            Hemat Rp {impact.costSavedVsOjolIdr.toLocaleString('id-ID')}
+          <span className="text-[10px] font-medium text-emerald-700 dark:text-emerald-400 bg-emerald-100/70 dark:bg-emerald-950/60 px-2 py-0.5 rounded-md border border-emerald-300/60 dark:border-emerald-800/40">
+            Efisiensi Perjalanan
           </span>
         </div>
 
