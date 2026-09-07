@@ -4,6 +4,7 @@ import {
   calculateTransJakartaFare,
   calculateBasoettaFare,
   calculateTotalJourneyFare,
+  BASOETTA_PAYMENT_INFO,
   JourneyLeg,
 } from './fareRules';
 
@@ -74,17 +75,43 @@ describe('Jakarta Transit Pulse - Official Multi-Modal Fare Rules', () => {
     it('calculates Rp 35.000 for inter-station city segment (e.g. Manggarai to Batu Ceper)', () => {
       expect(calculateBasoettaFare('krl_manggarai', 'krl_batuceper')).toBe(35000);
       expect(calculateBasoettaFare('krl_batuceper', 'krl_manggarai')).toBe(35000);
+      expect(calculateBasoettaFare('krl_bni_city', 'krl_batuceper')).toBe(35000);
+      expect(calculateBasoettaFare('krl_duri', 'krl_batuceper')).toBe(35000);
     });
 
-    it('calculates Rp 10.000 for short city segment (e.g. Manggarai to Duri, Manggarai to BNI City)', () => {
+    it('calculates Rp 25.000 for Manggarai / BNI City to Rawa Buaya', () => {
+      expect(calculateBasoettaFare('krl_manggarai', 'krl_rawa_buaya')).toBe(25000);
+      expect(calculateBasoettaFare('krl_rawa_buaya', 'krl_manggarai')).toBe(25000);
+      expect(calculateBasoettaFare('krl_bni_city', 'krl_rawa_buaya')).toBe(25000);
+      expect(calculateBasoettaFare('krl_rawa_buaya', 'krl_bni_city')).toBe(25000);
+    });
+
+    it('calculates Rp 15.000 for Duri to Rawa Buaya', () => {
+      expect(calculateBasoettaFare('krl_duri', 'krl_rawa_buaya')).toBe(15000);
+      expect(calculateBasoettaFare('krl_rawa_buaya', 'krl_duri')).toBe(15000);
+    });
+
+    it('calculates Rp 10.000 for short city segments (Manggarai-Duri, Manggarai-BNI City, BNI City-Duri, Rawa Buaya-Batu Ceper)', () => {
       expect(calculateBasoettaFare('krl_manggarai', 'krl_duri')).toBe(10000);
       expect(calculateBasoettaFare('krl_duri', 'krl_manggarai')).toBe(10000);
       expect(calculateBasoettaFare('krl_manggarai', 'krl_bni_city')).toBe(10000);
+      expect(calculateBasoettaFare('krl_bni_city', 'krl_manggarai')).toBe(10000);
+      expect(calculateBasoettaFare('krl_bni_city', 'krl_duri')).toBe(10000);
+      expect(calculateBasoettaFare('krl_duri', 'krl_bni_city')).toBe(10000);
+      expect(calculateBasoettaFare('krl_rawa_buaya', 'krl_batuceper')).toBe(10000);
+      expect(calculateBasoettaFare('krl_batuceper', 'krl_rawa_buaya')).toBe(10000);
     });
 
     it('handles boundary: same station circular trip returns Rp 0', () => {
       expect(calculateBasoettaFare('krl_manggarai', 'krl_manggarai')).toBe(0);
       expect(calculateBasoettaFare('ka_bandara_shia', 'ka_bandara_shia')).toBe(0);
+    });
+
+    it('provides payment metadata (KMT Tap and Go with min Rp 70.000, Access by KAI, Vending Machine)', () => {
+      expect(BASOETTA_PAYMENT_INFO.kmtMinBalance).toBe(70000);
+      expect(BASOETTA_PAYMENT_INFO.methods).toContain('Kartu Multi Trip (KMT) Tap and Go');
+      expect(BASOETTA_PAYMENT_INFO.methods).toContain('Aplikasi Access by KAI');
+      expect(BASOETTA_PAYMENT_INFO.methods).toContain('Vending Machine Stasiun');
     });
 
     it('handles boundary: throws descriptive error on unknown station ID', () => {
@@ -98,6 +125,24 @@ describe('Jakarta Transit Pulse - Official Multi-Modal Fare Rules', () => {
   });
 
   describe('4. Total Tarif Perjalanan Multi-Moda (calculateTotalJourneyFare)', () => {
+    it('calculates KRL Cikarang ke Manggarai (Rp 5.000) transit Basoetta ke Bandara Soetta (Rp 70.000) -> Rp 75.000', () => {
+      const legs: JourneyLeg[] = [
+        {
+          mode: 'krl',
+          fromStationId: 'krl_cikarang',
+          toStationId: 'krl_manggarai',
+          distanceKm: 43, // 25 km (3000) + 2x10 km (2000) = 5000
+        },
+        {
+          mode: 'basoetta',
+          fromStationId: 'krl_manggarai',
+          toStationId: 'ka_bandara_shia', // 70000
+        },
+      ];
+
+      expect(calculateTotalJourneyFare(legs)).toBe(75000);
+    });
+
     it('calculates KRL Bekasi ke Manggarai (Rp 3.000) transit Basoetta ke Bandara Soetta (Rp 70.000) -> Rp 73.000', () => {
       const legs: JourneyLeg[] = [
         {
@@ -136,24 +181,6 @@ describe('Jakarta Transit Pulse - Official Multi-Modal Fare Rules', () => {
 
     it('handles boundary: empty journey legs returns Rp 0', () => {
       expect(calculateTotalJourneyFare([])).toBe(0);
-    });
-
-    it('handles 3-modal trip: KRL Bogor ke Manggarai + KRL Manggarai ke Duri + Basoetta ke Bandara', () => {
-      const legs: JourneyLeg[] = [
-        {
-          mode: 'krl',
-          fromStationId: 'krl_bogor',
-          toStationId: 'krl_manggarai',
-          distanceKm: 44, // 25 km (3000) + 2x10 km (2000) = 5000
-        },
-        {
-          mode: 'basoetta',
-          fromStationId: 'krl_manggarai',
-          toStationId: 'ka_bandara_shia', // 70000
-        },
-      ];
-
-      expect(calculateTotalJourneyFare(legs)).toBe(75000);
     });
   });
 });

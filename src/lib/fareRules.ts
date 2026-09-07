@@ -124,28 +124,56 @@ const BASOETTA_STATIONS = new Set([
 
 // Sorted OD key lookup table: sorted [stationA, stationB].join('_') -> fare (IDR)
 const BASOETTA_OD_FARES: Record<string, number> = {
-  // Downtown to Airport = Rp 70.000
+  // Ke / Dari Bandara Soekarno-Hatta (BST)
+  // Manggarai (MRI) <-> Bandara Soetta (BST): Rp 70.000
+  // BNI City (BNC) <-> Bandara Soetta (BST): Rp 70.000
+  // Duri (DU) <-> Bandara Soetta (BST): Rp 70.000
   'ka_bandara_shia_krl_manggarai': 70000,
   'ka_bandara_shia_krl_bni_city': 70000,
   'ka_bandara_shia_krl_duri': 70000,
 
-  // West Jakarta & Tangerang to Airport = Rp 35.000
+  // Rawa Buaya (RW) <-> Bandara Soetta (BST): Rp 35.000
+  // Batu Ceper (BPR) <-> Bandara Soetta (BST): Rp 35.000
   'ka_bandara_shia_krl_batuceper': 35000,
   'ka_bandara_shia_krl_rawa_buaya': 35000,
 
-  // Inter-station city segments = Rp 35.000
+  // Perjalanan Antarstasiun Kota (Non-Bandara)
+  // Manggarai / BNI City / Duri <-> Batu Ceper: Rp 35.000
   'krl_batuceper_krl_manggarai': 35000,
   'krl_batuceper_krl_bni_city': 35000,
   'krl_batuceper_krl_duri': 35000,
-  'krl_manggarai_krl_rawa_buaya': 35000,
-  'krl_bni_city_krl_rawa_buaya': 35000,
-  'krl_duri_krl_rawa_buaya': 35000,
 
-  // Short city segments = Rp 10.000
+  // Manggarai / BNI City <-> Rawa Buaya: Rp 25.000
+  'krl_manggarai_krl_rawa_buaya': 25000,
+  'krl_bni_city_krl_rawa_buaya': 25000,
+
+  // Duri <-> Rawa Buaya: Rp 15.000
+  'krl_duri_krl_rawa_buaya': 15000,
+
+  // Manggarai <-> BNI City: Rp 10.000
+  // Manggarai <-> Duri: Rp 10.000
+  // BNI City <-> Duri: Rp 10.000
+  // Rawa Buaya <-> Batu Ceper: Rp 10.000
   'krl_bni_city_krl_manggarai': 10000,
   'krl_duri_krl_manggarai': 10000,
   'krl_bni_city_krl_duri': 10000,
   'krl_batuceper_krl_rawa_buaya': 10000,
+};
+
+export interface BasoettaPaymentInfo {
+  methods: string[];
+  kmtMinBalance: number;
+  notes: string;
+}
+
+export const BASOETTA_PAYMENT_INFO: BasoettaPaymentInfo = {
+  methods: [
+    'Kartu Multi Trip (KMT) Tap and Go',
+    'Aplikasi Access by KAI',
+    'Vending Machine Stasiun',
+  ],
+  kmtMinBalance: 70000,
+  notes: 'KMT Tap and Go membutuhkan minimal saldo Rp 70.000 saat tap-in.',
 };
 
 function getOdKey(stnA: string, stnB: string): string {
