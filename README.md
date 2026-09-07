@@ -33,7 +33,7 @@ Mendukung pencarian titik populer (mall, gedung perkantoran, tempat wisata) deng
 Semua tarif dihitung secara deterministik sesuai aturan operasional:
 * KRL: Rp 3.000 untuk 25 km pertama, tambah Rp 1.000 tiap 10 km berikutnya.
 * TransJakarta: Flat Rp 3.500.
-* Kereta Bandara: Skema tarif resmi sesuai stasiun asal dan tujuan.
+* Kereta Bandara: Skema tarif resmi relasi stasiun (Rp 70.000 ke Bandara dari Manggarai/BNI City/Duri, Rp 35.000 dari Rawa Buaya/Batu Ceper, dan Rp 10.000 - Rp 35.000 antarstasiun kota).
 * Rincian tarif per moda ditampilkan transparan di kartu hasil rute.
 
 ### 3. Alarm Anti-Bablas (Geo-Alarm)

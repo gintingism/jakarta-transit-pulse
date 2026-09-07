@@ -28,3 +28,9 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# local agent & context files
+.agents/
+AGENTS.md
+CONTEXT.md
+skills-lock.json

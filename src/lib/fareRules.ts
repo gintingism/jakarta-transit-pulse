@@ -107,8 +107,7 @@ export function calculateTjFare(departureTime?: Date | string): number {
 
 /**
  * 3. Commuter Line Basoetta (Kereta Bandara Soekarno-Hatta)
- * Layanan tunggal (Single Class) - Hapus pemisahan Eksekutif/Premium.
- * Skema matriks relasi stasiun (Origin-Destination):
+ * Skema tarif resmi sesuai relasi stasiun (Origin-Destination):
  * - Manggarai / BNI City / Duri <-> Bandara Soetta = Rp 70.000
  * - Rawa Buaya / Batu Ceper <-> Bandara Soetta = Rp 35.000
  * - Antarstasiun segmen kota (contoh: Manggarai <-> Batu Ceper) = Rp 35.000
@@ -154,7 +153,7 @@ function getOdKey(stnA: string, stnB: string): string {
 }
 
 /**
- * Calculates deterministic fare for Commuter Line Basoetta (Single unified class).
+ * Menghitung tarif resmi Commuter Line Basoetta sesuai relasi stasiun.
  *
  * @param originStationId ID Stasiun keberangkatan
  * @param destStationId ID Stasiun tujuan
