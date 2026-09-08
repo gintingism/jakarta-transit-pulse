@@ -17,7 +17,7 @@ import {
 } from 'lucide-react';
 
 export const DEVELOPER_CONFIG = {
-  name: 'Bonifasius Totoneguisa Ginting',
+  name: 'Bonifasius Toto Neguisa Ginting',
   handle: '@gintingism',
   title: 'Software Engineer & Transit Enthusiast',
   bio: 'Membangun aplikasi navigasi transit modern dan geo-alarm cerdas untuk membantu pejuang komuter Jabodetabek agar tidak bablas ketiduran di jalan.',

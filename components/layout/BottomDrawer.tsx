@@ -243,7 +243,7 @@ export default function BottomDrawer() {
               </a>
             </div>
             <div className="text-[10px] text-slate-400 dark:text-zinc-500">
-              © {new Date().getFullYear()} Jakarta Transit Pulse • Developed by Bonifasius Ginting (@gintingism)
+              © {new Date().getFullYear()} Jakarta Transit Pulse • Developed by Bonifasius Toto Neguisa Ginting (@gintingism)
             </div>
           </div>
         </div>

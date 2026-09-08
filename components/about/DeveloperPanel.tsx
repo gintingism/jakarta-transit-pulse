@@ -17,7 +17,7 @@ import {
 } from 'lucide-react';
 
 export const DEVELOPER_PROFILE = {
-  name: 'Bonifasius Totoneguisa Ginting',
+  name: 'Bonifasius Toto Neguisa Ginting',
   handle: '@gintingism',
   role: 'Software Engineer & Creator of Jakarta Transit Pulse',
   location: 'Jakarta, Indonesia',
