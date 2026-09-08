@@ -14,13 +14,19 @@ import {
   Train,
   Bell,
   Leaf,
+  MapPin,
+  Sparkles,
 } from 'lucide-react';
 
 export const DEVELOPER_CONFIG = {
   name: 'Bonifasius Toto Neguisa Ginting',
   handle: '@gintingism',
-  title: 'Software Engineer & Transit Enthusiast',
+  title: 'Software Engineer & Creator of Jakarta Transit Pulse',
+  location: 'Jakarta, Indonesia',
+  status: 'Open to Opportunities & Collaborations',
   bio: 'Membangun aplikasi navigasi transit modern dan geo-alarm cerdas untuk membantu pejuang komuter Jabodetabek agar tidak bablas ketiduran di jalan.',
+  story:
+    'Aplikasi ini lahir dari pengalaman pribadi: lelah menghadapi labirin transit antar moda, tarif ojol yang melonjak tajam saat jam sibuk, dan kekhawatiran bablas ketiduran di kereta setelah seharian bekerja. Dibangun mandiri dengan standar rekayasa modern tanpa iklan.',
   linkedinUrl: 'https://www.linkedin.com/in/bonifasiustotoneguisaginting/',
   githubUrl: 'https://github.com/gintingism',
   repoUrl: 'https://github.com/gintingism/jakarta-transit-pulse',
@@ -93,55 +99,90 @@ export default function AboutModal() {
 
         {/* Scrollable Modal Body */}
         <div className="overflow-y-auto p-5 sm:p-6 space-y-5 text-xs text-slate-700 dark:text-zinc-300 leading-relaxed">
-          {/* Developer Card */}
-          <div className="p-4 rounded-xl bg-slate-50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 space-y-3">
-            <div className="flex items-center gap-3">
-              <div className="w-11 h-11 rounded-full bg-gradient-to-tr from-sky-500 to-indigo-600 flex items-center justify-center text-white font-black text-sm shadow-sm ring-2 ring-sky-500/30 shrink-0">
-                BG
+          {/* Executive Developer Card */}
+          <div className="relative overflow-hidden bg-slate-50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 rounded-xl p-4 space-y-3">
+            {/* Status Pill & Location */}
+            <div className="flex items-center justify-between gap-2">
+              <div className="flex items-center gap-1.5 text-xs text-slate-500 dark:text-zinc-400">
+                <MapPin className="w-3.5 h-3.5 text-rose-500" />
+                <span>{DEVELOPER_CONFIG.location}</span>
               </div>
-              <div>
-                <div className="flex items-center gap-2 flex-wrap">
-                  <h3 className="font-bold text-sm text-slate-900 dark:text-white">
+              <div className="flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-emerald-50 dark:bg-emerald-950 text-emerald-700 dark:text-emerald-300 text-[10px] font-semibold border border-emerald-200 dark:border-emerald-800/80">
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-ping" />
+                <span>{DEVELOPER_CONFIG.status}</span>
+              </div>
+            </div>
+
+            {/* Avatar & Core Profile Info */}
+            <div className="flex items-center gap-3 pt-1">
+              <div className="relative shrink-0">
+                <div className="w-14 h-14 rounded-2xl bg-gradient-to-tr from-sky-500 via-blue-600 to-indigo-600 flex items-center justify-center text-white font-black text-lg shadow-md ring-2 ring-sky-500/30">
+                  BG
+                </div>
+                <div
+                  className="absolute -bottom-1 -right-1 w-5 h-5 rounded-full bg-emerald-500 border-2 border-white dark:border-zinc-900 flex items-center justify-center text-white text-[10px] font-bold shadow-xs"
+                  title="Verified Creator"
+                >
+                  ✓
+                </div>
+              </div>
+
+              <div className="space-y-0.5 min-w-0">
+                <div className="flex items-center gap-1.5 flex-wrap">
+                  <h3 className="font-bold text-sm sm:text-base text-slate-900 dark:text-white leading-tight">
                     {DEVELOPER_CONFIG.name}
                   </h3>
                   <span className="text-[10px] font-mono text-sky-600 dark:text-sky-400 bg-sky-50 dark:bg-sky-950 px-1.5 py-0.5 rounded border border-sky-200 dark:border-sky-800">
                     {DEVELOPER_CONFIG.handle}
                   </span>
                 </div>
-                <p className="text-[11px] text-slate-500 dark:text-zinc-400 font-medium mt-0.5">
+                <p className="text-[11px] text-slate-600 dark:text-zinc-400 font-medium leading-snug">
                   {DEVELOPER_CONFIG.title}
                 </p>
               </div>
             </div>
 
-            <p className="text-slate-600 dark:text-zinc-300 text-[11px]">
+            <p className="text-slate-600 dark:text-zinc-300 text-[11px] leading-relaxed">
               {DEVELOPER_CONFIG.bio}
             </p>
 
-            {/* Social & Contact Link Action Buttons */}
-            <div className="flex flex-wrap items-center gap-2 pt-1 border-t border-slate-200/80 dark:border-zinc-800/80">
+            {/* Primary Action Buttons: LinkedIn & GitHub */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-2 border-t border-slate-200/80 dark:border-zinc-800/80">
               <a
                 href={DEVELOPER_CONFIG.linkedinUrl}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="flex-1 min-w-[130px] flex items-center justify-center gap-1.5 py-2 px-3 rounded-lg bg-[#0077b5]/10 hover:bg-[#0077b5]/20 text-[#0077b5] dark:text-[#38bdf8] font-semibold border border-[#0077b5]/30 transition hover:scale-[1.02] active:scale-95 text-center"
+                className="flex items-center justify-center gap-2 py-2 px-3 rounded-lg bg-[#0a66c2] hover:bg-[#004182] text-white font-bold text-xs shadow-sm transition hover:scale-[1.02] active:scale-95 text-center cursor-pointer"
+                title="Kunjungi dan Konek di Profil LinkedIn"
               >
-                <Linkedin className="w-4 h-4 shrink-0 fill-current" />
-                <span>Profil LinkedIn</span>
-                <ExternalLink className="w-3 h-3 ml-0.5 opacity-70" />
+                <Linkedin className="w-3.5 h-3.5 fill-current shrink-0" />
+                <span>Connect di LinkedIn</span>
+                <ExternalLink className="w-3 h-3 ml-auto opacity-80" />
               </a>
 
               <a
                 href={DEVELOPER_CONFIG.githubUrl}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="flex-1 min-w-[130px] flex items-center justify-center gap-1.5 py-2 px-3 rounded-lg bg-slate-900/10 dark:bg-white/10 hover:bg-slate-900/20 dark:hover:bg-white/15 text-slate-900 dark:text-white font-semibold border border-slate-300 dark:border-zinc-700 transition hover:scale-[1.02] active:scale-95 text-center"
+                className="flex items-center justify-center gap-2 py-2 px-3 rounded-lg bg-slate-900 dark:bg-zinc-800 hover:bg-slate-800 dark:hover:bg-zinc-700 text-white font-bold text-xs border border-slate-700 dark:border-zinc-700 transition hover:scale-[1.02] active:scale-95 text-center cursor-pointer"
+                title="Kunjungi Profil GitHub @gintingism"
               >
-                <Github className="w-4 h-4 shrink-0" />
+                <Github className="w-3.5 h-3.5 shrink-0" />
                 <span>Profil GitHub</span>
-                <ExternalLink className="w-3 h-3 ml-0.5 opacity-70" />
+                <ExternalLink className="w-3 h-3 ml-auto opacity-80" />
               </a>
             </div>
+          </div>
+
+          {/* Project Backstory */}
+          <div className="p-3.5 rounded-xl bg-slate-50 dark:bg-zinc-950/60 border border-slate-200 dark:border-zinc-800 space-y-1.5">
+            <div className="flex items-center gap-1.5 font-bold text-slate-800 dark:text-zinc-200 text-xs">
+              <Sparkles className="w-3.5 h-3.5 text-amber-500 shrink-0" />
+              <span>Latar Belakang & Visi Proyek</span>
+            </div>
+            <p className="text-slate-600 dark:text-zinc-300 text-[11px] leading-relaxed">
+              {DEVELOPER_CONFIG.story}
+            </p>
           </div>
 
           {/* Core Technical Highlights */}
@@ -226,7 +267,7 @@ export default function AboutModal() {
           <div className="text-[10px] text-slate-400 dark:text-zinc-500">
             &copy; {new Date().getFullYear()} Jakarta Transit Pulse by{' '}
             <span className="font-semibold text-slate-600 dark:text-zinc-300">
-              {DEVELOPER_CONFIG.name}
+              {DEVELOPER_CONFIG.name} ({DEVELOPER_CONFIG.handle})
             </span>
             . Dilindungi Lisensi MIT.
           </div>

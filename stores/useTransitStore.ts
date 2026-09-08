@@ -14,7 +14,7 @@ import {
   calculateHaversineDistance,
 } from '@/src/lib/transitEngine';
 
-export type TabType = 'planner' | 'alarm' | 'developer';
+export type TabType = 'planner' | 'alarm';
 export type RoutePreference = 'FASTEST' | 'CHEAPEST' | 'FEWEST_TRANSFERS';
 
 interface TransitStore {

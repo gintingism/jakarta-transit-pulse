@@ -4,7 +4,6 @@ import React from 'react';
 import { useTransitStore } from '@/stores/useTransitStore';
 import RouteFinder from '@/components/planner/RouteFinder';
 import GeoAlarmPanel from '@/components/alarm/GeoAlarmPanel';
-import DeveloperPanel from '@/components/about/DeveloperPanel';
 import {
   Navigation2,
   Bell,
@@ -17,7 +16,6 @@ import {
   Linkedin,
   Github,
   Info,
-  User,
 } from 'lucide-react';
 
 export default function BottomDrawer() {
@@ -29,7 +27,7 @@ export default function BottomDrawer() {
   const routePlan = useTransitStore((s) => s.routePlan);
   const setAboutModalOpen = useTransitStore((s) => s.setAboutModalOpen);
 
-  const handleTabClick = (tab: 'planner' | 'alarm' | 'developer') => {
+  const handleTabClick = (tab: 'planner' | 'alarm') => {
     setActiveTab(tab);
     if (!isDrawerExpanded) {
       toggleDrawer();
@@ -141,22 +139,6 @@ export default function BottomDrawer() {
                   <span className="w-2 h-2 rounded-full bg-rose-500 animate-ping absolute top-1 right-1" />
                 )}
               </button>
-
-              <button
-                type="button"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  handleTabClick('developer');
-                }}
-                className={`flex-1 py-1.5 px-2 sm:px-3 rounded-lg text-xs font-semibold transition flex items-center justify-center gap-1 sm:gap-1.5 ${
-                  activeTab === 'developer'
-                    ? 'bg-indigo-50 dark:bg-indigo-950/70 text-indigo-700 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-800/60 shadow-sm'
-                    : 'text-slate-600 dark:text-zinc-400 hover:text-slate-900 dark:hover:text-zinc-200'
-                }`}
-              >
-                <User className="w-3.5 h-3.5 text-indigo-500 dark:text-indigo-400 shrink-0" />
-                <span className="truncate">Developer</span>
-              </button>
             </div>
 
             {/* Desktop/Mobile Collapse Toggle Button with Intuitive Directional Chevron */}
@@ -205,16 +187,15 @@ export default function BottomDrawer() {
         <div className="flex-1 overflow-y-auto p-3 sm:p-3.5 space-y-4">
           {activeTab === 'planner' && <RouteFinder />}
           {activeTab === 'alarm' && <GeoAlarmPanel />}
-          {activeTab === 'developer' && <DeveloperPanel />}
 
           {/* Sleek Professional Drawer Footer */}
           <div className="pt-3 pb-1 border-t border-slate-200 dark:border-zinc-800/80 flex flex-col items-center justify-center gap-2 text-center select-none">
             <div className="flex items-center gap-3 text-xs text-slate-500 dark:text-zinc-400 font-medium">
               <button
                 type="button"
-                onClick={() => handleTabClick('developer')}
+                onClick={() => setAboutModalOpen(true)}
                 className="hover:text-sky-600 dark:hover:text-sky-400 transition cursor-pointer flex items-center gap-1"
-                aria-label="Buka profil pengembang dan lisensi"
+                aria-label="Buka profil pengembang dan informasi aplikasi"
               >
                 <Info className="w-3.5 h-3.5 text-sky-500" />
                 <span>Tentang Pengembang</span>
