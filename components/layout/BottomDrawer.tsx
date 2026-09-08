@@ -221,7 +221,7 @@ export default function BottomDrawer() {
               </button>
               <span className="text-slate-300 dark:text-zinc-700">•</span>
               <a
-                href="https://www.linkedin.com/in/gintingism"
+                href="https://www.linkedin.com/in/bonifasiustotoneguisaginting/"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="hover:text-[#0077b5] dark:hover:text-[#38bdf8] transition flex items-center gap-1"
@@ -243,7 +243,7 @@ export default function BottomDrawer() {
               </a>
             </div>
             <div className="text-[10px] text-slate-400 dark:text-zinc-500">
-              © {new Date().getFullYear()} Jakarta Transit Pulse • Developed by @gintingism
+              © {new Date().getFullYear()} Jakarta Transit Pulse • Developed by Bonifasius Ginting (@gintingism)
             </div>
           </div>
         </div>

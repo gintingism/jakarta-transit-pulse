@@ -17,10 +17,11 @@ import {
 } from 'lucide-react';
 
 export const DEVELOPER_CONFIG = {
-  name: 'gintingism',
+  name: 'Bonifasius Totoneguisa Ginting',
+  handle: '@gintingism',
   title: 'Software Engineer & Transit Enthusiast',
   bio: 'Membangun aplikasi navigasi transit modern dan geo-alarm cerdas untuk membantu pejuang komuter Jabodetabek agar tidak bablas ketiduran di jalan.',
-  linkedinUrl: 'https://www.linkedin.com/in/gintingism',
+  linkedinUrl: 'https://www.linkedin.com/in/bonifasiustotoneguisaginting/',
   githubUrl: 'https://github.com/gintingism',
   repoUrl: 'https://github.com/gintingism/jakarta-transit-pulse',
 };
@@ -95,16 +96,16 @@ export default function AboutModal() {
           {/* Developer Card */}
           <div className="p-4 rounded-xl bg-slate-50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 space-y-3">
             <div className="flex items-center gap-3">
-              <div className="w-11 h-11 rounded-full bg-gradient-to-tr from-sky-500 to-indigo-600 flex items-center justify-center text-white font-black text-base shadow-sm ring-2 ring-sky-500/30 shrink-0">
-                G
+              <div className="w-11 h-11 rounded-full bg-gradient-to-tr from-sky-500 to-indigo-600 flex items-center justify-center text-white font-black text-sm shadow-sm ring-2 ring-sky-500/30 shrink-0">
+                BG
               </div>
               <div>
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-2 flex-wrap">
                   <h3 className="font-bold text-sm text-slate-900 dark:text-white">
                     {DEVELOPER_CONFIG.name}
                   </h3>
-                  <span className="text-[10px] px-2 py-0.5 rounded-full bg-sky-100 dark:bg-sky-950/80 text-sky-700 dark:text-sky-300 font-semibold border border-sky-200 dark:border-sky-800">
-                    Creator & Developer
+                  <span className="text-[10px] font-mono text-sky-600 dark:text-sky-400 bg-sky-50 dark:bg-sky-950 px-1.5 py-0.5 rounded border border-sky-200 dark:border-sky-800">
+                    {DEVELOPER_CONFIG.handle}
                   </span>
                 </div>
                 <p className="text-[11px] text-slate-500 dark:text-zinc-400 font-medium mt-0.5">

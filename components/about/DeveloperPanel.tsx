@@ -17,12 +17,12 @@ import {
 } from 'lucide-react';
 
 export const DEVELOPER_PROFILE = {
-  name: 'Ginting',
+  name: 'Bonifasius Totoneguisa Ginting',
   handle: '@gintingism',
   role: 'Software Engineer & Creator of Jakarta Transit Pulse',
   location: 'Jakarta, Indonesia',
   status: 'Open to Opportunities & Collaborations',
-  linkedinUrl: 'https://www.linkedin.com/in/gintingism',
+  linkedinUrl: 'https://www.linkedin.com/in/bonifasiustotoneguisaginting/',
   githubUrl: 'https://github.com/gintingism',
   repoUrl: 'https://github.com/gintingism/jakarta-transit-pulse',
 };
@@ -47,7 +47,7 @@ export default function DeveloperPanel() {
           <div className="-mt-10 sm:-mt-12 flex items-end justify-between mb-3">
             <div className="relative">
               <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-2xl bg-gradient-to-tr from-sky-500 via-blue-600 to-indigo-600 border-4 border-white dark:border-zinc-900 shadow-xl flex items-center justify-center text-white font-black text-2xl sm:text-3xl">
-                G
+                BG
               </div>
               <div
                 className="absolute -bottom-1 -right-1 w-6 h-6 rounded-full bg-emerald-500 border-2 border-white dark:border-zinc-900 flex items-center justify-center text-white text-xs shadow-md"

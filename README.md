@@ -102,8 +102,8 @@ Tests       83 passed (83)
 
 ### Author & Pengembang
 
-Dibuat oleh **gintingism** untuk seluruh pejuang komuter Jabodetabek:
-- 💼 **LinkedIn**: [linkedin.com/in/gintingism](https://www.linkedin.com/in/gintingism)
+Dibuat oleh **Bonifasius Totoneguisa Ginting (@gintingism)** untuk seluruh pejuang komuter Jabodetabek:
+- 💼 **LinkedIn**: [linkedin.com/in/bonifasiustotoneguisaginting](https://www.linkedin.com/in/bonifasiustotoneguisaginting/)
 - 🐙 **GitHub**: [@gintingism](https://github.com/gintingism)
 - 🚀 **Live App**: [jakarta-transit-pulse.vercel.app](https://jakarta-transit-pulse.vercel.app)
 
