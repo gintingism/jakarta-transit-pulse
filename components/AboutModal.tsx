@@ -156,7 +156,7 @@ export default function AboutModal() {
                   <span>5 Moda Transit</span>
                 </div>
                 <p className="text-slate-500 dark:text-zinc-400 text-[10px]">
-                  KRL, TransJakarta, MRT, LRT Jabodebek, & Kereta Bandara Basoetta.
+                  KRL, TransJakarta (Koridor 1 & bertahap), MRT, LRT, & KA Bandara.
                 </p>
               </div>
 
@@ -176,7 +176,7 @@ export default function AboutModal() {
                   <span>Zero Any TypeScript</span>
                 </div>
                 <p className="text-slate-500 dark:text-zinc-400 text-[10px]">
-                  Strict typing dengan 81 unit test otomatis via Vitest (100% lolos).
+                  Strict typing dengan 83 unit test otomatis via Vitest (100% lolos).
                 </p>
               </div>
 

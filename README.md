@@ -23,7 +23,11 @@ Makanya project ini dibikin: biar ada navigator transit yang beneran ngerti kond
 ### Apa aja yang bisa dilakuin?
 
 - **Peta & Rute 5 Moda Sekaligus**
-  Bisa nyambungin rute KRL (Lin Bogor & Cikarang), TransJakarta (Koridor 1 dan koridor utama), MRT, LRT Jabodebek, sampe Kereta Bandara Basoetta. Kalo titik awal atau tujuan lu mall atau gedung perkantoran (misal: Grand Indonesia atau Blok M Plaza), app ini bakal ngitungin jarak jalan kakinya juga ke halte terdekat.
+  Bisa nyambungin rute KRL (Lin Bogor & Cikarang), MRT Jakarta, LRT Jabodebek, Kereta Bandara Basoetta, dan TransJakarta.  
+  *(Catatan jujur: Buat TransJakarta saat ini jalurnya masih terbatas di Koridor 1 Blok M - Kota sebagai tulang punggung utama. Koridor-koridor lainnya bakal diupdate dan ditambah bertahap seiring waktu).* Kalo titik awal atau tujuan lu mall atau gedung perkantoran (misal: Grand Indonesia atau Blok M Plaza), app ini bakal ngitungin jarak jalan kakinya juga ke halte atau stasiun terdekat.
+
+- **Mode Navigasi Real-Time (Live Follow & Speedometer)**
+  Kamera peta bisa otomatis ngikutin posisi lu secara halus pas kereta atau bus lagi jalan mirip Google Maps. Lengkap sama indikator arah hadap (heading beam), lingkaran akurasi satelit, dan speedometer live di bilah atas biar lu tau kereta lagi lari berapa km/jam. Udah dipasang Screen Wake Lock dan watchdog recovery juga biar GPS HP lu gak mendadak tidur pas lewat jembatan atau terowongan.
 
 - **Hitungan Tarif Riil (Gak Asal Nembak)**
   - KRL: Rp 3.000 buat 25 km pertama, nambah Rp 1.000 tiap kelipatan 10 km.
@@ -51,7 +55,7 @@ Makanya project ini dibikin: biar ada navigator transit yang beneran ngerti kond
 Project ini dibikin bukan cuma buat pajangan:
 - **No `any` club**: TypeScript-nya strictly typed dari ujung kepala sampe ujung kaki.
 - **Pure domain logic**: Algoritma graf rute, hitungan tarif, dan formula jarak (Haversine) dipisah total di folder `src/lib/`. Gak dicampur aduk sama komponen UI atau Leaflet, jadi enteng dan gampang dites.
-- **81 automated unit tests**: Dites menyeluruh pake Vitest. Dari mulai skenario jarak per pecahan kilometer KRL, tarif relasi KA Bandara bolak-balik, sampe rute transit multi-moda.
+- **83 automated unit tests**: Dites menyeluruh pake Vitest. Dari mulai skenario jarak per pecahan kilometer KRL, tarif relasi KA Bandara bolak-balik, konversi kecepatan live, sampe rute transit multi-moda.
 - **Peta gratisan rasa premium**: Gak pake Google Maps API yang rawan bikin developer kena tagihan kartu kredit mendadak. Peta jalan pake kombinasi Leaflet, CartoDB Dark Matter, dan OpenStreetMap tiles dengan custom dark styling.
 
 ---
@@ -88,10 +92,10 @@ Tinggal buka `http://localhost:3000` di browser.
 npm test
 ```
 
-Output bakal nunjukin 81 test ijo semua:
+Output bakal nunjukin 83 test ijo semua:
 ```
 Test Files  4 passed (4)
-Tests       81 passed (81)
+Tests       83 passed (83)
 ```
 
 ---
