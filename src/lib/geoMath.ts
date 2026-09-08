@@ -33,3 +33,15 @@ export function formatDistance(meters: number): string {
   }
   return `${(meters / 1000).toFixed(1)} km`;
 }
+
+/**
+ * Formats speed in meters per second (m/s) to km/jam.
+ */
+export function formatSpeed(speedMps: number | null): string {
+  if (speedMps === null || isNaN(speedMps) || speedMps < 0.5) {
+    return '0 km/jam';
+  }
+  const kmh = Math.round(speedMps * 3.6);
+  return `${kmh} km/jam`;
+}
+

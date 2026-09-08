@@ -3,7 +3,7 @@
 import React from 'react';
 import { useTransitStore } from '@/stores/useTransitStore';
 import { STATION_MAP, TRANSIT_LINES, LineIdentifier } from '@/src/data/transitNetwork';
-import { formatDistance } from '@/src/lib/transitEngine';
+import { formatDistance, formatSpeed } from '@/src/lib/transitEngine';
 import {
   Bell,
   Layers,
@@ -26,6 +26,9 @@ export default function FloatingHud() {
   const isSimulatingApproach = useTransitStore((s) => s.isSimulatingApproach);
   const useCurrentLocationAsOrigin = useTransitStore((s) => s.useCurrentLocationAsOrigin);
   const userCoords = useTransitStore((s) => s.userCoords);
+  const userSpeed = useTransitStore((s) => s.userSpeed);
+  const isFollowUser = useTransitStore((s) => s.isFollowUser);
+  const setIsFollowUser = useTransitStore((s) => s.setIsFollowUser);
   const setMapCenter = useTransitStore((s) => s.setMapCenter);
   const isLocating = useTransitStore((s) => s.isLocating);
   const setAboutModalOpen = useTransitStore((s) => s.setAboutModalOpen);
@@ -34,9 +37,11 @@ export default function FloatingHud() {
 
   const handleLocateMe = () => {
     if (userCoords) {
-      setMapCenter(userCoords, 15);
+      setIsFollowUser(true);
+      setMapCenter(userCoords, 16);
     } else {
       useCurrentLocationAsOrigin();
+      setIsFollowUser(true);
     }
   };
 
@@ -139,19 +144,47 @@ export default function FloatingHud() {
           </select>
         </div>
 
-        {/* Quick GPS Locate Button */}
+        {/* Real-time Moving Speedometer */}
+        {userSpeed !== null && userSpeed >= 1.0 && (
+          <div
+            className="bg-white/95 dark:bg-zinc-900/90 backdrop-blur-md border border-sky-300 dark:border-sky-800/80 rounded-2xl px-2.5 py-1.5 shadow-xl flex items-center gap-1.5 text-xs font-mono font-bold text-sky-600 dark:text-sky-400"
+            title="Kecepatan Gerak Real-Time"
+          >
+            <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+            <span>{formatSpeed(userSpeed)}</span>
+          </div>
+        )}
+
+        {/* Quick GPS Locate & Follow Button */}
         <button
           type="button"
           onClick={handleLocateMe}
           disabled={isLocating}
-          className="p-2 sm:p-2.5 rounded-2xl bg-white/95 dark:bg-zinc-900/90 border border-slate-200/80 dark:border-zinc-800/80 backdrop-blur-md shadow-xl text-slate-700 dark:text-zinc-300 hover:text-sky-600 dark:hover:text-sky-400 hover:scale-105 active:scale-95 transition cursor-pointer disabled:opacity-50"
-          title="Pusatkan ke Posisi GPS Saya"
-          aria-label="Pusatkan ke Posisi GPS Saya"
+          className={`p-2 sm:p-2.5 rounded-2xl border backdrop-blur-md shadow-xl transition cursor-pointer active:scale-95 flex items-center gap-1.5 ${
+            isFollowUser
+              ? 'bg-sky-50 dark:bg-sky-950/90 border-sky-500 text-sky-600 dark:text-sky-300 ring-2 ring-sky-400/40'
+              : 'bg-white/95 dark:bg-zinc-900/90 border-slate-200/80 dark:border-zinc-800/80 text-slate-700 dark:text-zinc-300 hover:text-sky-600 dark:hover:text-sky-400'
+          }`}
+          title={
+            isFollowUser
+              ? 'Mode Ikuti Posisi Aktif (Peta bergerak otomatis mengikuti Anda)'
+              : 'Pusatkan & Ikuti Posisi GPS Saya'
+          }
+          aria-label="Pusatkan dan Ikuti Posisi GPS Saya"
         >
           {isLocating ? (
             <Loader2 className="w-4 h-4 animate-spin text-sky-500" />
           ) : (
-            <LocateFixed className="w-4 h-4 text-sky-500" />
+            <LocateFixed
+              className={`w-4 h-4 ${
+                isFollowUser ? 'text-sky-500 animate-pulse' : 'text-sky-500'
+              }`}
+            />
+          )}
+          {isFollowUser && (
+            <span className="text-[10px] font-bold text-sky-600 dark:text-sky-300 hidden md:inline">
+              Live Ikuti
+            </span>
           )}
         </button>
 

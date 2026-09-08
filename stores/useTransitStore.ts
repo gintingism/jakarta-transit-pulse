@@ -36,9 +36,13 @@ interface TransitStore {
   mapCenter: [number, number];
   mapZoom: number;
 
-  // Geolocation & Proximity Geo-Alarm
+  // Geolocation & Live Navigation Tracking
   userCoords: [number, number] | null;
+  userAccuracy: number | null;
+  userHeading: number | null;
+  userSpeed: number | null;
   isLocating: boolean;
+  isFollowUser: boolean;
   locationError: string | null;
 
   // Geo-Alarm settings
@@ -73,6 +77,14 @@ interface TransitStore {
 
   // Location & Alarm actions
   setUserCoords: (coords: [number, number] | null) => void;
+  setUserLocation: (
+    coords: [number, number],
+    accuracy?: number | null,
+    heading?: number | null,
+    speed?: number | null
+  ) => void;
+  setIsFollowUser: (follow: boolean) => void;
+  toggleFollowUser: () => void;
   setLocationError: (err: string | null) => void;
   armAlarm: (targetStopId?: string) => void;
   disarmAlarm: () => void;
@@ -109,7 +121,11 @@ export const useTransitStore = create<TransitStore>((set, get) => ({
   mapZoom: 12,
 
   userCoords: null,
+  userAccuracy: null,
+  userHeading: null,
+  userSpeed: null,
   isLocating: false,
+  isFollowUser: false,
   locationError: null,
 
   alarmTargetStopId: null,
@@ -302,6 +318,20 @@ export const useTransitStore = create<TransitStore>((set, get) => ({
     set({ userCoords: coords });
     get().updateDistanceToTarget();
   },
+
+  setUserLocation: (coords, accuracy = null, heading = null, speed = null) => {
+    set({
+      userCoords: coords,
+      userAccuracy: accuracy ?? null,
+      userHeading: heading ?? null,
+      userSpeed: speed ?? null,
+      locationError: null,
+    });
+    get().updateDistanceToTarget();
+  },
+
+  setIsFollowUser: (follow) => set({ isFollowUser: follow }),
+  toggleFollowUser: () => set((state) => ({ isFollowUser: !state.isFollowUser })),
 
   setLocationError: (err) => set({ locationError: err }),
 

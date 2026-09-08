@@ -7,13 +7,18 @@ import { playDisembarkAlarmChime } from '@/lib/audio';
 import { sendDisembarkNotification, requestNotificationPermission } from '@/lib/notifications';
 
 /**
- * Hook for proximity "Get-Off" Geo-Alarm
- * Coordinates real-time geolocation tracking, Haversine proximity calculations,
- * procedural Web Audio synthesis, Web Notifications, and haptic feedback.
+ * Hook for real-time live navigation tracking and proximity "Get-Off" Geo-Alarm.
+ * Coordinates high-frequency GPS tracking (hardware accelerated, zero cache, heartbeat polling,
+ * watchdog reconnection on tunnel/signal dips), screen WakeLock keep-alive,
+ * Haversine proximity calculations, procedural Web Audio synthesis, and haptic alerts.
  */
 export function useGeoAlert() {
   const userCoords = useTransitStore((s) => s.userCoords);
-  const setUserCoords = useTransitStore((s) => s.setUserCoords);
+  const userAccuracy = useTransitStore((s) => s.userAccuracy);
+  const userHeading = useTransitStore((s) => s.userHeading);
+  const userSpeed = useTransitStore((s) => s.userSpeed);
+  const isFollowUser = useTransitStore((s) => s.isFollowUser);
+  const setUserLocation = useTransitStore((s) => s.setUserLocation);
   const setLocationError = useTransitStore((s) => s.setLocationError);
   const alarmTargetStopId = useTransitStore((s) => s.alarmTargetStopId);
   const isAlarmArmed = useTransitStore((s) => s.isAlarmArmed);
@@ -28,8 +33,41 @@ export function useGeoAlert() {
 
   const chimeIntervalRef = useRef<NodeJS.Timeout | null>(null);
   const simIntervalRef = useRef<NodeJS.Timeout | null>(null);
+  const lastFixTimestampRef = useRef<number>(0);
+  const retryTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
-  // 1. Real HTML5 Geolocation Tracking
+  // 1. Screen WakeLock to prevent mobile browser CPU throttling & GPS sleep in moving transit
+  useEffect(() => {
+    let wakeLockSentinel: WakeLockSentinel | null = null;
+
+    const acquireLock = async () => {
+      if (typeof navigator !== 'undefined' && 'wakeLock' in navigator && navigator.wakeLock) {
+        try {
+          wakeLockSentinel = await navigator.wakeLock.request('screen');
+        } catch {
+          // Wake lock may fail if tab is not active or battery saver is engaged
+        }
+      }
+    };
+
+    acquireLock();
+
+    const onVisibilityChange = () => {
+      if (typeof document !== 'undefined' && document.visibilityState === 'visible') {
+        acquireLock();
+      }
+    };
+
+    document.addEventListener('visibilitychange', onVisibilityChange);
+    return () => {
+      document.removeEventListener('visibilitychange', onVisibilityChange);
+      if (wakeLockSentinel) {
+        wakeLockSentinel.release().catch(() => {});
+      }
+    };
+  }, []);
+
+  // 2. High-Frequency Real-Time HTML5 Geolocation Tracking with Watchdog Recovery
   useEffect(() => {
     if (isSimulatingApproach) return;
 
@@ -40,28 +78,77 @@ export function useGeoAlert() {
 
     const geoOptions: PositionOptions = {
       enableHighAccuracy: true,
-      timeout: 12000,
-      maximumAge: 3000,
+      maximumAge: 0,       // Force live GPS hardware fix without cached data
+      timeout: 8000,       // 8s timeout to catch transient loss quickly
     };
 
-    const watchId = navigator.geolocation.watchPosition(
-      (pos) => {
-        setUserCoords([pos.coords.latitude, pos.coords.longitude]);
-        setLocationError(null);
-      },
-      (err) => {
-        console.info('[GeoAlert] Location notice:', err.message);
+    let watchId: number | null = null;
+    let isActive = true;
+
+    const handleSuccess = (pos: GeolocationPosition) => {
+      if (!isActive) return;
+      lastFixTimestampRef.current = Date.now();
+      const { latitude, longitude, accuracy, heading, speed } = pos.coords;
+
+      setUserLocation(
+        [latitude, longitude],
+        typeof accuracy === 'number' && !isNaN(accuracy) ? accuracy : null,
+        typeof heading === 'number' && !isNaN(heading) ? heading : null,
+        typeof speed === 'number' && !isNaN(speed) ? speed : null
+      );
+    };
+
+    const handleError = (err: GeolocationPositionError) => {
+      if (!isActive) return;
+      // If temporary timeout or signal loss in tunnel/bus, schedule recovery reconnect
+      if (err.code === 3 || err.code === 2) {
+        if (!retryTimeoutRef.current) {
+          retryTimeoutRef.current = setTimeout(() => {
+            retryTimeoutRef.current = null;
+            if (isActive && navigator.geolocation) {
+              navigator.geolocation.getCurrentPosition(handleSuccess, () => {}, geoOptions);
+            }
+          }, 2000);
+        }
+      } else {
         setLocationError(err.message);
-      },
-      geoOptions
-    );
+      }
+    };
+
+    // Start continuous hardware watch
+    try {
+      watchId = navigator.geolocation.watchPosition(handleSuccess, handleError, geoOptions);
+    } catch {
+      // Fallback
+    }
+
+    // Immediate initial fix
+    navigator.geolocation.getCurrentPosition(handleSuccess, handleError, geoOptions);
+
+    // Heartbeat watchdog timer: actively checks if fixes have stalled for > 5s
+    // (Common on mobile WebKit/Blink when transit passes under bridges or through signal dips)
+    const watchdogInterval = setInterval(() => {
+      if (!isActive) return;
+      const elapsedSinceFix = Date.now() - lastFixTimestampRef.current;
+      if (elapsedSinceFix > 5000 && navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(handleSuccess, handleError, geoOptions);
+      }
+    }, 3500);
 
     return () => {
-      navigator.geolocation.clearWatch(watchId);
+      isActive = false;
+      if (watchId !== null) {
+        navigator.geolocation.clearWatch(watchId);
+      }
+      clearInterval(watchdogInterval);
+      if (retryTimeoutRef.current) {
+        clearTimeout(retryTimeoutRef.current);
+        retryTimeoutRef.current = null;
+      }
     };
-  }, [isSimulatingApproach, setUserCoords, setLocationError]);
+  }, [isSimulatingApproach, setUserLocation, setLocationError]);
 
-  // 2. Approach Simulation Interval
+  // 3. Approach Simulation Interval
   useEffect(() => {
     if (!isSimulatingApproach) {
       if (simIntervalRef.current) clearInterval(simIntervalRef.current);
@@ -77,7 +164,7 @@ export function useGeoAlert() {
     };
   }, [isSimulatingApproach, stepApproachSimulation]);
 
-  // 3. Proximity Trigger & Alert Execution
+  // 4. Proximity Trigger & Alert Execution
   useEffect(() => {
     if (!isAlarmArmed || isAlarmTriggered || currentDistanceMeters === null) return;
 
@@ -105,7 +192,7 @@ export function useGeoAlert() {
     triggerAlarm,
   ]);
 
-  // 4. Repeated Urgent Audio Chime while alarm is active & unmuted
+  // 5. Repeated Urgent Audio Chime while alarm is active & unmuted
   useEffect(() => {
     if (isAlarmTriggered && !alarmMuted) {
       playDisembarkAlarmChime();
@@ -130,6 +217,10 @@ export function useGeoAlert() {
 
   return {
     userCoords,
+    userAccuracy,
+    userHeading,
+    userSpeed,
+    isFollowUser,
     currentDistanceMeters,
     isAlarmArmed,
     isAlarmTriggered,

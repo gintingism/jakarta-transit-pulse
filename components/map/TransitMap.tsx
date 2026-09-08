@@ -86,6 +86,36 @@ function MapCenterController() {
   return null;
 }
 
+// Live Navigation Follow Controller (Google Maps style)
+function MapFollowController() {
+  const map = useMap();
+  const userCoords = useTransitStore((s) => s.userCoords);
+  const isFollowUser = useTransitStore((s) => s.isFollowUser);
+  const setIsFollowUser = useTransitStore((s) => s.setIsFollowUser);
+
+  // When commuter manually drags the map, disengage auto-follow smoothly
+  useEffect(() => {
+    const handleDragStart = () => {
+      if (useTransitStore.getState().isFollowUser) {
+        setIsFollowUser(false);
+      }
+    };
+    map.on('dragstart', handleDragStart);
+    return () => {
+      map.off('dragstart', handleDragStart);
+    };
+  }, [map, setIsFollowUser]);
+
+  // Continuously and smoothly pan to user location when follow mode is active
+  useEffect(() => {
+    if (isFollowUser && userCoords) {
+      map.panTo(userCoords, { animate: true, duration: 0.8, easeLinearity: 0.25 });
+    }
+  }, [map, userCoords, isFollowUser]);
+
+  return null;
+}
+
 // Segment focus controller: smoothly zooms and pans to selected leg
 function SegmentFocusController({ routePlan }: { routePlan?: RoutePlan | null }) {
   const map = useMap();
@@ -130,6 +160,8 @@ function MapFloatingControls({ routePlan }: { routePlan?: RoutePlan | null }) {
   const isLocating = useTransitStore((s) => s.isLocating);
   const activeSegmentId = useTransitStore((s) => s.activeSegmentId);
   const setActiveSegmentId = useTransitStore((s) => s.setActiveSegmentId);
+  const isFollowUser = useTransitStore((s) => s.isFollowUser);
+  const setIsFollowUser = useTransitStore((s) => s.setIsFollowUser);
 
   const handleZoomIn = (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -143,6 +175,7 @@ function MapFloatingControls({ routePlan }: { routePlan?: RoutePlan | null }) {
 
   const handleFitJourney = (e: React.MouseEvent) => {
     e.stopPropagation();
+    setIsFollowUser(false);
     if (activeSegmentId) {
       setActiveSegmentId(null);
     }
@@ -163,9 +196,11 @@ function MapFloatingControls({ routePlan }: { routePlan?: RoutePlan | null }) {
   const handleLocateUser = (e: React.MouseEvent) => {
     e.stopPropagation();
     if (userCoords) {
-      map.flyTo(userCoords, 15, { duration: 1.2 });
+      setIsFollowUser(true);
+      map.flyTo(userCoords, 16, { duration: 0.8 });
     } else {
       useCurrentLocationAsOrigin();
+      setIsFollowUser(true);
     }
   };
 
@@ -208,14 +243,18 @@ function MapFloatingControls({ routePlan }: { routePlan?: RoutePlan | null }) {
           type="button"
           onClick={handleLocateUser}
           disabled={isLocating}
-          className="p-2.5 text-slate-700 dark:text-zinc-300 hover:text-sky-600 dark:hover:text-sky-400 hover:bg-slate-100/80 dark:hover:bg-zinc-800/80 transition cursor-pointer active:scale-95 disabled:opacity-50"
-          title="Pusatkan ke Lokasi Saya"
-          aria-label="Pusatkan ke Lokasi Saya"
+          className={`p-2.5 transition cursor-pointer active:scale-95 disabled:opacity-50 ${
+            isFollowUser
+              ? 'bg-sky-500 text-white hover:bg-sky-600'
+              : 'text-slate-700 dark:text-zinc-300 hover:text-sky-600 dark:hover:text-sky-400 hover:bg-slate-100/80 dark:hover:bg-zinc-800/80'
+          }`}
+          title={isFollowUser ? 'Mode Ikuti Posisi Aktif' : 'Pusatkan & Ikuti Lokasi Saya'}
+          aria-label="Pusatkan dan Ikuti Lokasi Saya"
         >
           {isLocating ? (
             <Loader2 className="w-4 h-4 animate-spin text-sky-500" />
           ) : (
-            <LocateFixed className="w-4 h-4 text-sky-500" />
+            <LocateFixed className={`w-4 h-4 ${isFollowUser ? 'animate-pulse' : ''}`} />
           )}
         </button>
 
@@ -309,20 +348,34 @@ function createStationIcon(
   });
 }
 
-// User GPS marker icon
-function createUserMarkerIcon() {
+// User GPS live navigation marker icon (with optional heading beam & pulsing halo)
+function createUserMarkerIcon(heading: number | null) {
+  const rotationStyle =
+    heading !== null && !isNaN(heading)
+      ? `transform: rotate(${Math.round(heading)}deg); transform-origin: center center;`
+      : '';
+
   return L.divIcon({
-    className: 'custom-user-icon',
+    className: 'custom-user-live-icon',
     html: `
-      <div class="relative flex items-center justify-center" style="width:26px;height:26px;">
-        <span class="absolute -inset-1.5 rounded-full bg-blue-500/40 animate-ping"></span>
-        <div style="width:18px;height:18px;border-radius:50%;background:#2563eb;border:3px solid #ffffff;box-shadow:0 0 10px rgba(37,99,235,0.7);display:flex;align-items:center;justify-content:center;">
-          <div style="width:5px;height:5px;border-radius:50%;background:#ffffff;"></div>
+      <div class="relative flex items-center justify-center" style="width:36px;height:36px;transition:transform 0.4s ease-out;">
+        ${
+          heading !== null && !isNaN(heading)
+            ? `
+          <div style="position:absolute;top:0;left:0;width:36px;height:36px;pointer-events:none;${rotationStyle}">
+            <div style="position:absolute;top:1px;left:50%;transform:translateX(-50%);width:0;height:0;border-left:6px solid transparent;border-right:6px solid transparent;border-bottom:12px solid rgba(59,130,246,0.9);filter:drop-shadow(0 0 3px rgba(59,130,246,0.8));"></div>
+          </div>
+        `
+            : ''
+        }
+        <span class="absolute inset-1.5 rounded-full bg-blue-500/35 animate-ping"></span>
+        <div style="width:18px;height:18px;border-radius:50%;background:#2563eb;border:3px solid #ffffff;box-shadow:0 0 12px rgba(37,99,235,0.8);display:flex;align-items:center;justify-content:center;position:relative;z-index:2;">
+          <div style="width:6px;height:6px;border-radius:50%;background:#ffffff;"></div>
         </div>
       </div>
     `,
-    iconSize: [26, 26],
-    iconAnchor: [13, 13],
+    iconSize: [36, 36],
+    iconAnchor: [18, 18],
   });
 }
 
@@ -363,6 +416,9 @@ export default function TransitMap(props: TransitMapProps) {
   const storeOriginId = useTransitStore((s) => s.originStopId);
   const storeDestId = useTransitStore((s) => s.destinationStopId);
   const storeUserCoords = useTransitStore((s) => s.userCoords);
+  const userAccuracy = useTransitStore((s) => s.userAccuracy);
+  const userHeading = useTransitStore((s) => s.userHeading);
+  const userSpeed = useTransitStore((s) => s.userSpeed);
   const storeAlarmTargetId = useTransitStore((s) => s.alarmTargetStopId);
   const storeAlarmThreshold = useTransitStore((s) => s.alarmThresholdMeters);
   const storeIsAlarmArmed = useTransitStore((s) => s.isAlarmArmed);
@@ -447,6 +503,7 @@ export default function TransitMap(props: TransitMapProps) {
 
         <MapBoundsController routePlan={routePlan} />
         <MapCenterController />
+        <MapFollowController />
         <MapFloatingControls routePlan={routePlan} />
         <SegmentFocusController routePlan={routePlan} />
 
@@ -726,19 +783,43 @@ export default function TransitMap(props: TransitMapProps) {
           </Marker>
         )}
 
-        {/* Real User GPS Position Pin */}
+        {/* Real User GPS Position Pin & Dynamic Accuracy Circle */}
         {userCoords && (
-          <Marker position={userCoords} icon={createUserMarkerIcon()}>
-            <Popup className="clean-transit-popup">
-              <div className="p-2 text-slate-800 dark:text-zinc-200 text-xs font-mono">
-                <div className="font-semibold text-blue-400 mb-1">
-                  📍 Posisi Anda Saat Ini
+          <>
+            {userAccuracy && userAccuracy > 0 && userAccuracy < 1500 && (
+              <Circle
+                center={userCoords}
+                radius={userAccuracy}
+                pathOptions={{
+                  color: '#3b82f6',
+                  fillColor: '#60a5fa',
+                  fillOpacity: 0.12,
+                  weight: 1,
+                  dashArray: '3, 5',
+                }}
+              />
+            )}
+            <Marker position={userCoords} icon={createUserMarkerIcon(userHeading)}>
+              <Popup className="clean-transit-popup">
+                <div className="p-2 text-slate-800 dark:text-zinc-200 text-xs font-mono space-y-1">
+                  <div className="font-semibold text-blue-500 flex items-center gap-1">
+                    📍 <span>Posisi Anda Saat Ini</span>
+                  </div>
+                  <div>Akurasi: ~{Math.round(userAccuracy || 15)} meter</div>
+                  {userSpeed !== null && userSpeed >= 0.5 && (
+                    <div className="text-emerald-500 font-bold">
+                      Kecepatan: {Math.round(userSpeed * 3.6)} km/jam
+                    </div>
+                  )}
+                  {userHeading !== null && (
+                    <div className="text-sky-500">
+                      Arah: {Math.round(userHeading)}°
+                    </div>
+                  )}
                 </div>
-                <div>Lat: {userCoords[0].toFixed(5)}</div>
-                <div>Lng: {userCoords[1].toFixed(5)}</div>
-              </div>
-            </Popup>
-          </Marker>
+              </Popup>
+            </Marker>
+          </>
         )}
       </MapContainer>
     </div>

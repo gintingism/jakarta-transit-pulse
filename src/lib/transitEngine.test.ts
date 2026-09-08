@@ -2,6 +2,7 @@ import { describe, it, expect } from 'vitest';
 import {
   calculateHaversineDistance,
   formatDistance,
+  formatSpeed,
   calculateFare,
   calculateTravelTime,
   findTransitRoute,
@@ -34,6 +35,23 @@ describe('transitEngine pure calculations', () => {
       expect(formatDistance(1000)).toBe('1.0 km');
       expect(formatDistance(2450)).toBe('2.5 km');
       expect(formatDistance(15200)).toBe('15.2 km');
+    });
+  });
+
+  describe('formatSpeed', () => {
+    it('returns 0 km/jam for null, NaN, or stationary speeds', () => {
+      expect(formatSpeed(null)).toBe('0 km/jam');
+      expect(formatSpeed(NaN)).toBe('0 km/jam');
+      expect(formatSpeed(0.2)).toBe('0 km/jam');
+    });
+
+    it('correctly converts m/s to km/jam for transit speeds', () => {
+      // 10 m/s = 36 km/h
+      expect(formatSpeed(10)).toBe('36 km/jam');
+      // 20 m/s = 72 km/h (KRL speed)
+      expect(formatSpeed(20)).toBe('72 km/jam');
+      // 15 m/s = 54 km/h
+      expect(formatSpeed(15)).toBe('54 km/jam');
     });
   });
 

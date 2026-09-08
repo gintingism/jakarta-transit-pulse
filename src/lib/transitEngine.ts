@@ -7,7 +7,7 @@ import {
   TRANSIT_LINES,
   INTERCHANGE_CONNECTIONS,
 } from '@/src/data/transitNetwork';
-import { calculateHaversineDistance, formatDistance } from './geoMath';
+import { calculateHaversineDistance, formatDistance, formatSpeed } from './geoMath';
 import { calculateWalkingRoute } from './walkingEngine';
 import {
   calculateKrlFare,
@@ -27,6 +27,7 @@ import {
 export {
   calculateHaversineDistance,
   formatDistance,
+  formatSpeed,
   calculateKrlFare,
   calculateTransJakartaFare,
   calculateTjFare,
