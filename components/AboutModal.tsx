@@ -269,7 +269,7 @@ export default function AboutModal() {
             <span className="font-semibold text-slate-600 dark:text-zinc-300">
               {DEVELOPER_CONFIG.name} ({DEVELOPER_CONFIG.handle})
             </span>
-            . Dilindungi Lisensi MIT.
+            . Berlisensi terbuka di bawah GNU AGPLv3.
           </div>
         </div>
       </div>

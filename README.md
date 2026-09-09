@@ -111,4 +111,4 @@ Dibuat oleh **Bonifasius Toto Neguisa Ginting (@gintingism)** untuk seluruh peju
 
 ### Lisensi
 
-MIT License. Bebas dipakai buat referensi portfolio, difork, atau dikembangkan lagi. Kalau ada ide fitur atau perbaikan rute transit, silakan buka issue atau submit pull request.
+Didistribusikan di bawah lisensi **GNU Affero General Public License v3.0 (GNU AGPLv3)**. Proyek ini bersifat *copyleft open-source* untuk menjamin kebebasan kode sumber bagi seluruh komunitas komuter dan pengembang publik. Lihat berkas [LICENSE](LICENSE) untuk ketentuan hukum lengkap.
