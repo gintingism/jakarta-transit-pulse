@@ -1,7 +1,8 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { RoutePlan, formatDistance, calculateTripImpact } from '@/src/lib/transitEngine';
+import { fetchStationWeather, TransitWeather } from '@/src/lib/weatherService';
 import { useTransitStore } from '@/stores/useTransitStore';
 import {
   Clock,
@@ -35,6 +36,17 @@ export default function RouteCard({
 }: RouteCardProps) {
   const [showStopsList, setShowStopsList] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [weather, setWeather] = useState<TransitWeather | null>(null);
+
+  useEffect(() => {
+    const destCoords = route.destination.coords;
+    if (!destCoords) return;
+    const controller = new AbortController();
+    void fetchStationWeather(destCoords, { signal: controller.signal }).then((w) => {
+      if (w) setWeather(w);
+    });
+    return () => controller.abort();
+  }, [route.destination.id, route.destination.coords]);
 
   const activeSegmentId = useTransitStore((s) => s.activeSegmentId);
   const setActiveSegmentId = useTransitStore((s) => s.setActiveSegmentId);
@@ -114,7 +126,7 @@ export default function RouteCard({
           </div>
         </div>
 
-        <div className="flex items-center gap-1.5 text-[11px]">
+        <div className="flex items-center gap-1.5 text-[11px] flex-wrap">
           <span className="px-2 py-0.5 rounded-md bg-slate-100 dark:bg-zinc-800 text-slate-700 dark:text-zinc-300 border border-slate-200 dark:border-zinc-700 font-medium">
             {route.segments.length === 1
               ? 'Perjalanan Langsung'
@@ -124,6 +136,22 @@ export default function RouteCard({
           <span className="text-slate-500 dark:text-zinc-400">
             {route.allStops.length} stasiun total
           </span>
+          {weather && (
+            <>
+              <span className="text-slate-400 dark:text-zinc-600">•</span>
+              <span
+                className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-md border font-medium text-[11px] ${
+                  weather.isRaining
+                    ? 'bg-amber-50 dark:bg-amber-950/70 border-amber-300 dark:border-amber-800 text-amber-800 dark:text-amber-300'
+                    : 'bg-sky-50 dark:bg-sky-950/60 border-sky-200 dark:border-sky-800/60 text-sky-800 dark:text-sky-300'
+                }`}
+                title={weather.advisoryText}
+              >
+                <span>{weather.icon}</span>
+                <span>{weather.temperatureC}°C {weather.conditionText}</span>
+              </span>
+            </>
+          )}
         </div>
       </div>
 

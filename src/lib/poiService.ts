@@ -274,3 +274,54 @@ export async function searchPOIs(
 
   return results;
 }
+
+/**
+ * Free Reverse Geocoding via OpenStreetMap Nominatim.
+ * Resolves GPS coordinates [lat, lng] into a human-readable location name in Jakarta.
+ */
+export async function reverseGeocodeLocation(
+  coords: [number, number],
+  options?: { signal?: AbortSignal }
+): Promise<string> {
+  const [lat, lng] = coords;
+  try {
+    const url = `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat.toFixed(5)}&lon=${lng.toFixed(5)}&zoom=18&addressdetails=1`;
+    const res = await fetch(url, {
+      signal: options?.signal,
+      headers: {
+        Accept: 'application/json',
+        'User-Agent': 'JakartaTransitPulse/1.0',
+      },
+    });
+
+    if (res.ok) {
+      const data = (await res.json()) as {
+        display_name?: string;
+        address?: {
+          road?: string;
+          suburb?: string;
+          neighbourhood?: string;
+          city_district?: string;
+          city?: string;
+        };
+      };
+      if (data.address) {
+        const parts = [
+          data.address.road,
+          data.address.neighbourhood || data.address.suburb || data.address.city_district,
+        ].filter(Boolean);
+        if (parts.length > 0) {
+          return parts.join(', ');
+        }
+      }
+      if (data.display_name) {
+        return data.display_name.split(',').slice(0, 2).join(',').trim();
+      }
+    }
+  } catch {
+    // Fallback on timeout or offline
+  }
+
+  return 'Lokasi Saya Saat Ini';
+}
+

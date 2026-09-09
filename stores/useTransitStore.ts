@@ -13,6 +13,7 @@ import {
   findDoorToDoorRoute,
   calculateHaversineDistance,
 } from '@/src/lib/transitEngine';
+import { reverseGeocodeLocation } from '@/src/lib/poiService';
 
 export type TabType = 'planner' | 'alarm';
 export type RoutePreference = 'FASTEST' | 'CHEAPEST' | 'FEWEST_TRANSFERS';
@@ -189,6 +190,14 @@ export const useTransitStore = create<TransitStore>((set, get) => ({
         originStopId: null,
       });
       void get().calculateCurrentRoute();
+      void reverseGeocodeLocation(coords).then((name) => {
+        if (name && name !== 'Lokasi Saya Saat Ini') {
+          const current = get().originPlace;
+          if (current && current.coords[0] === coords[0] && current.coords[1] === coords[1]) {
+            set({ originPlace: { ...current, name } });
+          }
+        }
+      });
       return;
     }
 
@@ -207,6 +216,14 @@ export const useTransitStore = create<TransitStore>((set, get) => ({
             originStopId: null,
           });
           void get().calculateCurrentRoute();
+          void reverseGeocodeLocation(newCoords).then((name) => {
+            if (name && name !== 'Lokasi Saya Saat Ini') {
+              const current = get().originPlace;
+              if (current && current.coords[0] === newCoords[0] && current.coords[1] === newCoords[1]) {
+                set({ originPlace: { ...current, name } });
+              }
+            }
+          });
         },
         () => {
           const fallbackCoords: [number, number] = [-6.1967, 106.8225];
