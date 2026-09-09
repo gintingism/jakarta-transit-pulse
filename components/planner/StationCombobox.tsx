@@ -17,6 +17,26 @@ import {
   Plane,
 } from 'lucide-react';
 
+// ── Station tag helpers ──────────────────────────────────────────────────────
+
+type StationTag = 'krl' | 'mrt' | 'lrt' | 'tj' | 'bandara';
+
+const TAG_BADGE_CLASSES: Record<StationTag, string> = {
+  krl:     'bg-sky-100 dark:bg-sky-950 text-sky-800 dark:text-sky-300 border border-sky-200 dark:border-sky-800/50',
+  mrt:     'bg-blue-100 dark:bg-blue-950 text-blue-800 dark:text-blue-300 border border-blue-200 dark:border-blue-800/50',
+  lrt:     'bg-amber-100 dark:bg-amber-950 text-amber-800 dark:text-amber-300 border border-amber-200 dark:border-amber-800/50',
+  tj:      'bg-rose-100 dark:bg-rose-950 text-rose-800 dark:text-rose-300 border border-rose-200 dark:border-rose-800/50',
+  bandara: 'bg-indigo-100 dark:bg-indigo-950 text-indigo-800 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-800/50',
+};
+
+const TAG_BADGE_LABEL: Record<StationTag, string> = {
+  krl:     'KRL',
+  mrt:     'MRT',
+  lrt:     'LRT',
+  tj:      'TJ',
+  bandara: '✈ BANDARA',
+};
+
 interface StationComboboxProps {
   label: string;
   selectedStationId?: string | null;
@@ -315,7 +335,48 @@ export default function StationCombobox({
                 if (item.type === 'station') {
                   const s = item.data;
                   const isSelected = selectedStationId === s.id;
-                  const isAirport = s.lines.includes('kai-bandara');
+
+                  // A station is "pure airport" if ALL its lines are kai-bandara
+                  const isPureAirport = s.lines.length > 0 && s.lines.every((l) => l === 'kai-bandara');
+                  const hasBandaraAlso = !isPureAirport && s.lines.includes('kai-bandara');
+
+                  // Build service tags (all transit modes this station serves)
+                  const stationTags: StationTag[] = [];
+                  if (!isPureAirport) stationTags.push(s.type as StationTag);
+                  if (s.lines.includes('kai-bandara')) stationTags.push('bandara');
+
+                  // Service label for subtitle
+                  const TYPE_LABEL: Record<string, string> = {
+                    krl: 'KRL Commuterline', mrt: 'MRT Jakarta',
+                    lrt: 'LRT Jabodebek', tj: 'TransJakarta BRT',
+                  };
+                  const baseLabel = isPureAirport
+                    ? 'KAI Bandara (Railink)'
+                    : (TYPE_LABEL[s.type] ?? s.type.toUpperCase());
+                  const serviceLabel = hasBandaraAlso ? `${baseLabel} + KA Bandara` : baseLabel;
+
+                  // Cross-mode interchange labels (different transit type from this station)
+                  const crossModes: string[] = (() => {
+                    if (!s.interchangeWith?.length) return [];
+                    const modeSet = new Set<string>();
+                    for (const id of s.interchangeWith) {
+                      const target = STATIONS.find((st) => st.id === id);
+                      if (!target || target.type === s.type) continue;
+                      const lbl = { mrt: 'MRT', lrt: 'LRT', tj: 'TransJakarta', krl: 'KRL' }[target.type];
+                      if (lbl) modeSet.add(lbl);
+                    }
+                    return Array.from(modeSet);
+                  })();
+
+                  const isSameModeHub =
+                    s.isInterchange && (!s.interchangeWith || s.interchangeWith.length === 0);
+
+                  let subtitleText = serviceLabel;
+                  if (crossModes.length > 0) {
+                    subtitleText += ` · ↔ ${crossModes.join(' · ')}`;
+                  } else if (isSameModeHub) {
+                    subtitleText += ' · Simpul Transit';
+                  }
 
                   return (
                     <li
@@ -328,8 +389,9 @@ export default function StationCombobox({
                           : 'text-slate-700 dark:text-zinc-300 hover:bg-slate-50 dark:hover:bg-zinc-900/80'
                       }`}
                     >
+                      {/* Left: icon + name + subtitle */}
                       <div className="flex items-center gap-2.5 min-w-0 pr-2">
-                        {isAirport ? (
+                        {isPureAirport ? (
                           <Plane className="w-4 h-4 text-indigo-500 dark:text-indigo-400 shrink-0" />
                         ) : s.type === 'krl' ? (
                           <Train className="w-4 h-4 text-sky-500 dark:text-sky-400 shrink-0" />
@@ -345,43 +407,30 @@ export default function StationCombobox({
                           <div className="flex items-center gap-1.5">
                             <span className="font-medium truncate">{s.name}</span>
                             {s.code && (
-                              <span className="text-[10px] font-mono px-1 py-0.2 rounded bg-slate-100 dark:bg-zinc-800 text-slate-600 dark:text-zinc-400">
+                              <span className="text-[10px] font-mono px-1 rounded bg-slate-100 dark:bg-zinc-800 text-slate-600 dark:text-zinc-400 shrink-0">
                                 {s.code}
                               </span>
                             )}
                           </div>
-                          <p className="text-[10px] text-slate-500 dark:text-zinc-500 truncate">
-                            {isAirport
-                              ? 'KAI Bandara (Railink)'
-                              : s.type === 'krl'
-                              ? 'KRL Commuterline'
-                              : s.type === 'mrt'
-                              ? 'MRT Jakarta'
-                              : s.type === 'lrt'
-                              ? 'LRT'
-                              : 'TransJakarta BRT'}
-                            {s.isInterchange ? ' • Simpul Transit' : ''}
+                          <p className="text-[10px] text-slate-500 dark:text-zinc-500 truncate mt-0.5">
+                            {subtitleText}
                           </p>
                         </div>
                       </div>
 
-                      <div className="flex items-center gap-1.5 shrink-0">
-                        <span
-                          className={`text-[9px] font-semibold px-1.5 py-0.5 rounded uppercase ${
-                            isAirport
-                              ? 'bg-indigo-100 dark:bg-indigo-950 text-indigo-800 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-800/50'
-                              : s.type === 'krl'
-                              ? 'bg-sky-100 dark:bg-sky-950 text-sky-800 dark:text-sky-300 border border-sky-200 dark:border-sky-800/50'
-                              : s.type === 'mrt'
-                              ? 'bg-blue-100 dark:bg-blue-950 text-blue-800 dark:text-blue-300 border border-blue-200 dark:border-blue-800/50'
-                              : s.type === 'lrt'
-                              ? 'bg-amber-100 dark:bg-amber-950 text-amber-800 dark:text-amber-300 border border-amber-200 dark:border-amber-800/50'
-                              : 'bg-rose-100 dark:bg-rose-950 text-rose-800 dark:text-rose-300 border border-rose-200 dark:border-rose-800/50'
-                          }`}
-                        >
-                          {isAirport ? 'BANDARA' : s.type.toUpperCase()}
-                        </span>
-                        {isSelected && <Check className="w-3.5 h-3.5 text-emerald-500 dark:text-emerald-400" />}
+                      {/* Right: transit type tags + check mark */}
+                      <div className="flex items-center gap-1 shrink-0">
+                        {stationTags.map((tag) => (
+                          <span
+                            key={tag}
+                            className={`text-[9px] font-semibold px-1.5 py-0.5 rounded uppercase ${TAG_BADGE_CLASSES[tag]}`}
+                          >
+                            {TAG_BADGE_LABEL[tag]}
+                          </span>
+                        ))}
+                        {isSelected && (
+                          <Check className="w-3.5 h-3.5 text-emerald-500 dark:text-emerald-400 ml-0.5" />
+                        )}
                       </div>
                     </li>
                   );
