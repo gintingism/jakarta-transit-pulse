@@ -16,6 +16,7 @@ import {
   Linkedin,
   Github,
   Info,
+  Coffee,
 } from 'lucide-react';
 
 export default function BottomDrawer() {
@@ -190,7 +191,7 @@ export default function BottomDrawer() {
 
           {/* Sleek Professional Drawer Footer */}
           <div className="pt-3 pb-1 border-t border-slate-200 dark:border-zinc-800/80 flex flex-col items-center justify-center gap-2 text-center select-none">
-            <div className="flex items-center gap-3 text-xs text-slate-500 dark:text-zinc-400 font-medium">
+            <div className="flex items-center gap-2 sm:gap-3 text-xs text-slate-500 dark:text-zinc-400 font-medium flex-wrap justify-center">
               <button
                 type="button"
                 onClick={() => setAboutModalOpen(true)}
@@ -199,6 +200,16 @@ export default function BottomDrawer() {
               >
                 <Info className="w-3.5 h-3.5 text-sky-500" />
                 <span>Tentang Pengembang</span>
+              </button>
+              <span className="text-slate-300 dark:text-zinc-700">•</span>
+              <button
+                type="button"
+                onClick={() => setAboutModalOpen(true)}
+                className="hover:text-amber-600 dark:hover:text-amber-400 text-amber-600 dark:text-amber-400 transition cursor-pointer flex items-center gap-1 font-semibold"
+                aria-label="Dukung proyek via QRIS"
+              >
+                <Coffee className="w-3.5 h-3.5" />
+                <span>Donasi QRIS</span>
               </button>
               <span className="text-slate-300 dark:text-zinc-700">•</span>
               <a
@@ -223,8 +234,12 @@ export default function BottomDrawer() {
                 <span>GitHub</span>
               </a>
             </div>
-            <div className="text-[10px] text-slate-400 dark:text-zinc-500">
-              © {new Date().getFullYear()} Jakarta Transit Pulse • Developed by Bonifasius Toto Neguisa Ginting (@gintingism)
+            <div className="flex flex-wrap items-center justify-center gap-x-2 gap-y-0.5 text-[10px] text-slate-400 dark:text-zinc-500">
+              <span>&copy; {new Date().getFullYear()} Jakarta Transit Pulse</span>
+              <span className="hidden sm:inline">•</span>
+              <span>Oleh <strong className="font-semibold text-slate-600 dark:text-zinc-400">Bonifasius Toto Neguisa Ginting</strong> (@gintingism)</span>
+              <span className="hidden sm:inline">•</span>
+              <span className="inline-block px-1.5 py-0.2 rounded bg-slate-100 dark:bg-zinc-800 text-[9px] text-slate-500 dark:text-zinc-400 border border-slate-200 dark:border-zinc-700">GNU AGPLv3</span>
             </div>
           </div>
         </div>

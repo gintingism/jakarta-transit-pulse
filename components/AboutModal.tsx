@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useTransitStore } from '@/stores/useTransitStore';
 import {
   X,
@@ -16,6 +16,11 @@ import {
   Leaf,
   MapPin,
   Sparkles,
+  Coffee,
+  Copy,
+  Check,
+  Download,
+  QrCode,
 } from 'lucide-react';
 
 export const DEVELOPER_CONFIG = {
@@ -30,11 +35,28 @@ export const DEVELOPER_CONFIG = {
   linkedinUrl: 'https://www.linkedin.com/in/bonifasiustotoneguisaginting/',
   githubUrl: 'https://github.com/gintingism',
   repoUrl: 'https://github.com/gintingism/jakarta-transit-pulse',
+  qris: {
+    merchantName: 'GINTING TECH, DIGITAL & KREATIF',
+    nmid: 'ID1026587920145',
+    imagePath: '/qris-donasi.png',
+  },
 };
 
 export default function AboutModal() {
   const isAboutModalOpen = useTransitStore((s) => s.isAboutModalOpen);
   const setAboutModalOpen = useTransitStore((s) => s.setAboutModalOpen);
+  const [copiedNmid, setCopiedNmid] = useState(false);
+
+  const handleCopyNmid = async () => {
+    try {
+      await navigator.clipboard.writeText(DEVELOPER_CONFIG.qris.nmid);
+      setCopiedNmid(true);
+      setTimeout(() => setCopiedNmid(false), 2000);
+    } catch {
+      // Fallback if clipboard API fails
+      setCopiedNmid(false);
+    }
+  };
 
   // Close modal on Escape key press
   useEffect(() => {
@@ -174,6 +196,103 @@ export default function AboutModal() {
             </div>
           </div>
 
+          {/* QRIS Donation / Support Card */}
+          <div
+            id="donation-section"
+            className="relative overflow-hidden bg-gradient-to-br from-amber-500/10 via-amber-500/5 to-rose-500/10 dark:from-amber-950/40 dark:via-zinc-950 dark:to-rose-950/30 border border-amber-300/80 dark:border-amber-800/60 rounded-2xl p-4 sm:p-5 space-y-3.5 shadow-sm"
+          >
+            {/* Card Header */}
+            <div className="flex items-center justify-between gap-2 flex-wrap">
+              <div className="flex items-center gap-2">
+                <div className="w-8 h-8 rounded-xl bg-amber-500 text-white flex items-center justify-center shadow-sm shadow-amber-500/30 shrink-0">
+                  <Coffee className="w-4 h-4" />
+                </div>
+                <div>
+                  <h4 className="font-bold text-xs sm:text-sm text-slate-900 dark:text-zinc-100 leading-tight">
+                    Dukung Pengembang (Donasi QRIS)
+                  </h4>
+                  <p className="text-[10px] text-amber-800 dark:text-amber-400 font-medium">
+                    Traktir Kopi & Dukung Server Bebas Iklan
+                  </p>
+                </div>
+              </div>
+
+              <span className="px-2 py-0.5 rounded-full text-[9px] font-bold uppercase bg-emerald-100 dark:bg-emerald-950 text-emerald-800 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-800/80 shrink-0">
+                QRIS Nasional
+              </span>
+            </div>
+
+            <p className="text-slate-600 dark:text-zinc-300 text-[11px] leading-relaxed">
+              Jakarta Transit Pulse dibangun dan dirawat secara mandiri tanpa iklan berbayar. Dukungan sukarela Anda membantu kelangsungan server, pemeliharaan domain, dan riset akurasi rute transit Jabodetabek:
+            </p>
+
+            {/* Clean QRIS Frame Card */}
+            <div className="bg-white rounded-xl p-3.5 sm:p-4 border border-slate-200 shadow-md text-slate-900 text-center space-y-2 max-w-[270px] mx-auto">
+              <div className="border-b border-slate-100 pb-1.5 space-y-0.5">
+                <div className="text-[11px] font-black tracking-tight text-slate-900 uppercase">
+                  {DEVELOPER_CONFIG.qris.merchantName}
+                </div>
+                <div className="text-[10px] font-mono text-slate-500">
+                  NMID: {DEVELOPER_CONFIG.qris.nmid}
+                </div>
+              </div>
+
+              {/* QR Image */}
+              <div className="relative bg-white rounded-lg p-0.5">
+                <img
+                  src={DEVELOPER_CONFIG.qris.imagePath}
+                  alt="QRIS Donasi Ginting Tech, Digital & Kreatif - NMID ID1026587920145"
+                  className="w-full max-w-[230px] mx-auto object-contain rounded-md"
+                  loading="lazy"
+                />
+              </div>
+
+              {/* Accepted Providers Info */}
+              <div className="border-t border-slate-100 pt-2 space-y-0.5">
+                <div className="text-[9px] font-bold text-slate-600 uppercase tracking-wide">
+                  Satu QRIS untuk Semua
+                </div>
+                <div className="text-[8.5px] text-slate-400 font-medium leading-tight">
+                  GoPay • OVO • DANA • ShopeePay • BCA • Mandiri • BRI • BNI • Semua m-Banking
+                </div>
+              </div>
+            </div>
+
+            {/* Quick Action Buttons: Copy NMID & Download QR */}
+            <div className="grid grid-cols-2 gap-2 pt-1">
+              <button
+                type="button"
+                onClick={handleCopyNmid}
+                className="flex items-center justify-center gap-1.5 py-2 px-2.5 rounded-xl bg-white dark:bg-zinc-800 hover:bg-slate-50 dark:hover:bg-zinc-700 text-slate-700 dark:text-zinc-200 font-bold text-[11px] transition border border-slate-200 dark:border-zinc-700 shadow-2xs active:scale-95 cursor-pointer"
+                title="Salin nomor identitas pedagang QRIS (NMID)"
+              >
+                {copiedNmid ? (
+                  <>
+                    <Check className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
+                    <span className="text-emerald-600 dark:text-emerald-400">NMID Tersalin!</span>
+                  </>
+                ) : (
+                  <>
+                    <Copy className="w-3.5 h-3.5 text-slate-500 dark:text-zinc-400" />
+                    <span>Salin NMID</span>
+                  </>
+                )}
+              </button>
+
+              <a
+                href={DEVELOPER_CONFIG.qris.imagePath}
+                download="QRIS-Donasi-JakartaTransitPulse.png"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center justify-center gap-1.5 py-2 px-2.5 rounded-xl bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-white font-bold text-[11px] transition shadow-xs shadow-amber-500/25 active:scale-95 text-center cursor-pointer"
+                title="Unduh gambar QRIS untuk di-scan lewat galeri di aplikasi bank/e-wallet"
+              >
+                <Download className="w-3.5 h-3.5" />
+                <span>Unduh Gambar</span>
+              </a>
+            </div>
+          </div>
+
           {/* Project Backstory */}
           <div className="p-3.5 rounded-xl bg-slate-50 dark:bg-zinc-950/60 border border-slate-200 dark:border-zinc-800 space-y-1.5">
             <div className="flex items-center gap-1.5 font-bold text-slate-800 dark:text-zinc-200 text-xs">
@@ -218,7 +337,7 @@ export default function AboutModal() {
                   <span>Zero Any TypeScript</span>
                 </div>
                 <p className="text-slate-500 dark:text-zinc-400 text-[10px]">
-                  Strict typing dengan 83 unit test otomatis via Vitest (100% lolos).
+                  Strict typing dengan 95 unit test otomatis via Vitest (100% lolos).
                 </p>
               </div>
 
@@ -257,19 +376,26 @@ export default function AboutModal() {
           </div>
         </div>
 
-        {/* Footer with Copyright Notice */}
-        <div className="p-4 bg-slate-100/80 dark:bg-zinc-950 border-t border-slate-200 dark:border-zinc-800 text-center text-[11px] text-slate-500 dark:text-zinc-400 space-y-1">
-          <div className="flex items-center justify-center gap-1 font-medium">
+        {/* Clean, Structured Footer with Visual Hierarchy */}
+        <div className="px-5 py-3.5 bg-slate-100/90 dark:bg-zinc-950 border-t border-slate-200 dark:border-zinc-800/80 flex flex-col items-center gap-1.5 text-center select-none">
+          <div className="flex items-center justify-center gap-1.5 text-[11px] font-medium text-slate-600 dark:text-zinc-400">
             <span>Dibuat dengan</span>
             <Heart className="w-3 h-3 text-rose-500 fill-current inline" />
             <span>untuk para pejuang komuter Jabodetabek</span>
           </div>
-          <div className="text-[10px] text-slate-400 dark:text-zinc-500">
-            &copy; {new Date().getFullYear()} Jakarta Transit Pulse by{' '}
-            <span className="font-semibold text-slate-600 dark:text-zinc-300">
-              {DEVELOPER_CONFIG.name} ({DEVELOPER_CONFIG.handle})
+
+          <div className="text-[10px] text-slate-500 dark:text-zinc-400">
+            &copy; {new Date().getFullYear()}{' '}
+            <span className="font-semibold text-slate-700 dark:text-zinc-200">Jakarta Transit Pulse</span> by{' '}
+            <span className="font-semibold text-slate-700 dark:text-zinc-200">{DEVELOPER_CONFIG.name}</span>{' '}
+            <span className="text-sky-600 dark:text-sky-400 font-mono text-[9.5px]">({DEVELOPER_CONFIG.handle})</span>
+          </div>
+
+          <div className="pt-0.5">
+            <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[9.5px] font-medium bg-slate-200/80 dark:bg-zinc-800/80 text-slate-600 dark:text-zinc-400 border border-slate-300/70 dark:border-zinc-700/70">
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+              Berlisensi terbuka di bawah GNU AGPLv3
             </span>
-            . Berlisensi terbuka di bawah GNU AGPLv3.
           </div>
         </div>
       </div>
