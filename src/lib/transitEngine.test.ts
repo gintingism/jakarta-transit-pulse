@@ -491,6 +491,88 @@ describe('transitEngine pure calculations', () => {
       expect(lineIds).toContain('kai-bandara');
       expect(plan.destination.id).toBe('ka_bandara_shia');
     });
+    it('strictly forbids KAI Bandara for intra-city trips when neither origin nor destination is the airport', () => {
+      // 1. Manggarai to Duri: both stations have KAI Bandara stops, but trip is non-airport
+      const routeManggaraiDuri = findTransitRoute('krl_manggarai', 'krl_duri', 'FASTEST');
+      expect(routeManggaraiDuri).not.toBeNull();
+      if (!routeManggaraiDuri) return;
+
+      const lineIds1 = routeManggaraiDuri.segments.map((s) => s.lineId);
+      expect(lineIds1).not.toContain('kai-bandara');
+      expect(lineIds1).toContain('krl-cikarang');
+      expect(routeManggaraiDuri.totalFareIdr).toBe(3000); // KRL commuter fare, not Rp 70.000
+
+      // 2. BNI City to Batu Ceper: both have KAI Bandara, but neither is SHIA airport
+      const routeBniBatuCeper = findTransitRoute('krl_bni_city', 'krl_batuceper', 'FASTEST');
+      expect(routeBniBatuCeper).not.toBeNull();
+      if (!routeBniBatuCeper) return;
+
+      const lineIds2 = routeBniBatuCeper.segments.map((s) => s.lineId);
+      expect(lineIds2).not.toContain('kai-bandara');
+      expect(routeBniBatuCeper.totalFareIdr).toBe(3000);
+
+      // 3. Manggarai to Batu Ceper
+      const routeManggaraiBatuCeper = findTransitRoute('krl_manggarai', 'krl_batuceper', 'FASTEST');
+      expect(routeManggaraiBatuCeper).not.toBeNull();
+      if (!routeManggaraiBatuCeper) return;
+
+      const lineIds3 = routeManggaraiBatuCeper.segments.map((s) => s.lineId);
+      expect(lineIds3).not.toContain('kai-bandara');
+      expect(routeManggaraiBatuCeper.totalFareIdr).toBe(3000);
+    });
+
+    it('allows KAI Bandara when traveling FROM airport to central city', () => {
+      const route = findTransitRoute('ka_bandara_shia', 'krl_manggarai');
+      expect(route).not.toBeNull();
+      if (!route) return;
+
+      expect(route.segments.length).toBe(1);
+      expect(route.segments[0].lineId).toBe('kai-bandara');
+      expect(route.totalFareIdr).toBe(70000);
+    });
+
+    it('differentiates FASTEST vs CHEAPEST route preferences in door-to-door navigation', async () => {
+      const { findDoorToDoorRoute } = await import('./transitEngine');
+
+      // Origin: Blok M Hub (has both MRT Blok M and TJ Blok M nearby)
+      const origin = {
+        name: 'Blok M Hub',
+        coords: [-6.2444, 106.7981] as [number, number],
+      };
+      // Destination: Bundaran HI (has both MRT Bundaran HI and TJ Bundaran HI nearby)
+      const destination = {
+        name: 'Bundaran HI',
+        coords: [-6.1931, 106.8228] as [number, number],
+      };
+
+      // FASTEST should select MRT (commercial speed 60 km/h, grade-separated, ~14 mins)
+      const fastestPlan = await findDoorToDoorRoute(origin, destination, 'FASTEST');
+      expect(fastestPlan).not.toBeNull();
+      if (!fastestPlan) return;
+
+      // CHEAPEST should select TransJakarta Koridor 1 (flat fare Rp 3.500)
+      const cheapestPlan = await findDoorToDoorRoute(origin, destination, 'CHEAPEST');
+      expect(cheapestPlan).not.toBeNull();
+      if (!cheapestPlan) return;
+
+      // FEWEST_TRANSFERS should select a direct route with 0 transfers
+      const directPlan = await findDoorToDoorRoute(origin, destination, 'FEWEST_TRANSFERS');
+      expect(directPlan).not.toBeNull();
+      if (!directPlan) return;
+
+      // CHEAPEST must be strictly cheaper than FASTEST
+      expect(cheapestPlan.totalFareIdr).toBe(3500); // TJ Corridor 1 flat fare
+      expect(fastestPlan.totalFareIdr).toBe(10000); // MRT Jakarta (Blok M to Bundaran HI = 7 stops = Rp 10.000)
+      expect(cheapestPlan.totalFareIdr).toBeLessThan(fastestPlan.totalFareIdr);
+
+      // FASTEST must have shorter transit duration than CHEAPEST
+      expect(fastestPlan.segments[0].type).toBe('mrt');
+      expect(cheapestPlan.segments[0].type).toBe('tj');
+      expect(fastestPlan.totalDurationMinutes).toBeLessThan(cheapestPlan.totalDurationMinutes);
+
+      // FEWEST_TRANSFERS must have 0 transfers
+      expect(directPlan.transfers?.length ?? (directPlan.transfer ? 1 : 0)).toBe(0);
+    });
   });
 });
 

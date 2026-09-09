@@ -195,7 +195,7 @@ export default function StationCombobox({
       });
     } else {
       const poi = item.data;
-      onSelect?.(poi.id);
+      onSelect?.(null);
       onSelectPlace?.({
         name: poi.name,
         coords: poi.coords,

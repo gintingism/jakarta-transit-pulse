@@ -236,14 +236,21 @@ export function calculateTotalJourneyFare(legs: JourneyLeg[]): number {
   }
 
   let total = 0;
+  let runningKrlDist = 0;
 
-  for (const leg of legs) {
-    switch (leg.mode) {
-      case 'krl': {
-        total += calculateKrlFare(leg.distanceKm ?? 0);
-        break;
+  for (let i = 0; i < legs.length; i++) {
+    const leg = legs[i];
+    if (leg.mode === 'krl') {
+      runningKrlDist += leg.distanceKm ?? 0;
+      const nextLeg = legs[i + 1];
+      if (!nextLeg || nextLeg.mode !== 'krl') {
+        total += calculateKrlFare(runningKrlDist);
+        runningKrlDist = 0;
       }
+      continue;
+    }
 
+    switch (leg.mode) {
       case 'tj': {
         total += calculateTransJakartaFare();
         break;
@@ -300,18 +307,53 @@ export function calculateMultiModalFare(
     };
   }
 
+  // Consolidate contiguous KRL legs for single tap-in/tap-out fare schedule
+  let currentKrlGroup: { indices: number[]; totalDist: number } | null = null;
+  const krlGroups: { indices: number[]; totalDist: number }[] = [];
+
+  legs.forEach((leg, idx) => {
+    if (leg.mode === 'krl') {
+      if (!currentKrlGroup) {
+        currentKrlGroup = { indices: [idx], totalDist: leg.distanceKm ?? 0 };
+      } else {
+        currentKrlGroup.indices.push(idx);
+        currentKrlGroup.totalDist += leg.distanceKm ?? 0;
+      }
+    } else {
+      if (currentKrlGroup) {
+        krlGroups.push(currentKrlGroup);
+        currentKrlGroup = null;
+      }
+    }
+  });
+  if (currentKrlGroup) {
+    krlGroups.push(currentKrlGroup);
+  }
+
   const breakdown: FareLegBreakdown[] = [];
   let totalFare = 0;
 
-  for (const leg of legs) {
+  for (let i = 0; i < legs.length; i++) {
+    const leg = legs[i];
     let legFare = 0;
     let description = '';
 
     switch (leg.mode) {
       case 'krl': {
-        const dist = leg.distanceKm ?? 0;
-        legFare = calculateKrlFare(dist);
-        description = `KRL Commuterline (${dist.toFixed(1)} km)`;
+        const group = krlGroups.find((g) => g.indices.includes(i));
+        const isFirstInGroup = group ? group.indices[0] === i : true;
+        const totalDist = group ? group.totalDist : (leg.distanceKm ?? 0);
+
+        if (isFirstInGroup) {
+          legFare = calculateKrlFare(totalDist);
+          description =
+            group && group.indices.length > 1
+              ? `KRL Commuterline (Terusan Transit, ${totalDist.toFixed(1)} km)`
+              : `KRL Commuterline (${totalDist.toFixed(1)} km)`;
+        } else {
+          legFare = 0;
+          description = 'Transit Peron KRL (Terusan - Bebas Biaya)';
+        }
         break;
       }
 

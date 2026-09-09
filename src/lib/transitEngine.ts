@@ -427,38 +427,85 @@ export function findTransitRoute(
     totalDuration: number;
     totalDistanceKm: number;
     totalFareIdr: number;
+    fareBreakdown: FareLegBreakdown[];
     transferCount: number;
   }
+
+  function evaluateCandidate(
+    segments: RouteSegment[],
+    transfers: TransferStep[]
+  ): CandidateRoute {
+    let totalDistanceKm = 0;
+    for (const seg of segments) {
+      totalDistanceKm += seg.distanceKm;
+    }
+    totalDistanceKm = Math.round(totalDistanceKm * 10) / 10;
+
+    let transitDuration = 0;
+    for (const seg of segments) {
+      transitDuration += seg.durationMinutes;
+    }
+
+    let transferDuration = 0;
+    for (let i = 0; i < transfers.length; i++) {
+      const t = transfers[i];
+      const nextSeg = segments[i + 1];
+      const nextLine = nextSeg ? TRANSIT_LINES[nextSeg.lineId] : undefined;
+      const headway = nextLine?.headwayMinutes || 10;
+      const waitMins = Math.max(2, Math.round(headway / 2));
+      transferDuration += t.walkMinutes + waitMins;
+    }
+
+    const multiModal = calculateMultiModalFare(
+      segments.map((s) => ({
+        mode: (s.lineId === 'kai-bandara' ? 'basoetta' : s.type) as TransitMode,
+        lineId: s.lineId,
+        fromStationId: s.fromStation.id,
+        toStationId: s.toStation.id,
+        distanceKm: s.distanceKm,
+        stopCount: s.stopCount,
+      }))
+    );
+
+    return {
+      segments,
+      transfers,
+      totalDuration: transitDuration + transferDuration,
+      totalDistanceKm,
+      totalFareIdr: multiModal.totalFare,
+      fareBreakdown: multiModal.breakdown,
+      transferCount: transfers.length,
+    };
+  }
+
+  const isAirportTrip =
+    originId === 'ka_bandara_shia' || destinationId === 'ka_bandara_shia';
+
+  const originLines = origin.lines.filter((l) => isAirportTrip || l !== 'kai-bandara');
+  const destLines = destination.lines.filter((l) => isAirportTrip || l !== 'kai-bandara');
 
   const candidates: CandidateRoute[] = [];
 
   // -------------------------------------------------------------
   // STRATEGY 1: Direct Route on a Shared Line
   // -------------------------------------------------------------
-  const sharedLines = origin.lines.filter((lineId) =>
-    destination.lines.includes(lineId)
+  const sharedLines = originLines.filter((lineId) =>
+    destLines.includes(lineId)
   );
 
   for (const lineId of sharedLines) {
     const stops = getLineSubSequence(lineId, originId, destinationId);
     if (stops && stops.length >= 2) {
       const seg = buildSegment(lineId, stops);
-      candidates.push({
-        segments: [seg],
-        transfers: [],
-        totalDuration: seg.durationMinutes,
-        totalDistanceKm: seg.distanceKm,
-        totalFareIdr: seg.fareIdr,
-        transferCount: 0,
-      });
+      candidates.push(evaluateCandidate([seg], []));
     }
   }
 
   // -------------------------------------------------------------
   // STRATEGY 2: 1-Transfer Route
   // -------------------------------------------------------------
-  for (const line1Id of origin.lines) {
-    for (const line2Id of destination.lines) {
+  for (const line1Id of originLines) {
+    for (const line2Id of destLines) {
       if (line1Id === line2Id) continue;
 
       const transfers = getLineTransfers(line1Id, line2Id);
@@ -481,14 +528,7 @@ export function findTransitRoute(
             instruction: t.instruction,
           };
 
-          candidates.push({
-            segments: [seg1, seg2],
-            transfers: [transfer],
-            totalDuration: seg1.durationMinutes + t.walkMinutes + seg2.durationMinutes,
-            totalDistanceKm: Math.round((seg1.distanceKm + seg2.distanceKm) * 10) / 10,
-            totalFareIdr: seg1.fareIdr + seg2.fareIdr,
-            transferCount: 1,
-          });
+          candidates.push(evaluateCandidate([seg1, seg2], [transfer]));
         }
       }
     }
@@ -500,9 +540,11 @@ export function findTransitRoute(
   // To avoid performance issues, only check 2-transfers if FEWEST_TRANSFERS is not selected
   // OR if we don't have any 0 or 1 transfer routes.
   if (candidates.length === 0 || preference !== 'FEWEST_TRANSFERS') {
-    const allLineIds = Object.keys(TRANSIT_LINES) as LineIdentifier[];
-    for (const line1Id of origin.lines) {
-      for (const line3Id of destination.lines) {
+    const allLineIds = (Object.keys(TRANSIT_LINES) as LineIdentifier[]).filter(
+      (l) => isAirportTrip || l !== 'kai-bandara'
+    );
+    for (const line1Id of originLines) {
+      for (const line3Id of destLines) {
         if (line1Id === line3Id) continue;
         const line1 = TRANSIT_LINES[line1Id];
         const line3 = TRANSIT_LINES[line3Id];
@@ -544,14 +586,9 @@ export function findTransitRoute(
                   instruction: t2.instruction,
                 };
 
-                candidates.push({
-                  segments: [seg1, seg2, seg3],
-                  transfers: [transfer1, transfer2],
-                  totalDuration: seg1.durationMinutes + t1.walkMinutes + seg2.durationMinutes + t2.walkMinutes + seg3.durationMinutes,
-                  totalDistanceKm: Math.round((seg1.distanceKm + seg2.distanceKm + seg3.distanceKm) * 10) / 10,
-                  totalFareIdr: seg1.fareIdr + seg2.fareIdr + seg3.fareIdr,
-                  transferCount: 2,
-                });
+                candidates.push(
+                  evaluateCandidate([seg1, seg2, seg3], [transfer1, transfer2])
+                );
               }
             }
           }
@@ -570,18 +607,24 @@ export function findTransitRoute(
   if (preference === 'CHEAPEST') {
     candidates.sort((a, b) => {
       if (a.totalFareIdr !== b.totalFareIdr) return a.totalFareIdr - b.totalFareIdr;
-      return a.totalDuration - b.totalDuration; // fallback to fastest
+      if (a.totalDuration !== b.totalDuration) return a.totalDuration - b.totalDuration;
+      if (a.transferCount !== b.transferCount) return a.transferCount - b.transferCount;
+      return a.totalDistanceKm - b.totalDistanceKm;
     });
   } else if (preference === 'FEWEST_TRANSFERS') {
     candidates.sort((a, b) => {
       if (a.transferCount !== b.transferCount) return a.transferCount - b.transferCount;
-      return a.totalDuration - b.totalDuration; // fallback to fastest
+      if (a.totalDuration !== b.totalDuration) return a.totalDuration - b.totalDuration;
+      if (a.totalFareIdr !== b.totalFareIdr) return a.totalFareIdr - b.totalFareIdr;
+      return a.totalDistanceKm - b.totalDistanceKm;
     });
   } else {
     // FASTEST (Default)
     candidates.sort((a, b) => {
       if (a.totalDuration !== b.totalDuration) return a.totalDuration - b.totalDuration;
-      return a.transferCount - b.transferCount; // fallback to fewest transfers
+      if (a.transferCount !== b.transferCount) return a.transferCount - b.transferCount;
+      if (a.totalFareIdr !== b.totalFareIdr) return a.totalFareIdr - b.totalFareIdr;
+      return a.totalDistanceKm - b.totalDistanceKm;
     });
   }
 
@@ -609,17 +652,6 @@ export function findTransitRoute(
     }
   });
 
-  const multiModal = calculateMultiModalFare(
-    best.segments.map((s) => ({
-      mode: (s.lineId === 'kai-bandara' ? 'basoetta' : s.type) as TransitMode,
-      lineId: s.lineId,
-      fromStationId: s.fromStation.id,
-      toStationId: s.toStation.id,
-      distanceKm: s.distanceKm,
-      stopCount: s.stopCount,
-    }))
-  );
-
   return {
     origin,
     destination,
@@ -629,8 +661,8 @@ export function findTransitRoute(
     allStops,
     totalDistanceKm: best.totalDistanceKm,
     totalDurationMinutes: best.totalDuration,
-    totalFareIdr: multiModal.totalFare,
-    fareBreakdown: multiModal.breakdown,
+    totalFareIdr: best.totalFareIdr,
+    fareBreakdown: best.fareBreakdown,
     polylineCoords,
   };
 }
@@ -659,24 +691,40 @@ export async function findDoorToDoorRoute(
   // Identify candidate origin transit stops
   let originCandidates: Station[] = [];
   if (origin.stationId && STATION_MAP[origin.stationId]) {
-    originCandidates = [STATION_MAP[origin.stationId]];
+    const mainOrigin = STATION_MAP[origin.stationId];
+    originCandidates = [mainOrigin];
+    if (mainOrigin.interchangeWith) {
+      for (const linkedId of mainOrigin.interchangeWith) {
+        if (STATION_MAP[linkedId] && !originCandidates.some((c) => c.id === linkedId)) {
+          originCandidates.push(STATION_MAP[linkedId]);
+        }
+      }
+    }
   } else {
     originCandidates = [...STATIONS]
       .map((s) => ({ station: s, dist: calculateHaversineDistance(origin.coords, s.coords) }))
       .sort((a, b) => a.dist - b.dist)
-      .slice(0, 3)
+      .slice(0, 5)
       .map((x) => x.station);
   }
 
   // Identify candidate destination transit stops
   let destCandidates: Station[] = [];
   if (destination.stationId && STATION_MAP[destination.stationId]) {
-    destCandidates = [STATION_MAP[destination.stationId]];
+    const mainDest = STATION_MAP[destination.stationId];
+    destCandidates = [mainDest];
+    if (mainDest.interchangeWith) {
+      for (const linkedId of mainDest.interchangeWith) {
+        if (STATION_MAP[linkedId] && !destCandidates.some((c) => c.id === linkedId)) {
+          destCandidates.push(STATION_MAP[linkedId]);
+        }
+      }
+    }
   } else {
     destCandidates = [...STATIONS]
       .map((s) => ({ station: s, dist: calculateHaversineDistance(destination.coords, s.coords) }))
       .sort((a, b) => a.dist - b.dist)
-      .slice(0, 3)
+      .slice(0, 5)
       .map((x) => x.station);
   }
 
@@ -687,6 +735,53 @@ export async function findDoorToDoorRoute(
     firstMileDist: number;
     lastMileDist: number;
     totalDuration: number;
+    totalFareIdr: number;
+    transferCount: number;
+    totalWalkDist: number;
+  }
+
+  function isBetterItinerary(
+    candidate: EvaluatedItinerary,
+    currentBest: EvaluatedItinerary,
+    pref: 'FASTEST' | 'CHEAPEST' | 'FEWEST_TRANSFERS'
+  ): boolean {
+    if (pref === 'CHEAPEST') {
+      if (candidate.totalFareIdr !== currentBest.totalFareIdr) {
+        return candidate.totalFareIdr < currentBest.totalFareIdr;
+      }
+      if (candidate.totalDuration !== currentBest.totalDuration) {
+        return candidate.totalDuration < currentBest.totalDuration;
+      }
+      if (candidate.transferCount !== currentBest.transferCount) {
+        return candidate.transferCount < currentBest.transferCount;
+      }
+      return candidate.totalWalkDist < currentBest.totalWalkDist;
+    }
+
+    if (pref === 'FEWEST_TRANSFERS') {
+      if (candidate.transferCount !== currentBest.transferCount) {
+        return candidate.transferCount < currentBest.transferCount;
+      }
+      if (candidate.totalDuration !== currentBest.totalDuration) {
+        return candidate.totalDuration < currentBest.totalDuration;
+      }
+      if (candidate.totalFareIdr !== currentBest.totalFareIdr) {
+        return candidate.totalFareIdr < currentBest.totalFareIdr;
+      }
+      return candidate.totalWalkDist < currentBest.totalWalkDist;
+    }
+
+    // FASTEST (Default)
+    if (candidate.totalDuration !== currentBest.totalDuration) {
+      return candidate.totalDuration < currentBest.totalDuration;
+    }
+    if (candidate.transferCount !== currentBest.transferCount) {
+      return candidate.transferCount < currentBest.transferCount;
+    }
+    if (candidate.totalFareIdr !== currentBest.totalFareIdr) {
+      return candidate.totalFareIdr < currentBest.totalFareIdr;
+    }
+    return candidate.totalWalkDist < currentBest.totalWalkDist;
   }
 
   let bestItinerary: EvaluatedItinerary | null = null;
@@ -705,16 +800,24 @@ export async function findDoorToDoorRoute(
       const lastMileDur = Math.max(1, Math.round((lastMileDist * 1.25) / 75));
 
       const totalDuration = firstMileDur + transitRoute.totalDurationMinutes + lastMileDur;
+      const totalFareIdr = transitRoute.totalFareIdr;
+      const transferCount = transitRoute.transfers?.length ?? (transitRoute.transfer ? 1 : 0);
+      const totalWalkDist = firstMileDist + lastMileDist;
 
-      if (!bestItinerary || totalDuration < bestItinerary.totalDuration) {
-        bestItinerary = {
-          transitRoute,
-          candOrigin,
-          candDest,
-          firstMileDist,
-          lastMileDist,
-          totalDuration,
-        };
+      const candidate: EvaluatedItinerary = {
+        transitRoute,
+        candOrigin,
+        candDest,
+        firstMileDist,
+        lastMileDist,
+        totalDuration,
+        totalFareIdr,
+        transferCount,
+        totalWalkDist,
+      };
+
+      if (!bestItinerary || isBetterItinerary(candidate, bestItinerary, preference)) {
+        bestItinerary = candidate;
       }
     }
   }

@@ -54,7 +54,7 @@ const POPULAR_DESTINATIONS = [
   {
     name: 'Blok M Hub',
     coords: [-6.2444, 106.7981] as [number, number],
-    stationId: 'mrt_blok_m',
+    stationId: 'mrt_blokm',
     badge: 'MRT / TJ',
   },
 ];
