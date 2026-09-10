@@ -49,13 +49,21 @@ export default function HomePage() {
       <UrlSync />
 
       {/* Turn-by-Turn GPS Navigation HUD (Active Mode) */}
-      {isNavigating && navigationLegs ? (
+      {isNavigating && navigationLegs && navigationLegs.length > 0 ? (
         <NavigationHUD
           legs={navigationLegs}
           onStopNavigation={stopNavigation}
           onPositionUpdate={(pos) => {
-            setUserCoords([pos.lat, pos.lng]);
-            setMapCenter([pos.lat, pos.lng]);
+            if (
+              pos &&
+              typeof pos.lat === 'number' &&
+              typeof pos.lng === 'number' &&
+              !isNaN(pos.lat) &&
+              !isNaN(pos.lng)
+            ) {
+              setUserCoords([pos.lat, pos.lng]);
+              setMapCenter([pos.lat, pos.lng]);
+            }
           }}
         />
       ) : (

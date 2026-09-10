@@ -67,10 +67,10 @@ export default function NavigationHUD({
       if (!voiceNavRef.current || voiceNavRef.current.getIsMuted()) return;
 
       if (status === 'approaching_destination') {
-        const currentLeg = legs[state.currentLegIndex];
+        const curLeg = legs[state.currentLegIndex];
         const text = generateVoiceInstruction({
           type: 'ANTI_BABLAS_WARNING',
-          stationName: currentLeg?.to.name || 'tujuan',
+          stationName: curLeg?.to?.name || 'tujuan',
         });
         voiceNavRef.current.speakPriority(text);
       } else if (status === 'arrived') {
@@ -104,14 +104,15 @@ export default function NavigationHUD({
   useEffect(() => {
     if (legs.length > 0 && voiceNavRef.current && !voiceNavRef.current.getIsMuted()) {
       const firstLeg = legs[0];
+      if (!firstLeg) return;
       const initialText =
         firstLeg.type === 'WALK'
           ? generateVoiceInstruction({
               type: 'START_WALK',
-              distanceMeters: firstLeg.distanceMeters,
-              targetName: firstLeg.to.name,
+              distanceMeters: firstLeg.distanceMeters || 0,
+              targetName: firstLeg.to?.name || 'tujuan',
             })
-          : firstLeg.instruction;
+          : firstLeg.instruction || '';
       voiceNavRef.current.speakOnce(`initial-${firstLeg.id}`, initialText);
     }
   }, [legs]);
@@ -122,12 +123,17 @@ export default function NavigationHUD({
     [state.legs]
   );
 
+  if (!legs || legs.length === 0 || !currentLeg) {
+    return null;
+  }
+
   const formatDistance = (meters: number) => {
     if (meters < 1000) return `${Math.round(meters)} m`;
     return `${(meters / 1000).toFixed(1)} km`;
   };
 
-  const getLegIcon = (leg: RouteLeg) => {
+  const getLegIcon = (leg?: RouteLeg) => {
+    if (!leg) return <Train className="w-5 h-5 text-sky-400" />;
     if (leg.type === 'WALK') return <Footprints className="w-5 h-5 text-emerald-400" />;
     if (leg.type === 'TRANSFER') return <ArrowRightLeft className="w-5 h-5 text-amber-400" />;
     if (leg.mode === 'TJ') return <Bus className="w-5 h-5 text-rose-400" />;
@@ -191,7 +197,7 @@ export default function NavigationHUD({
               </div>
 
               <div className="text-[10px] text-zinc-400 truncate max-w-[200px]">
-                Tujuan segmen: {currentLeg.to.name}
+                Tujuan segmen: {currentLeg.to?.name || 'Tujuan'}
               </div>
             </div>
           </div>
@@ -306,7 +312,7 @@ export default function NavigationHUD({
                       {leg.instruction}
                     </p>
                     <span className="text-[9.5px] text-zinc-500">
-                      Menuju {leg.to.name} • {formatDistance(leg.distanceMeters)}
+                      Menuju {leg.to?.name || 'tujuan'} • {formatDistance(leg.distanceMeters || 0)}
                     </span>
                   </div>
                 </div>

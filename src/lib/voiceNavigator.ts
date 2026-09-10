@@ -51,9 +51,13 @@ export class VoiceNavigator {
     }
 
     if (typeof window !== 'undefined') {
-      const savedMute = localStorage.getItem('jtp_voice_muted');
-      if (savedMute !== null) {
-        this.isMuted = savedMute === 'true';
+      try {
+        const savedMute = localStorage.getItem('jtp_voice_muted');
+        if (savedMute !== null) {
+          this.isMuted = savedMute === 'true';
+        }
+      } catch {
+        // Ignore localStorage restrictions
       }
     }
 
@@ -104,7 +108,11 @@ export class VoiceNavigator {
       this.onSpeakingChange?.(false);
     }
     if (typeof window !== 'undefined') {
-      localStorage.setItem('jtp_voice_muted', muted ? 'true' : 'false');
+      try {
+        localStorage.setItem('jtp_voice_muted', muted ? 'true' : 'false');
+      } catch {
+        // Ignore localStorage restrictions
+      }
     }
   }
 

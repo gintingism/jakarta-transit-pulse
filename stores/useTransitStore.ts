@@ -130,6 +130,7 @@ export const useTransitStore = create<TransitStore>((set, get) => ({
   navigationLegs: null,
   startNavigation: (plan: RoutePlan) => {
     const legs = convertRoutePlanToLegs(plan);
+    if (!legs || legs.length === 0) return;
     set({
       isNavigating: true,
       navigationLegs: legs,

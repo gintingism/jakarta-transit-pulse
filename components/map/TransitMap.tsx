@@ -628,17 +628,22 @@ export default function TransitMap(props: TransitMapProps) {
           ))}
 
         {/* Dynamic Turn-by-Turn Navigation Polylines */}
-        {isNavigating && navigationLegs && navigationLegs.map((leg, lIdx) => {
-          if (!leg.polylineCoordinates || leg.polylineCoordinates.length < 2) return null;
-          const isComp = leg.status === 'completed';
-          const isAct = leg.status === 'active';
-          const color = leg.lineColor || (leg.type === 'WALK' ? '#10b981' : leg.type === 'TRANSFER' ? '#f59e0b' : '#06b6d4');
+        {isNavigating &&
+          navigationLegs &&
+          navigationLegs.flatMap((leg, lIdx) => {
+            if (!leg.polylineCoordinates || leg.polylineCoordinates.length < 2) return [];
+            const isComp = leg.status === 'completed';
+            const isAct = leg.status === 'active';
+            const color =
+              leg.lineColor ||
+              (leg.type === 'WALK' ? '#10b981' : leg.type === 'TRANSFER' ? '#f59e0b' : '#06b6d4');
 
-          return (
-            <React.Fragment key={`nav_leg_${leg.id}_${lIdx}`}>
-              {/* Active leg outer halo glow */}
-              {isAct && (
+            const elements: React.ReactElement[] = [];
+
+            if (isAct) {
+              elements.push(
                 <Polyline
+                  key={`nav_halo_${leg.id}_${lIdx}`}
                   positions={leg.polylineCoordinates}
                   pathOptions={{
                     color,
@@ -648,22 +653,28 @@ export default function TransitMap(props: TransitMapProps) {
                     lineJoin: 'round',
                   }}
                 />
-              )}
-              {/* Core leg polyline */}
+              );
+            }
+
+            elements.push(
               <Polyline
+                key={`nav_core_${leg.id}_${lIdx}`}
                 positions={leg.polylineCoordinates}
                 pathOptions={{
                   color: isComp ? '#64748b' : isAct ? '#ffffff' : color,
                   weight: isComp ? 3 : isAct ? 6 : 5,
-                  opacity: isComp ? 0.2 : isAct ? 1.0 : 0.6,
+                  opacity: isComp ? 0.25 : 1.0,
                   dashArray: leg.type === 'WALK' ? '4, 8' : undefined,
                   lineCap: 'round',
                   lineJoin: 'round',
                 }}
               />
-              {/* Active leg vivid center */}
-              {isAct && (
+            );
+
+            if (isAct) {
+              elements.push(
                 <Polyline
+                  key={`nav_vivid_${leg.id}_${lIdx}`}
                   positions={leg.polylineCoordinates}
                   pathOptions={{
                     color,
@@ -674,10 +685,11 @@ export default function TransitMap(props: TransitMapProps) {
                     lineJoin: 'round',
                   }}
                 />
-              )}
-            </React.Fragment>
-          );
-        })}
+              );
+            }
+
+            return elements;
+          })}
 
         {/* Geo-Alarm Radius Perimeter */}
         {isAlarmArmed && alarmTargetStation && (

@@ -313,4 +313,97 @@ describe('Voice Guidance Engine', () => {
     expect(() => ssrNavigator.speak('Test')).not.toThrow();
     expect(() => ssrNavigator.unlockAudio()).not.toThrow();
   });
+
+  it('safely handles null, empty, or fallback route plans without throwing', () => {
+    // Null plan
+    expect(convertRoutePlanToLegs(null as unknown as RoutePlan)).toEqual([]);
+
+    // Minimal fallback plan
+    const mockOrigin = STATIONS[0];
+    const mockDest = STATIONS[1];
+    const emptySegmentsPlan: RoutePlan = {
+      origin: mockOrigin,
+      destination: mockDest,
+      segments: [],
+      allStops: [mockOrigin, mockDest],
+      totalDistanceKm: 5,
+      totalDurationMinutes: 15,
+      totalFareIdr: 3000,
+      polylineCoords: [mockOrigin.coords, mockDest.coords],
+    };
+
+    const legs = convertRoutePlanToLegs(emptySegmentsPlan);
+    expect(legs.length).toBe(1);
+    expect(legs[0].status).toBe('active');
+    expect(legs[0].from.name).toBe(mockOrigin.name);
+    expect(legs[0].to.name).toBe(mockDest.name);
+  });
+
+  it('correctly maps transfer steps between segments into TRANSFER legs', () => {
+    const mockOrigin = STATIONS[0];
+    const mockTransit = STATIONS[1];
+    const mockDest = STATIONS[2];
+
+    const transferPlan: RoutePlan = {
+      origin: mockOrigin,
+      destination: mockDest,
+      segments: [
+        {
+          id: 'seg-1',
+          lineId: 'krl-cikarang',
+          lineName: 'Lin Cikarang',
+          lineColor: '#0072C6',
+          type: 'krl',
+          fromStation: mockOrigin,
+          toStation: mockTransit,
+          stops: [mockOrigin, mockTransit],
+          stopCount: 2,
+          distanceKm: 3,
+          durationMinutes: 8,
+          fareIdr: 3000,
+          instruction: 'Naik KRL ke transit',
+          polylineCoords: [mockOrigin.coords, mockTransit.coords],
+        },
+        {
+          id: 'seg-2',
+          lineId: 'krl-bogor',
+          lineName: 'Lin Bogor',
+          lineColor: '#E11B22',
+          type: 'krl',
+          fromStation: mockTransit,
+          toStation: mockDest,
+          stops: [mockTransit, mockDest],
+          stopCount: 2,
+          distanceKm: 4,
+          durationMinutes: 10,
+          fareIdr: 3000,
+          instruction: 'Naik KRL ke tujuan',
+          polylineCoords: [mockTransit.coords, mockDest.coords],
+        },
+      ],
+      transfers: [
+        {
+          fromStation: mockTransit,
+          toStation: mockTransit,
+          walkMinutes: 3,
+          instruction: `Pindah peron di ${mockTransit.name}`,
+        },
+      ],
+      allStops: [mockOrigin, mockTransit, mockDest],
+      totalDistanceKm: 7,
+      totalDurationMinutes: 21,
+      totalFareIdr: 3000,
+      polylineCoords: [mockOrigin.coords, mockTransit.coords, mockDest.coords],
+    };
+
+    const legs = convertRoutePlanToLegs(transferPlan);
+    expect(legs.length).toBe(3); // seg1 + transfer + seg2
+    expect(legs[0].type).toBe('TRANSIT');
+    expect(legs[0].status).toBe('active');
+    expect(legs[1].type).toBe('TRANSFER');
+    expect(legs[1].status).toBe('upcoming');
+    expect(legs[2].type).toBe('TRANSIT');
+    expect(legs[2].status).toBe('upcoming');
+  });
 });
+

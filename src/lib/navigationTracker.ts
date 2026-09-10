@@ -177,7 +177,7 @@ export function useNavigationTracker(
   }));
 
   const consecutiveCountRef = useRef<number>(0);
-  const wakeLockRef = useRef<any>(null);
+  const wakeLockRef = useRef<{ release: () => Promise<void> } | null>(null);
   const watchIdRef = useRef<number | null>(null);
 
   // Sync incoming legs
@@ -198,10 +198,22 @@ export function useNavigationTracker(
   useEffect(() => {
     if (typeof window === 'undefined' || !enabled) return;
 
+    let isMounted = true;
+
     const requestWakeLock = async () => {
       try {
         if ('wakeLock' in navigator) {
-          wakeLockRef.current = await (navigator as any).wakeLock.request('screen');
+          const nav = navigator as unknown as {
+            wakeLock: {
+              request: (type: string) => Promise<{ release: () => Promise<void> }>;
+            };
+          };
+          const lock = await nav.wakeLock.request('screen');
+          if (isMounted) {
+            wakeLockRef.current = lock;
+          } else {
+            void lock.release();
+          }
         }
       } catch {
         // Wake lock may fail due to low battery or browser permissions
@@ -212,6 +224,7 @@ export function useNavigationTracker(
     void requestWakeLock();
 
     return () => {
+      isMounted = false;
       if (wakeLockRef.current) {
         try {
           void wakeLockRef.current.release();
@@ -350,7 +363,11 @@ export function useNavigationTracker(
     setNavigationState((prev) => {
       const nextMuted = !prev.isMuted;
       if (typeof window !== 'undefined') {
-        localStorage.setItem('jtp_voice_muted', nextMuted ? 'true' : 'false');
+        try {
+          localStorage.setItem('jtp_voice_muted', nextMuted ? 'true' : 'false');
+        } catch {
+          // Ignore localStorage restrictions
+        }
       }
       return { ...prev, isMuted: nextMuted };
     });
