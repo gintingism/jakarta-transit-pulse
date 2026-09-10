@@ -491,8 +491,8 @@ export default function TransitMap(props: TransitMapProps) {
       >
         {/* CARTO Basemap (Voyager for Light / Dark Matter for Dark) */}
         {(() => {
-          const apiKey = process.env.NEXT_PUBLIC_CARTO_API_KEY;
-          const query = apiKey ? `?api_key=${apiKey}` : '';
+          const cartoKey = process.env.NEXT_PUBLIC_CARTO_KEY || process.env.NEXT_PUBLIC_CARTO_API_KEY;
+          const query = cartoKey ? `?key=${cartoKey}` : '';
           return resolvedTheme === 'light' ? (
             <TileLayer
               key="carto-voyager"
@@ -504,7 +504,7 @@ export default function TransitMap(props: TransitMapProps) {
           ) : (
             <TileLayer
               key="carto-dark-matter"
-              url={`https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}.png${query}`}
+              url={`https://{s}.basemaps.cartocdn.com/rastertiles/dark_all/{z}/{x}/{y}.png${query}`}
               attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>'
               maxZoom={19}
               subdomains="abcd"
