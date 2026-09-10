@@ -352,19 +352,65 @@ export const useTransitStore = create<TransitStore>((set, get) => ({
   setActiveTab: (tab) => set({ activeTab: tab, isDrawerExpanded: true }),
   toggleDrawer: () => set((state) => ({ isDrawerExpanded: !state.isDrawerExpanded })),
   setDrawerExpanded: (expanded) => set({ isDrawerExpanded: expanded }),
-  setMapCenter: (center, zoom) =>
+  setMapCenter: (center, zoom) => {
+    const current = get().mapCenter;
+    const isCenterSame =
+      Math.abs(current[0] - center[0]) < 0.00001 &&
+      Math.abs(current[1] - center[1]) < 0.00001;
+    const isZoomSame = zoom === undefined || zoom === get().mapZoom;
+
+    if (isCenterSame && isZoomSame) {
+      return;
+    }
+
     set((state) => ({
       mapCenter: center,
       mapZoom: zoom !== undefined ? zoom : state.mapZoom,
-    })),
+    }));
+  },
   setAboutModalOpen: (open) => set({ isAboutModalOpen: open }),
 
   setUserCoords: (coords) => {
+    if (!coords) {
+      if (get().userCoords !== null) {
+        set({ userCoords: null });
+      }
+      return;
+    }
+    const current = get().userCoords;
+    if (
+      current &&
+      Math.abs(current[0] - coords[0]) < 0.00001 &&
+      Math.abs(current[1] - coords[1]) < 0.00001
+    ) {
+      return; // Suppress re-render if position is practically unchanged (< 1.1m)
+    }
     set({ userCoords: coords });
     get().updateDistanceToTarget();
   },
 
   setUserLocation: (coords, accuracy = null, heading = null, speed = null) => {
+    if (!coords) {
+      set({
+        userCoords: null,
+        userAccuracy: accuracy ?? null,
+        userHeading: heading ?? null,
+        userSpeed: speed ?? null,
+        locationError: null,
+      });
+      return;
+    }
+    const current = get().userCoords;
+    const isCoordsSame =
+      current &&
+      Math.abs(current[0] - coords[0]) < 0.00001 &&
+      Math.abs(current[1] - coords[1]) < 0.00001;
+    const isHeadingSame = get().userHeading === (heading ?? null);
+
+    if (isCoordsSame && isHeadingSame) {
+      return;
+    }
+
     set({
       userCoords: coords,
       userAccuracy: accuracy ?? null,

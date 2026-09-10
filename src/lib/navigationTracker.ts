@@ -179,6 +179,20 @@ export function useNavigationTracker(
   const consecutiveCountRef = useRef<number>(0);
   const wakeLockRef = useRef<{ release: () => Promise<void> } | null>(null);
   const watchIdRef = useRef<number | null>(null);
+  const lastProcessedPosRef = useRef<{ lat: number; lng: number } | null>(null);
+
+  // Keep latest callbacks and legs in refs to avoid re-subscribing the GPS watcher
+  const onLegChangeRef = useRef(onLegChange);
+  onLegChangeRef.current = onLegChange;
+
+  const onStatusChangeRef = useRef(onStatusChange);
+  onStatusChangeRef.current = onStatusChange;
+
+  const onInstructionRef = useRef(onInstruction);
+  onInstructionRef.current = onInstruction;
+
+  const legsRef = useRef(legs);
+  legsRef.current = legs;
 
   // Sync incoming legs
   useEffect(() => {
@@ -234,15 +248,15 @@ export function useNavigationTracker(
     };
   }, [enabled]);
 
-  // Geolocation watchPosition lifecycle
+  // Geolocation watchPosition lifecycle (pure GPS tracking, stable watcher)
   useEffect(() => {
-    if (typeof window === 'undefined' || !enabled || legs.length === 0) {
+    if (typeof window === 'undefined' || !enabled || legsRef.current.length === 0) {
       return;
     }
 
     if (!('geolocation' in navigator)) {
       setNavigationState((prev) => ({ ...prev, status: 'gps_lost' }));
-      onStatusChange?.('gps_lost');
+      onStatusChangeRef.current?.('gps_lost');
       return;
     }
 
@@ -254,6 +268,17 @@ export function useNavigationTracker(
         speed: position.coords.speed,
         accuracy: position.coords.accuracy,
       };
+
+      // Filter micro-movements / GPS jitter (< 0.00001 deg, ~1.1 meters) to prevent render loops
+      const last = lastProcessedPosRef.current;
+      if (
+        last &&
+        Math.abs(last.lat - userPos.lat) < 0.00001 &&
+        Math.abs(last.lng - userPos.lng) < 0.00001
+      ) {
+        return;
+      }
+      lastProcessedPosRef.current = { lat: userPos.lat, lng: userPos.lng };
 
       setNavigationState((prev) => {
         const currentLeg = prev.legs[prev.currentLegIndex];
@@ -286,7 +311,7 @@ export function useNavigationTracker(
           });
 
           if (isFinal) {
-            onStatusChange?.('arrived');
+            onStatusChangeRef.current?.('arrived');
             return {
               ...prev,
               currentLocation: userPos,
@@ -298,8 +323,8 @@ export function useNavigationTracker(
           }
 
           const nextLeg = updatedLegs[nextIndex];
-          onLegChange?.(nextIndex, nextLeg);
-          onInstruction?.(nextLeg.instruction);
+          onLegChangeRef.current?.(nextIndex, nextLeg);
+          onInstructionRef.current?.(nextLeg.instruction);
 
           return {
             ...prev,
@@ -317,16 +342,16 @@ export function useNavigationTracker(
 
         if (approachingCheck.isApproaching) {
           newStatus = 'approaching_destination';
-          onStatusChange?.('approaching_destination');
+          onStatusChangeRef.current?.('approaching_destination');
         } else {
           // 4. Check off-route
           const off = isOffRoute(userPos, currentLeg.polylineCoordinates, 100);
           if (off && prev.status !== 'approaching_destination') {
             newStatus = 'off_route';
-            onStatusChange?.('off_route');
+            onStatusChangeRef.current?.('off_route');
           } else if (newStatus === 'off_route' && !off) {
             newStatus = 'navigating';
-            onStatusChange?.('navigating');
+            onStatusChangeRef.current?.('navigating');
           }
         }
 
@@ -342,7 +367,7 @@ export function useNavigationTracker(
 
     const handleError = () => {
       setNavigationState((prev) => ({ ...prev, status: 'gps_lost' }));
-      onStatusChange?.('gps_lost');
+      onStatusChangeRef.current?.('gps_lost');
     };
 
     watchIdRef.current = navigator.geolocation.watchPosition(handleSuccess, handleError, {
@@ -357,7 +382,7 @@ export function useNavigationTracker(
         watchIdRef.current = null;
       }
     };
-  }, [enabled, legs, onLegChange, onStatusChange, onInstruction]);
+  }, [enabled]);
 
   const toggleMute = useCallback(() => {
     setNavigationState((prev) => {

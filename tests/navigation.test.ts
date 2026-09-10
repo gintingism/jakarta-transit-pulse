@@ -17,6 +17,7 @@ import {
 } from '@/src/lib/voiceNavigator';
 import { RoutePlan } from '@/src/lib/transitEngine';
 import { STATIONS } from '@/src/data/transitNetwork';
+import { useTransitStore } from '@/stores/useTransitStore';
 
 describe('Navigation Domain & Geofence Logic', () => {
   const monasStop: StationStop = {
@@ -406,4 +407,42 @@ describe('Voice Guidance Engine', () => {
     expect(legs[2].status).toBe('upcoming');
   });
 });
+
+describe('Navigation State & Infinite Loop Prevention', () => {
+  it('deduplicates practically identical coordinates in setUserCoords (< 0.00001 deg threshold)', () => {
+    const initialCoords: [number, number] = [-6.2088, 106.8456];
+    useTransitStore.getState().setUserCoords(initialCoords);
+
+    const firstState = useTransitStore.getState().userCoords;
+    expect(firstState).toEqual(initialCoords);
+
+    // Micro-jitter: +0.000005 deg (~0.5 meters) -> should NOT update reference or re-render
+    const jitterCoords: [number, number] = [-6.208805, 106.845604];
+    useTransitStore.getState().setUserCoords(jitterCoords);
+
+    const secondState = useTransitStore.getState().userCoords;
+    expect(secondState).toBe(firstState); // Reference identity preserved!
+
+    // Significant move: +0.0002 deg (~22 meters) -> SHOULD update state
+    const movedCoords: [number, number] = [-6.2091, 106.8459];
+    useTransitStore.getState().setUserCoords(movedCoords);
+
+    const thirdState = useTransitStore.getState().userCoords;
+    expect(thirdState).toEqual(movedCoords);
+    expect(thirdState).not.toBe(firstState);
+  });
+
+  it('deduplicates redundant setMapCenter calls with same center and zoom', () => {
+    const initialCenter: [number, number] = [-6.2088, 106.8456];
+    useTransitStore.getState().setMapCenter(initialCenter, 13);
+
+    const firstCenter = useTransitStore.getState().mapCenter;
+
+    // Negligible difference (< 0.00001 deg) with same zoom
+    useTransitStore.getState().setMapCenter([-6.208802, 106.845603], 13);
+    const secondCenter = useTransitStore.getState().mapCenter;
+    expect(secondCenter).toBe(firstCenter); // Reference identity preserved!
+  });
+});
+
 

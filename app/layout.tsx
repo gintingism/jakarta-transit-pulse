@@ -24,6 +24,9 @@ export const metadata: Metadata = {
     statusBarStyle: 'black-translucent',
     title: 'Jakarta Transit Pulse',
   },
+  other: {
+    'mobile-web-app-capable': 'yes',
+  },
 };
 
 export const viewport: Viewport = {
@@ -44,6 +47,9 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en" suppressHydrationWarning className="h-full w-full">
+      <head>
+        <meta name="mobile-web-app-capable" content="yes" />
+      </head>
       <body className="h-full w-full bg-white dark:bg-[#090a0f] text-slate-900 dark:text-slate-100 antialiased overflow-hidden selection:bg-cyan-500 selection:text-black transition-colors duration-300">
         <ThemeProvider attribute="class" defaultTheme="dark" enableSystem={false}>
           {children}

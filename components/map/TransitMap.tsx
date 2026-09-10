@@ -92,6 +92,7 @@ function MapFollowController() {
   const userCoords = useTransitStore((s) => s.userCoords);
   const isFollowUser = useTransitStore((s) => s.isFollowUser);
   const setIsFollowUser = useTransitStore((s) => s.setIsFollowUser);
+  const lastPanRef = React.useRef<[number, number] | null>(null);
 
   // When commuter manually drags the map, disengage auto-follow smoothly
   useEffect(() => {
@@ -109,7 +110,15 @@ function MapFollowController() {
   // Continuously and smoothly pan to user location when follow mode is active
   useEffect(() => {
     if (isFollowUser && userCoords) {
-      map.panTo(userCoords, { animate: true, duration: 0.8, easeLinearity: 0.25 });
+      const last = lastPanRef.current;
+      if (
+        !last ||
+        Math.abs(last[0] - userCoords[0]) >= 0.00001 ||
+        Math.abs(last[1] - userCoords[1]) >= 0.00001
+      ) {
+        lastPanRef.current = userCoords;
+        map.panTo(userCoords, { animate: true, duration: 0.8, easeLinearity: 0.25 });
+      }
     }
   }, [map, userCoords, isFollowUser]);
 

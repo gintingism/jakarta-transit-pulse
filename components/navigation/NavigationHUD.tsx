@@ -1,9 +1,10 @@
 'use client';
 
-import React, { useState, useEffect, useRef, useMemo } from 'react';
+import React, { useState, useEffect, useRef, useMemo, useCallback } from 'react';
 import {
   RouteLeg,
   NavigationState,
+  NavigationStatus,
 } from '@/src/types/navigation';
 import { useNavigationTracker } from '@/src/lib/navigationTracker';
 import { VoiceNavigator, generateVoiceInstruction } from '@/src/lib/voiceNavigator';
@@ -40,6 +41,13 @@ export default function NavigationHUD({
   const [isHistoryOpen, setIsHistoryOpen] = useState(false);
   const [isSpeaking, setIsSpeaking] = useState(false);
   const voiceNavRef = useRef<VoiceNavigator | null>(null);
+  const onPositionUpdateRef = useRef(onPositionUpdate);
+  onPositionUpdateRef.current = onPositionUpdate;
+  const onActiveLegChangeRef = useRef(onActiveLegChange);
+  onActiveLegChangeRef.current = onActiveLegChange;
+  const legsRef = useRef(legs);
+  legsRef.current = legs;
+  const lastNotifiedPosRef = useRef<{ lat: number; lng: number } | null>(null);
 
   // Initialize VoiceNavigator instance once
   useEffect(() => {
@@ -52,35 +60,40 @@ export default function NavigationHUD({
     }
   }, []);
 
+  const handleLegChange = useCallback((index: number, nextLeg: RouteLeg) => {
+    onActiveLegChangeRef.current?.(nextLeg, index);
+    if (voiceNavRef.current && !voiceNavRef.current.getIsMuted()) {
+      voiceNavRef.current.speakOnce(
+        `leg-${nextLeg.id}`,
+        nextLeg.instruction
+      );
+    }
+  }, []);
+
+  const handleStatusChange = useCallback((status: NavigationStatus) => {
+    if (!voiceNavRef.current || voiceNavRef.current.getIsMuted()) return;
+
+    if (status === 'approaching_destination') {
+      const currentLegs = legsRef.current;
+      const curLeg = currentLegs[0]; // fallback
+      const text = generateVoiceInstruction({
+        type: 'ANTI_BABLAS_WARNING',
+        stationName: curLeg?.to?.name || 'tujuan',
+      });
+      voiceNavRef.current.speakPriority(text);
+    } else if (status === 'arrived') {
+      const text = generateVoiceInstruction({ type: 'ARRIVED' });
+      voiceNavRef.current.speakPriority(text);
+    } else if (status === 'off_route') {
+      const text = generateVoiceInstruction({ type: 'OFF_ROUTE' });
+      voiceNavRef.current.speakOnce('off-route-warning', text);
+    }
+  }, []);
+
   const { state, toggleMute, toggleCenter } = useNavigationTracker(legs, {
     enabled: true,
-    onLegChange: (index, nextLeg) => {
-      onActiveLegChange?.(nextLeg, index);
-      if (voiceNavRef.current && !voiceNavRef.current.getIsMuted()) {
-        voiceNavRef.current.speakOnce(
-          `leg-${nextLeg.id}`,
-          nextLeg.instruction
-        );
-      }
-    },
-    onStatusChange: (status) => {
-      if (!voiceNavRef.current || voiceNavRef.current.getIsMuted()) return;
-
-      if (status === 'approaching_destination') {
-        const curLeg = legs[state.currentLegIndex];
-        const text = generateVoiceInstruction({
-          type: 'ANTI_BABLAS_WARNING',
-          stationName: curLeg?.to?.name || 'tujuan',
-        });
-        voiceNavRef.current.speakPriority(text);
-      } else if (status === 'arrived') {
-        const text = generateVoiceInstruction({ type: 'ARRIVED' });
-        voiceNavRef.current.speakPriority(text);
-      } else if (status === 'off_route') {
-        const text = generateVoiceInstruction({ type: 'OFF_ROUTE' });
-        voiceNavRef.current.speakOnce('off-route-warning', text);
-      }
-    },
+    onLegChange: handleLegChange,
+    onStatusChange: handleStatusChange,
   });
 
   // Sync mute state to VoiceNavigator
@@ -90,15 +103,24 @@ export default function NavigationHUD({
     }
   }, [state.isMuted]);
 
-  // Notify parent of location changes for map tracking
+  // Notify parent of location changes for map tracking (with 0.00001 deg threshold)
   useEffect(() => {
     if (state.currentLocation && state.isCentered) {
-      onPositionUpdate?.({
-        lat: state.currentLocation.lat,
-        lng: state.currentLocation.lng,
-      });
+      const cur = state.currentLocation;
+      const last = lastNotifiedPosRef.current;
+      if (
+        !last ||
+        Math.abs(last.lat - cur.lat) >= 0.00001 ||
+        Math.abs(last.lng - cur.lng) >= 0.00001
+      ) {
+        lastNotifiedPosRef.current = { lat: cur.lat, lng: cur.lng };
+        onPositionUpdateRef.current?.({
+          lat: cur.lat,
+          lng: cur.lng,
+        });
+      }
     }
-  }, [state.currentLocation, state.isCentered, onPositionUpdate]);
+  }, [state.currentLocation, state.isCentered]);
 
   // Initial instruction speech
   useEffect(() => {
