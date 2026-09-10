@@ -1,5 +1,3 @@
-// ── Voice Instruction Types & Generation ─────────────────────────────────────
-
 export type VoiceInstructionParams =
   | { type: 'START_WALK'; distanceMeters: number; targetName: string }
   | { type: 'APPROACH_GATE'; distanceMeters: number }
@@ -9,7 +7,7 @@ export type VoiceInstructionParams =
   | { type: 'OFF_ROUTE' };
 
 /**
- * Pure generator for standard commuter voice instructions in Indonesian
+ * Generates spoken navigation instructions in Indonesian
  */
 export function generateVoiceInstruction(params: VoiceInstructionParams): string {
   switch (params.type) {
@@ -29,7 +27,7 @@ export function generateVoiceInstruction(params: VoiceInstructionParams): string
 }
 
 /**
- * Web Speech API Voice Navigator for Turn-by-Turn commuter guidance
+ * Text-to-speech voice guidance using Web Speech API
  */
 export class VoiceNavigator {
   private synth: SpeechSynthesis | null = null;

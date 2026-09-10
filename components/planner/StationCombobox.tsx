@@ -17,8 +17,6 @@ import {
   Plane,
 } from 'lucide-react';
 
-// ── Station tag helpers ──────────────────────────────────────────────────────
-
 type StationTag = 'krl' | 'mrt' | 'lrt' | 'tj' | 'bandara';
 
 const TAG_BADGE_CLASSES: Record<StationTag, string> = {

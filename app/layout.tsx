@@ -18,7 +18,8 @@ export const metadata: Metadata = {
     'Manggarai',
     'Soekarno-Hatta',
   ],
-  authors: [{ name: 'Senior Frontend & Systems Engineer' }],
+  authors: [{ name: 'Bonifasius Toto Neguisa Ginting', url: 'https://github.com/gintingism' }],
+  creator: 'Bonifasius Toto Neguisa Ginting',
   appleWebApp: {
     capable: true,
     statusBarStyle: 'black-translucent',

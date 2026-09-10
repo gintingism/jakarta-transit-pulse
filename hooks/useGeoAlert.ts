@@ -7,10 +7,8 @@ import { playDisembarkAlarmChime } from '@/lib/audio';
 import { sendDisembarkNotification, requestNotificationPermission } from '@/lib/notifications';
 
 /**
- * Hook for real-time live navigation tracking and proximity "Get-Off" Geo-Alarm.
- * Coordinates high-frequency GPS tracking (hardware accelerated, zero cache, heartbeat polling,
- * watchdog reconnection on tunnel/signal dips), screen WakeLock keep-alive,
- * Haversine proximity calculations, procedural Web Audio synthesis, and haptic alerts.
+ * Hook for user location tracking and proximity disembark alarm.
+ * Handles geolocation watching, wake lock, distance checks, audio chime, and vibrations.
  */
 export function useGeoAlert() {
   const userCoords = useTransitStore((s) => s.userCoords);
@@ -36,7 +34,7 @@ export function useGeoAlert() {
   const lastFixTimestampRef = useRef<number>(0);
   const retryTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
-  // 1. Screen WakeLock to prevent mobile browser CPU throttling & GPS sleep in moving transit
+  // Keep screen awake while tracking
   useEffect(() => {
     let wakeLockSentinel: WakeLockSentinel | null = null;
 
@@ -67,7 +65,7 @@ export function useGeoAlert() {
     };
   }, []);
 
-  // 2. High-Frequency Real-Time HTML5 Geolocation Tracking with Watchdog Recovery
+  // Geolocation watch with retry fallback
   useEffect(() => {
     if (isSimulatingApproach) return;
 
@@ -78,8 +76,8 @@ export function useGeoAlert() {
 
     const geoOptions: PositionOptions = {
       enableHighAccuracy: true,
-      maximumAge: 0,       // Force live GPS hardware fix without cached data
-      timeout: 8000,       // 8s timeout to catch transient loss quickly
+      maximumAge: 0,
+      timeout: 8000,
     };
 
     let watchId: number | null = null;
@@ -100,7 +98,7 @@ export function useGeoAlert() {
 
     const handleError = (err: GeolocationPositionError) => {
       if (!isActive) return;
-      // If temporary timeout or signal loss in tunnel/bus, schedule recovery reconnect
+      // Re-query location if temporary timeout or signal drop
       if (err.code === 3 || err.code === 2) {
         if (!retryTimeoutRef.current) {
           retryTimeoutRef.current = setTimeout(() => {
@@ -115,18 +113,16 @@ export function useGeoAlert() {
       }
     };
 
-    // Start continuous hardware watch
     try {
       watchId = navigator.geolocation.watchPosition(handleSuccess, handleError, geoOptions);
     } catch {
-      // Fallback
+      // Ignore
     }
 
     // Immediate initial fix
     navigator.geolocation.getCurrentPosition(handleSuccess, handleError, geoOptions);
 
-    // Heartbeat watchdog timer: actively checks if fixes have stalled for > 5s
-    // (Common on mobile WebKit/Blink when transit passes under bridges or through signal dips)
+    // Heartbeat check in case watchPosition stalls
     const watchdogInterval = setInterval(() => {
       if (!isActive) return;
       const elapsedSinceFix = Date.now() - lastFixTimestampRef.current;
@@ -148,7 +144,7 @@ export function useGeoAlert() {
     };
   }, [isSimulatingApproach, setUserLocation, setLocationError]);
 
-  // 3. Approach Simulation Interval
+  // Approach simulation interval
   useEffect(() => {
     if (!isSimulatingApproach) {
       if (simIntervalRef.current) clearInterval(simIntervalRef.current);
@@ -164,7 +160,7 @@ export function useGeoAlert() {
     };
   }, [isSimulatingApproach, stepApproachSimulation]);
 
-  // 4. Proximity Trigger & Alert Execution
+  // Trigger alarm when within threshold distance
   useEffect(() => {
     if (!isAlarmArmed || isAlarmTriggered || currentDistanceMeters === null) return;
 
@@ -179,7 +175,7 @@ export function useGeoAlert() {
         try {
           navigator.vibrate([400, 200, 400, 200, 800]);
         } catch {
-          // Vibration may be restricted on insecure origins
+          // Ignore
         }
       }
     }
@@ -192,7 +188,7 @@ export function useGeoAlert() {
     triggerAlarm,
   ]);
 
-  // 5. Repeated Urgent Audio Chime while alarm is active & unmuted
+  // Play repeating alarm chime while active & unmuted
   useEffect(() => {
     if (isAlarmTriggered && !alarmMuted) {
       playDisembarkAlarmChime();

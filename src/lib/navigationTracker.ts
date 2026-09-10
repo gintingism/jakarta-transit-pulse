@@ -9,8 +9,6 @@ import {
 } from '@/src/types/navigation';
 import { calculateHaversineDistance } from '@/src/lib/geoMath';
 
-// ── Pure Algorithmic Domain Functions ────────────────────────────────────────
-
 /**
  * Calculates straight-line distance in meters from coordinates to a StationStop
  */
@@ -146,8 +144,6 @@ export function processGpsTick(params: ProcessGpsTickParams): ProcessGpsTickResu
     distanceToTarget,
   };
 }
-
-// ── Custom React Hook: useNavigationTracker ──────────────────────────────────
 
 export interface UseNavigationTrackerOptions {
   enabled?: boolean;

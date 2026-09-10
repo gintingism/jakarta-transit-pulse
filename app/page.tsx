@@ -13,7 +13,6 @@ import { useTransitStore } from '@/stores/useTransitStore';
 import { initAudioContext } from '@/lib/audio';
 
 export default function HomePage() {
-  // Initialize continuous Geolocation Proximity Watcher & Web Audio Alarm Engine
   useGeoAlert();
 
   const calculateCurrentRoute = useTransitStore((s) => s.calculateCurrentRoute);
@@ -22,10 +21,9 @@ export default function HomePage() {
   const stopNavigation = useTransitStore((s) => s.stopNavigation);
 
   useEffect(() => {
-    // Initial calculation for default selected origin & destination
     calculateCurrentRoute();
 
-    // Attach interaction listener to pre-warm Web Audio API context per browser autoplay policies
+    // Resume audio context on first user gesture (browser autoplay policy)
     const handleFirstInteraction = () => {
       initAudioContext();
       window.removeEventListener('click', handleFirstInteraction);
@@ -43,30 +41,20 @@ export default function HomePage() {
 
   return (
     <main className="relative w-screen h-screen overflow-hidden bg-slate-50 dark:bg-zinc-950">
-      {/* URL Deep-Linking State Synchronizer */}
       <UrlSync />
 
-      {/* Turn-by-Turn GPS Navigation HUD (Active Mode) */}
       {isNavigating && navigationLegs && navigationLegs.length > 0 ? (
         <NavigationHUD
           legs={navigationLegs}
           onStopNavigation={stopNavigation}
         />
       ) : (
-        /* Top Floating Diagnostic Status Bar (Idle Mode) */
         <FloatingHud />
       )}
 
-      {/* Full-Screen Vector Map (CartoDB Dark Matter) */}
       <MapWrapper />
-
-      {/* Responsive Ergonomic Bottom Sheet / Floating Sidebar */}
       <BottomDrawer />
-
-      {/* High-Contrast Proximity Geo-Alarm Alert Modal */}
       <GeoAlarmModal />
-
-      {/* Professional About Developer & Copyright Modal */}
       <AboutModal />
     </main>
   );

@@ -1,6 +1,5 @@
 /**
- * Web Audio API Procedural Synthesizer
- * Generates custom transit chimes and alarms in-browser with zero external audio assets.
+ * Transit chimes and disembark alarm generated with the Web Audio API.
  */
 
 let audioCtx: AudioContext | null = null;
@@ -21,7 +20,7 @@ function getAudioContext(): AudioContext | null {
 }
 
 /**
- * Plays a classic, pleasant Japanese/Jakarta commuter dual-tone chime (e.g. E5 -> G5 -> C6)
+ * Arrival chime (E5 -> G5 -> C6)
  */
 export function playTransitArrivalChime(): void {
   try {
@@ -55,7 +54,7 @@ export function playTransitArrivalChime(): void {
 }
 
 /**
- * Plays an urgent yet clear disembarkation Geo-Alarm (High pitch pulsing chime)
+ * Pulsing disembark alarm chime
  */
 export function playDisembarkAlarmChime(): void {
   try {
@@ -96,7 +95,7 @@ export function playDisembarkAlarmChime(): void {
 }
 
 /**
- * Pre-warms the AudioContext on initial click/tap to bypass browser autoplay policy
+ * Pre-warms AudioContext on user gesture to comply with browser autoplay policies
  */
 export function initAudioContext(): void {
   getAudioContext();

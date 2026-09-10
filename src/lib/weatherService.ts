@@ -1,16 +1,9 @@
 /**
  * Transit Weather Service
- *
- * Primary  : BMKG (Badan Meteorologi, Klimatologi, dan Geofisika) Indonesia
- *            — hyper-local, Indonesian-language, 3-hourly forecast, no API key.
- * Fallback : Open-Meteo (global, WMO-coded, no API key).
- *
- * Pure module — zero React / DOM / Leaflet imports.
+ * Uses BMKG weather API with Open-Meteo as fallback.
  */
 
 import { findNearestBmkgAdm4 } from './bmkgAreaMap';
-
-// ── Shared output type ───────────────────────────────────────────────────────
 
 export interface TransitWeather {
   temperatureC: number;
@@ -24,10 +17,8 @@ export interface TransitWeather {
   source: 'bmkg' | 'open-meteo';
 }
 
-// ── BMKG types ───────────────────────────────────────────────────────────────
-
 interface BmkgWeatherSlot {
-  datetime: string;       // UTC ISO-8601, e.g. "2026-09-09T04:00:00Z"
+  datetime: string;       // UTC ISO-8601
   t: number;              // temperature °C
   hu: number;             // relative humidity %
   tp: number;             // precipitation mm
@@ -42,8 +33,6 @@ interface BmkgResponse {
   }[];
 }
 
-// ── Open-Meteo types ─────────────────────────────────────────────────────────
-
 interface OpenMeteoCurrentResponse {
   current?: {
     temperature_2m?: number;
@@ -53,12 +42,8 @@ interface OpenMeteoCurrentResponse {
   };
 }
 
-// ── BMKG code helpers ────────────────────────────────────────────────────────
-
 /**
  * Derives transit advisory text and emoji icon from a BMKG weather code.
- * BMKG codes: 0-4 = clear/cloudy, 5/10/45 = haze/fog, 60-63 = rain,
- * 80 = local rain, 95/97 = thunderstorm.
  */
 function interpretBmkgCode(code: number, tp: number): { icon: string; isRaining: boolean; advisoryText: string } {
   if (code <= 2) {
@@ -89,9 +74,6 @@ function interpretBmkgCode(code: number, tp: number): { icon: string; isRaining:
   return { icon: '⛅', isRaining: false, advisoryText: 'Kondisi operasional normal.' };
 }
 
-/**
- * Finds the weather slot closest to current UTC time from BMKG nested array.
- */
 function findCurrentBmkgSlot(cuaca: BmkgWeatherSlot[][]): BmkgWeatherSlot | null {
   const now = Date.now();
   let closest: BmkgWeatherSlot | null = null;
@@ -110,8 +92,6 @@ function findCurrentBmkgSlot(cuaca: BmkgWeatherSlot[][]): BmkgWeatherSlot | null
 
   return closest;
 }
-
-// ── WMO code helper (Open-Meteo fallback) ───────────────────────────────────
 
 /**
  * Maps WMO weather interpretation codes to Indonesian descriptions and transit advisories.
@@ -152,12 +132,6 @@ export function interpretWmoWeatherCode(code: number, rainMm: number = 0): {
   return { conditionText: 'Berawan', isRaining: false, advisoryText: 'Kondisi operasional normal.', icon: '☁️' };
 }
 
-// ── BMKG fetch ────────────────────────────────────────────────────────────────
-
-/**
- * Fetches real-time weather from BMKG for the nearest kelurahan to given coordinates.
- * Returns null on network failure or invalid response.
- */
 async function fetchBmkgWeather(
   coords: [number, number],
   options?: { signal?: AbortSignal }
@@ -199,11 +173,6 @@ async function fetchBmkgWeather(
   }
 }
 
-// ── Open-Meteo fetch (fallback) ───────────────────────────────────────────────
-
-/**
- * Fetches real-time weather from Open-Meteo (global fallback).
- */
 async function fetchOpenMeteoWeather(
   coords: [number, number],
   options?: { signal?: AbortSignal }
@@ -245,15 +214,9 @@ async function fetchOpenMeteoWeather(
   }
 }
 
-// ── Public API ────────────────────────────────────────────────────────────────
-
 /**
- * Fetches real-time weather for a transit station coordinate.
- *
- * Strategy:
- *   1. Try BMKG (Indonesian Met Agency) — hyper-local, Indonesian language.
- *   2. On failure, fall back to Open-Meteo (global, WMO-coded).
- *   3. On total failure, returns null (UI should hide the weather widget).
+ * Fetches current weather for given coordinates.
+ * Tries BMKG first, then falls back to Open-Meteo.
  */
 export async function fetchStationWeather(
   coords: [number, number],
