@@ -489,28 +489,22 @@ export default function TransitMap(props: TransitMapProps) {
         className="w-full h-full z-0"
         style={{ background: resolvedTheme === 'light' ? '#f4f5f7' : '#090a0f' }}
       >
-        {/* CARTO Basemap (Voyager for Light / Dark Matter for Dark) */}
-        {(() => {
-          const cartoKey = process.env.NEXT_PUBLIC_CARTO_KEY || process.env.NEXT_PUBLIC_CARTO_API_KEY;
-          const query = cartoKey ? `?key=${cartoKey}` : '';
-          return resolvedTheme === 'light' ? (
-            <TileLayer
-              key="carto-voyager"
-              url={`https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}.png${query}`}
-              attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>'
-              maxZoom={19}
-              subdomains="abcd"
-            />
-          ) : (
-            <TileLayer
-              key="carto-dark-matter"
-              url={`https://{s}.basemaps.cartocdn.com/rastertiles/dark_all/{z}/{x}/{y}.png${query}`}
-              attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>'
-              maxZoom={19}
-              subdomains="abcd"
-            />
-          );
-        })()}
+        {/* CARTO Basemap via Internal Secure Proxy Route Handler */}
+        {resolvedTheme === 'light' ? (
+          <TileLayer
+            key="carto-voyager"
+            url="/api/carto/rastertiles/voyager/{z}/{x}/{y}.png"
+            attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>'
+            maxZoom={19}
+          />
+        ) : (
+          <TileLayer
+            key="carto-dark-matter"
+            url="/api/carto/rastertiles/dark_all/{z}/{x}/{y}.png"
+            attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>'
+            maxZoom={19}
+          />
+        )}
 
         <MapBoundsController routePlan={routePlan} />
         <MapCenterController />

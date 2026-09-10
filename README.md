@@ -55,7 +55,7 @@ Makanya project ini dibikin: biar ada navigator transit yang beneran ngerti kond
 Project ini dibikin bukan cuma buat pajangan:
 - **No `any` club**: TypeScript-nya strictly typed dari ujung kepala sampe ujung kaki.
 - **Pure domain logic**: Algoritma graf rute, hitungan tarif, dan formula jarak (Haversine) dipisah total di folder `src/lib/`. Gak dicampur aduk sama komponen UI atau Leaflet, jadi enteng dan gampang dites.
-- **108 automated unit tests**: Dites menyeluruh pake Vitest. Dari mulai skenario jarak per pecahan kilometer KRL, tarif relasi KA Bandara bolak-balik, konversi kecepatan live, estimasi cuaca stasiun (BMKG/Open-Meteo), turn-by-turn navigation logic, geofencing drift, hingga rute transit multi-moda.
+- **114 automated unit tests**: Dites menyeluruh pake Vitest. Dari mulai skenario jarak per pecahan kilometer KRL, tarif relasi KA Bandara bolak-balik, konversi kecepatan live, estimasi cuaca stasiun (BMKG/Open-Meteo), turn-by-turn navigation logic, CARTO tile proxy security, geofencing drift, hingga rute transit multi-moda.
 - **Peta gratisan rasa premium**: Gak pake Google Maps API yang rawan bikin developer kena tagihan kartu kredit mendadak. Peta jalan pake kombinasi Leaflet, CartoDB Dark Matter, dan OpenStreetMap tiles dengan custom dark styling.
 
 ---
@@ -92,10 +92,10 @@ Tinggal buka `http://localhost:3000` di browser.
 npm test
 ```
 
-Output bakal nunjukin 108 test ijo semua:
+Output bakal nunjukin 114 test ijo semua:
 ```
-Test Files  7 passed (7)
-Tests       108 passed (108)
+Test Files  8 passed (8)
+Tests       114 passed (114)
 ```
 
 ---
