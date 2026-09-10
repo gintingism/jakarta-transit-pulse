@@ -14,6 +14,7 @@ import {
   calculateHaversineDistance,
 } from '@/src/lib/transitEngine';
 import { reverseGeocodeLocation } from '@/src/lib/poiService';
+import { RouteLeg, convertRoutePlanToLegs } from '@/src/types/navigation';
 
 export type TabType = 'planner' | 'alarm';
 export type RoutePreference = 'FASTEST' | 'CHEAPEST' | 'FEWEST_TRANSFERS';
@@ -57,6 +58,12 @@ interface TransitStore {
   // Simulation Mode
   isSimulatingApproach: boolean;
   simApproachProgress: number;
+
+  // Turn-by-Turn Live Navigation
+  isNavigating: boolean;
+  navigationLegs: RouteLeg[] | null;
+  startNavigation: (plan: RoutePlan) => void;
+  stopNavigation: () => void;
 
   // Actions
   setOriginStop: (id: string | null) => void;
@@ -117,6 +124,26 @@ export const useTransitStore = create<TransitStore>((set, get) => ({
   isDrawerExpanded: true,
   activeSegmentId: null,
   isAboutModalOpen: false,
+
+  // Live Navigation State
+  isNavigating: false,
+  navigationLegs: null,
+  startNavigation: (plan: RoutePlan) => {
+    const legs = convertRoutePlanToLegs(plan);
+    set({
+      isNavigating: true,
+      navigationLegs: legs,
+      isDrawerExpanded: false,
+      isFollowUser: true,
+    });
+  },
+  stopNavigation: () => {
+    set({
+      isNavigating: false,
+      navigationLegs: null,
+      isFollowUser: false,
+    });
+  },
 
   mapCenter: [-6.2088, 106.8456],
   mapZoom: 12,

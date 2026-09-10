@@ -21,6 +21,7 @@ import {
   Check,
   Leaf,
   Focus,
+  Navigation,
 } from 'lucide-react';
 
 interface RouteCardProps {
@@ -55,6 +56,7 @@ export default function RouteCard({
   const originPlace = useTransitStore((s) => s.originPlace);
   const destinationPlace = useTransitStore((s) => s.destinationPlace);
   const routePreference = useTransitStore((s) => s.routePreference);
+  const startNavigation = useTransitStore((s) => s.startNavigation);
 
   const originDisplay = route.originPlaceName || route.origin.name;
   const destDisplay = route.destinationPlaceName || route.destination.name;
@@ -452,29 +454,41 @@ export default function RouteCard({
           )}
         </button>
 
-        {onSetAlarm && (
+        <div className="flex items-center gap-2 flex-wrap justify-end">
           <button
             type="button"
-            onClick={() => onSetAlarm(route.destination.id)}
-            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition shadow-sm cursor-pointer ${
-              isAlarmArmed
-                ? 'bg-emerald-600 hover:bg-emerald-500 text-white'
-                : 'bg-rose-600 hover:bg-rose-500 text-white active:scale-95'
-            }`}
+            onClick={() => startNavigation(route)}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold bg-cyan-600 hover:bg-cyan-500 text-white transition shadow-sm hover:shadow-cyan-500/25 active:scale-95 cursor-pointer"
+            title="Mulai Panduan Navigasi Turn-by-Turn GPS & Suara"
           >
-            {isAlarmArmed ? (
-              <>
-                <CheckCircle2 className="w-3.5 h-3.5" />
-                <span>Alarm Aktif</span>
-              </>
-            ) : (
-              <>
-                <Bell className="w-3.5 h-3.5" />
-                <span>Pasang Alarm Turun</span>
-              </>
-            )}
+            <Navigation className="w-3.5 h-3.5 fill-current" />
+            <span>Mulai Navigasi</span>
           </button>
-        )}
+
+          {onSetAlarm && (
+            <button
+              type="button"
+              onClick={() => onSetAlarm(route.destination.id)}
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition shadow-sm cursor-pointer ${
+                isAlarmArmed
+                  ? 'bg-emerald-600 hover:bg-emerald-500 text-white'
+                  : 'bg-rose-600 hover:bg-rose-500 text-white active:scale-95'
+              }`}
+            >
+              {isAlarmArmed ? (
+                <>
+                  <CheckCircle2 className="w-3.5 h-3.5" />
+                  <span>Alarm Aktif</span>
+                </>
+              ) : (
+                <>
+                  <Bell className="w-3.5 h-3.5" />
+                  <span>Pasang Alarm</span>
+                </>
+              )}
+            </button>
+          )}
+        </div>
       </div>
 
       {showStopsList && (

@@ -7,6 +7,7 @@ import BottomDrawer from '@/components/layout/BottomDrawer';
 import GeoAlarmModal from '@/components/alarm/GeoAlarmModal';
 import AboutModal from '@/components/AboutModal';
 import UrlSync from '@/components/UrlSync';
+import NavigationHUD from '@/components/navigation/NavigationHUD';
 import { useGeoAlert } from '@/hooks/useGeoAlert';
 import { useTransitStore } from '@/stores/useTransitStore';
 import { initAudioContext } from '@/lib/audio';
@@ -16,6 +17,11 @@ export default function HomePage() {
   useGeoAlert();
 
   const calculateCurrentRoute = useTransitStore((s) => s.calculateCurrentRoute);
+  const isNavigating = useTransitStore((s) => s.isNavigating);
+  const navigationLegs = useTransitStore((s) => s.navigationLegs);
+  const stopNavigation = useTransitStore((s) => s.stopNavigation);
+  const setUserCoords = useTransitStore((s) => s.setUserCoords);
+  const setMapCenter = useTransitStore((s) => s.setMapCenter);
 
   useEffect(() => {
     // Initial calculation for default selected origin & destination
@@ -42,8 +48,20 @@ export default function HomePage() {
       {/* URL Deep-Linking State Synchronizer */}
       <UrlSync />
 
-      {/* Top Floating Diagnostic Status Bar */}
-      <FloatingHud />
+      {/* Turn-by-Turn GPS Navigation HUD (Active Mode) */}
+      {isNavigating && navigationLegs ? (
+        <NavigationHUD
+          legs={navigationLegs}
+          onStopNavigation={stopNavigation}
+          onPositionUpdate={(pos) => {
+            setUserCoords([pos.lat, pos.lng]);
+            setMapCenter([pos.lat, pos.lng]);
+          }}
+        />
+      ) : (
+        /* Top Floating Diagnostic Status Bar (Idle Mode) */
+        <FloatingHud />
+      )}
 
       {/* Full-Screen Vector Map (CartoDB Dark Matter) */}
       <MapWrapper />

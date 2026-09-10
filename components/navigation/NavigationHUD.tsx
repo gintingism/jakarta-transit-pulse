@@ -1,0 +1,320 @@
+'use client';
+
+import React, { useState, useEffect, useRef, useMemo } from 'react';
+import {
+  RouteLeg,
+  NavigationState,
+} from '@/src/types/navigation';
+import { useNavigationTracker } from '@/src/lib/navigationTracker';
+import { VoiceNavigator, generateVoiceInstruction } from '@/src/lib/voiceNavigator';
+import {
+  Footprints,
+  Train,
+  Bus,
+  ArrowRightLeft,
+  Volume2,
+  VolumeX,
+  Crosshair,
+  X,
+  ChevronDown,
+  ChevronUp,
+  AlertTriangle,
+  CheckCircle2,
+  BellRing,
+  Navigation as NavigationIcon,
+} from 'lucide-react';
+
+export interface NavigationHUDProps {
+  legs: RouteLeg[];
+  onStopNavigation: () => void;
+  onPositionUpdate?: (pos: { lat: number; lng: number }) => void;
+  onActiveLegChange?: (leg: RouteLeg, index: number) => void;
+}
+
+export default function NavigationHUD({
+  legs,
+  onStopNavigation,
+  onPositionUpdate,
+  onActiveLegChange,
+}: NavigationHUDProps) {
+  const [isHistoryOpen, setIsHistoryOpen] = useState(false);
+  const [isSpeaking, setIsSpeaking] = useState(false);
+  const voiceNavRef = useRef<VoiceNavigator | null>(null);
+
+  // Initialize VoiceNavigator instance once
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      voiceNavRef.current = new VoiceNavigator(undefined, (speaking) => {
+        setIsSpeaking(speaking);
+      });
+      // Unlock audio for autoplay bypass
+      voiceNavRef.current.unlockAudio();
+    }
+  }, []);
+
+  const { state, toggleMute, toggleCenter } = useNavigationTracker(legs, {
+    enabled: true,
+    onLegChange: (index, nextLeg) => {
+      onActiveLegChange?.(nextLeg, index);
+      if (voiceNavRef.current && !voiceNavRef.current.getIsMuted()) {
+        voiceNavRef.current.speakOnce(
+          `leg-${nextLeg.id}`,
+          nextLeg.instruction
+        );
+      }
+    },
+    onStatusChange: (status) => {
+      if (!voiceNavRef.current || voiceNavRef.current.getIsMuted()) return;
+
+      if (status === 'approaching_destination') {
+        const currentLeg = legs[state.currentLegIndex];
+        const text = generateVoiceInstruction({
+          type: 'ANTI_BABLAS_WARNING',
+          stationName: currentLeg?.to.name || 'tujuan',
+        });
+        voiceNavRef.current.speakPriority(text);
+      } else if (status === 'arrived') {
+        const text = generateVoiceInstruction({ type: 'ARRIVED' });
+        voiceNavRef.current.speakPriority(text);
+      } else if (status === 'off_route') {
+        const text = generateVoiceInstruction({ type: 'OFF_ROUTE' });
+        voiceNavRef.current.speakOnce('off-route-warning', text);
+      }
+    },
+  });
+
+  // Sync mute state to VoiceNavigator
+  useEffect(() => {
+    if (voiceNavRef.current) {
+      voiceNavRef.current.setMuted(state.isMuted);
+    }
+  }, [state.isMuted]);
+
+  // Notify parent of location changes for map tracking
+  useEffect(() => {
+    if (state.currentLocation && state.isCentered) {
+      onPositionUpdate?.({
+        lat: state.currentLocation.lat,
+        lng: state.currentLocation.lng,
+      });
+    }
+  }, [state.currentLocation, state.isCentered, onPositionUpdate]);
+
+  // Initial instruction speech
+  useEffect(() => {
+    if (legs.length > 0 && voiceNavRef.current && !voiceNavRef.current.getIsMuted()) {
+      const firstLeg = legs[0];
+      const initialText =
+        firstLeg.type === 'WALK'
+          ? generateVoiceInstruction({
+              type: 'START_WALK',
+              distanceMeters: firstLeg.distanceMeters,
+              targetName: firstLeg.to.name,
+            })
+          : firstLeg.instruction;
+      voiceNavRef.current.speakOnce(`initial-${firstLeg.id}`, initialText);
+    }
+  }, [legs]);
+
+  const currentLeg = state.legs[state.currentLegIndex] || legs[0];
+  const completedLegs = useMemo(
+    () => state.legs.filter((l) => l.status === 'completed'),
+    [state.legs]
+  );
+
+  const formatDistance = (meters: number) => {
+    if (meters < 1000) return `${Math.round(meters)} m`;
+    return `${(meters / 1000).toFixed(1)} km`;
+  };
+
+  const getLegIcon = (leg: RouteLeg) => {
+    if (leg.type === 'WALK') return <Footprints className="w-5 h-5 text-emerald-400" />;
+    if (leg.type === 'TRANSFER') return <ArrowRightLeft className="w-5 h-5 text-amber-400" />;
+    if (leg.mode === 'TJ') return <Bus className="w-5 h-5 text-rose-400" />;
+    return <Train className="w-5 h-5 text-sky-400" />;
+  };
+
+  return (
+    <div className="fixed top-3 left-3 right-3 sm:left-6 sm:right-auto sm:w-[440px] z-40 flex flex-col gap-2 font-sans select-none animate-in fade-in slide-in-from-top-4 duration-300">
+      {/* 1. Status Banners (Anti-Bablas / Off-Route / GPS Lost) */}
+      {state.status === 'approaching_destination' && (
+        <div className="bg-gradient-to-r from-amber-600 via-rose-600 to-rose-700 text-white px-3.5 py-2 rounded-xl shadow-lg flex items-center justify-between text-xs font-bold border border-rose-400/40 animate-pulse">
+          <div className="flex items-center gap-2">
+            <BellRing className="w-4 h-4 animate-bounce" />
+            <span>Peringatan Anti-Bablas: Satu stasiun lagi tiba!</span>
+          </div>
+          <span className="text-[10px] uppercase font-mono px-1.5 py-0.5 rounded bg-black/25">H-1</span>
+        </div>
+      )}
+
+      {state.status === 'off_route' && (
+        <div className="bg-amber-600/95 backdrop-blur-md text-white px-3.5 py-2 rounded-xl shadow-lg flex items-center gap-2 text-xs font-semibold border border-amber-400/40">
+          <AlertTriangle className="w-4 h-4 shrink-0 text-amber-200" />
+          <span>Anda berada di luar jalur (&gt;100m). Silakan ikuti kembali rute.</span>
+        </div>
+      )}
+
+      {state.status === 'gps_lost' && (
+        <div className="bg-rose-900/90 backdrop-blur-md text-white px-3.5 py-2 rounded-xl shadow-lg flex items-center gap-2 text-xs font-semibold border border-rose-700/60">
+          <AlertTriangle className="w-4 h-4 shrink-0 text-rose-300" />
+          <span>Sinyal GPS lemah atau izin lokasi belum diberikan.</span>
+        </div>
+      )}
+
+      {/* 2. Main Hero Turn-by-Turn Navigation Card */}
+      <div className="bg-[#0b101b]/95 backdrop-blur-xl border border-cyan-500/25 rounded-2xl shadow-2xl p-4 text-white overflow-hidden relative">
+        {/* Top bar: Mode indicator, Soundwave, & Controls */}
+        <div className="flex items-center justify-between pb-3 border-b border-zinc-800/80">
+          <div className="flex items-center gap-2">
+            <div className="w-8 h-8 rounded-xl bg-zinc-800/90 border border-zinc-700/80 flex items-center justify-center shrink-0">
+              {getLegIcon(currentLeg)}
+            </div>
+
+            <div>
+              <div className="flex items-center gap-1.5">
+                <span className="text-[11px] font-bold uppercase tracking-wider text-cyan-400 font-mono">
+                  {currentLeg.type === 'WALK'
+                    ? 'Jalan Kaki'
+                    : currentLeg.type === 'TRANSFER'
+                    ? 'Pindah Peron'
+                    : `${currentLeg.mode || 'TRANSIT'} ${currentLeg.lineName || ''}`}
+                </span>
+
+                {/* Soundwave Pulse Indicator */}
+                {isSpeaking && (
+                  <div className="flex items-center gap-0.5 ml-1" title="Pemandu suara sedang berbicara">
+                    <span className="w-1 h-3 bg-cyan-400 rounded-full animate-bounce [animation-delay:-0.3s]" />
+                    <span className="w-1 h-4 bg-cyan-300 rounded-full animate-bounce [animation-delay:-0.15s]" />
+                    <span className="w-1 h-2.5 bg-cyan-400 rounded-full animate-bounce" />
+                  </div>
+                )}
+              </div>
+
+              <div className="text-[10px] text-zinc-400 truncate max-w-[200px]">
+                Tujuan segmen: {currentLeg.to.name}
+              </div>
+            </div>
+          </div>
+
+          {/* Action Control Buttons */}
+          <div className="flex items-center gap-1.5">
+            {/* Mute/Unmute Audio */}
+            <button
+              type="button"
+              onClick={toggleMute}
+              className={`p-2 rounded-xl text-xs transition border cursor-pointer ${
+                state.isMuted
+                  ? 'bg-zinc-800/80 border-zinc-700 text-zinc-400 hover:text-zinc-200'
+                  : 'bg-cyan-500/15 border-cyan-500/40 text-cyan-400 hover:bg-cyan-500/25'
+              }`}
+              title={state.isMuted ? 'Aktifkan Suara Navigasi' : 'Bisukan Suara'}
+              aria-label={state.isMuted ? 'Unmute voice guidance' : 'Mute voice guidance'}
+            >
+              {state.isMuted ? <VolumeX className="w-4 h-4" /> : <Volume2 className="w-4 h-4" />}
+            </button>
+
+            {/* Recenter GPS / Follow Camera */}
+            <button
+              type="button"
+              onClick={toggleCenter}
+              className={`p-2 rounded-xl text-xs transition border cursor-pointer ${
+                state.isCentered
+                  ? 'bg-emerald-500/20 border-emerald-500/40 text-emerald-400 hover:bg-emerald-500/30'
+                  : 'bg-zinc-800/80 border-zinc-700 text-zinc-400 hover:text-zinc-200'
+              }`}
+              title={state.isCentered ? 'Kamera Mengikuti Lokasi Anda' : 'Kunci Kamera ke Lokasi GPS'}
+              aria-label="Center GPS"
+            >
+              <Crosshair className="w-4 h-4" />
+            </button>
+
+            {/* Stop Navigation */}
+            <button
+              type="button"
+              onClick={onStopNavigation}
+              className="p-2 rounded-xl text-xs bg-rose-600/20 border border-rose-500/40 text-rose-400 hover:bg-rose-600/30 transition cursor-pointer"
+              title="Akhiri Navigasi"
+              aria-label="Stop navigation"
+            >
+              <X className="w-4 h-4" />
+            </button>
+          </div>
+        </div>
+
+        {/* Hero Active Instruction */}
+        <div className="pt-3 pb-1 space-y-1">
+          <p className="text-sm sm:text-base font-black text-white leading-snug tracking-tight">
+            {currentLeg.instruction}
+          </p>
+
+          <div className="flex items-baseline gap-3 pt-1">
+            <div className="text-2xl font-black text-cyan-400 font-mono tracking-tight">
+              {formatDistance(state.distanceToNextStopMeters)}
+            </div>
+
+            <div className="text-xs text-zinc-400 font-medium">
+              Sisa ke stasiun/tujuan berikutnya
+            </div>
+          </div>
+        </div>
+
+        {/* Bottom Metrics Bar: Progress & Step counter */}
+        <div className="mt-3 pt-2.5 border-t border-zinc-800/80 flex items-center justify-between text-[11px] text-zinc-400">
+          <div className="flex items-center gap-1.5 font-medium">
+            <NavigationIcon className="w-3.5 h-3.5 text-cyan-400" />
+            <span>
+              Langkah {state.currentLegIndex + 1} dari {state.legs.length}
+            </span>
+          </div>
+
+          <div className="font-mono text-zinc-300">
+            {state.status === 'arrived' ? (
+              <span className="text-emerald-400 font-bold">Tiba di Tujuan</span>
+            ) : (
+              <span>Est. {currentLeg.durationMinutes} mnt</span>
+            )}
+          </div>
+        </div>
+      </div>
+
+      {/* 3. Completed Steps Accordion */}
+      {completedLegs.length > 0 && (
+        <div className="bg-[#0b101b]/90 backdrop-blur-md border border-zinc-800/80 rounded-xl overflow-hidden shadow-lg text-xs text-zinc-300">
+          <button
+            type="button"
+            onClick={() => setIsHistoryOpen((prev) => !prev)}
+            className="w-full px-3 py-2 flex items-center justify-between hover:bg-zinc-800/40 transition cursor-pointer"
+          >
+            <div className="flex items-center gap-1.5 font-semibold text-emerald-400">
+              <CheckCircle2 className="w-3.5 h-3.5" />
+              <span>{completedLegs.length} langkah terlewati</span>
+            </div>
+
+            <div className="flex items-center gap-1 text-[10px] text-zinc-500">
+              <span>{isHistoryOpen ? 'Tutup riwayat' : 'Buka riwayat'}</span>
+              {isHistoryOpen ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
+            </div>
+          </button>
+
+          {isHistoryOpen && (
+            <div className="p-3 border-t border-zinc-800/60 divide-y divide-zinc-800/40 space-y-2 max-h-48 overflow-y-auto">
+              {completedLegs.map((leg, idx) => (
+                <div key={`comp_${leg.id}_${idx}`} className="pt-2 first:pt-0 flex items-start gap-2 text-[11px]">
+                  <span className="text-emerald-500 font-mono text-[10px] mt-0.5">✓</span>
+                  <div className="min-w-0">
+                    <p className="font-medium text-zinc-300 line-through opacity-75 truncate">
+                      {leg.instruction}
+                    </p>
+                    <span className="text-[9.5px] text-zinc-500">
+                      Menuju {leg.to.name} • {formatDistance(leg.distanceMeters)}
+                    </span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
