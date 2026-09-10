@@ -26,7 +26,7 @@ const JAKARTA_BMKG_AREAS: readonly BmkgArea[] = [
   { adm4: '31.71.01.1001', name: 'Gambir',           lat: -6.1764, lon: 106.8267 },
   { adm4: '31.71.03.1001', name: 'Senen',            lat: -6.1756, lon: 106.8450 },
   { adm4: '31.71.04.1001', name: 'Kemayoran',        lat: -6.1524, lon: 106.8576 },
-  { adm4: '31.71.05.1004', name: 'Bendungan Hilir',  lat: -6.2050, lon: 106.8172 },
+  { adm4: '31.71.07.1002', name: 'Bendungan Hilir',  lat: -6.2050, lon: 106.8172 },
   { adm4: '31.71.06.1003', name: 'Cikini-Menteng',   lat: -6.1914, lon: 106.8394 },
 
   // ── Jakarta Selatan (31.74) ──────────────────────────────────────────────

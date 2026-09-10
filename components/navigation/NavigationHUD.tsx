@@ -105,6 +105,7 @@ export default function NavigationHUD({
 
   // Notify parent of location changes for map tracking (with 0.00001 deg threshold)
   useEffect(() => {
+    if (!onPositionUpdateRef.current) return;
     if (state.currentLocation && state.isCentered) {
       const cur = state.currentLocation;
       const last = lastNotifiedPosRef.current;
@@ -114,7 +115,7 @@ export default function NavigationHUD({
         Math.abs(last.lng - cur.lng) >= 0.00001
       ) {
         lastNotifiedPosRef.current = { lat: cur.lat, lng: cur.lng };
-        onPositionUpdateRef.current?.({
+        onPositionUpdateRef.current({
           lat: cur.lat,
           lng: cur.lng,
         });

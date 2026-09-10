@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useCallback } from 'react';
+import React, { useEffect } from 'react';
 import MapWrapper from '@/components/map/MapWrapper';
 import FloatingHud from '@/components/alarm/FloatingHud';
 import BottomDrawer from '@/components/layout/BottomDrawer';
@@ -20,8 +20,6 @@ export default function HomePage() {
   const isNavigating = useTransitStore((s) => s.isNavigating);
   const navigationLegs = useTransitStore((s) => s.navigationLegs);
   const stopNavigation = useTransitStore((s) => s.stopNavigation);
-  const setUserCoords = useTransitStore((s) => s.setUserCoords);
-  const setMapCenter = useTransitStore((s) => s.setMapCenter);
 
   useEffect(() => {
     // Initial calculation for default selected origin & destination
@@ -43,22 +41,6 @@ export default function HomePage() {
     };
   }, [calculateCurrentRoute]);
 
-  const handlePositionUpdate = useCallback(
-    (pos: { lat: number; lng: number }) => {
-      if (
-        pos &&
-        typeof pos.lat === 'number' &&
-        typeof pos.lng === 'number' &&
-        !isNaN(pos.lat) &&
-        !isNaN(pos.lng)
-      ) {
-        // Pure GPS tracking update; map panning during follow mode is handled by MapFollowController
-        setUserCoords([pos.lat, pos.lng]);
-      }
-    },
-    [setUserCoords]
-  );
-
   return (
     <main className="relative w-screen h-screen overflow-hidden bg-slate-50 dark:bg-zinc-950">
       {/* URL Deep-Linking State Synchronizer */}
@@ -69,7 +51,6 @@ export default function HomePage() {
         <NavigationHUD
           legs={navigationLegs}
           onStopNavigation={stopNavigation}
-          onPositionUpdate={handlePositionUpdate}
         />
       ) : (
         /* Top Floating Diagnostic Status Bar (Idle Mode) */
