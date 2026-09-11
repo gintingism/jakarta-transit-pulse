@@ -10,6 +10,9 @@ import {
   isOffRoute,
   checkApproachingDestination,
   processGpsTick,
+  projectPointToPolyline,
+  evaluateAdaptiveStep,
+  evaluateOffRoute,
 } from '@/src/lib/navigationTracker';
 import {
   VoiceNavigator,
@@ -51,11 +54,15 @@ describe('Navigation Domain & Geofence Logic', () => {
     expect(zeroDist).toBeCloseTo(0, 1);
   });
 
-  it('evaluates geofence thresholds: walk <= 25m, transit <= 80m', () => {
-    // Walk threshold <= 25m
-    expect(evaluateGeofence(20, 'WALK')).toBe(true);
-    expect(evaluateGeofence(25, 'WALK')).toBe(true);
-    expect(evaluateGeofence(26, 'WALK')).toBe(false);
+  it('evaluates geofence thresholds: walk <= 40m/75m, transit/transfer <= 80m', () => {
+    // Walk threshold (street destination <= 40m, station stop <= 75m)
+    expect(evaluateGeofence(35, 'WALK', false)).toBe(true);
+    expect(evaluateGeofence(40, 'WALK', false)).toBe(true);
+    expect(evaluateGeofence(45, 'WALK', false)).toBe(false);
+
+    expect(evaluateGeofence(70, 'WALK', true)).toBe(true);
+    expect(evaluateGeofence(75, 'WALK', true)).toBe(true);
+    expect(evaluateGeofence(80, 'WALK', true)).toBe(false);
 
     // Transit threshold <= 80m
     expect(evaluateGeofence(75, 'TRANSIT')).toBe(true);
@@ -64,7 +71,8 @@ describe('Navigation Domain & Geofence Logic', () => {
 
     // Transfer threshold <= 80m
     expect(evaluateGeofence(50, 'TRANSFER')).toBe(true);
-    expect(evaluateGeofence(81, 'TRANSFER')).toBe(false);
+    expect(evaluateGeofence(80, 'TRANSFER')).toBe(true);
+    expect(evaluateGeofence(85, 'TRANSFER')).toBe(false);
   });
 
   it('filters GPS drift: requires at least 2 consecutive stable ticks before completing leg', () => {
@@ -151,6 +159,228 @@ describe('Navigation Domain & Geofence Logic', () => {
     // User is 300 meters off path
     const offRoute = isOffRoute({ lat: -6.175, lng: 106.8235 }, polyline, 100);
     expect(offRoute).toBe(true);
+  });
+
+  describe('Snap-to-Route & Polyline Projection', () => {
+    const polyline: [number, number][] = [
+      [-6.170, 106.820],
+      [-6.175, 106.820],
+      [-6.180, 106.820],
+    ];
+
+    it('projects point perpendicularly onto the nearest polyline segment', () => {
+      // Point is ~50 meters east of the middle segment
+      const projection = projectPointToPolyline({ lat: -6.175, lng: 106.82045 }, polyline);
+      expect(projection).not.toBeNull();
+      expect(projection!.distanceMeters).toBeGreaterThan(40);
+      expect(projection!.distanceMeters).toBeLessThan(60);
+      expect(projection!.projectedPoint[0]).toBeCloseTo(-6.175, 3);
+      expect(projection!.projectedPoint[1]).toBeCloseTo(106.820, 3);
+    });
+
+    it('handles point beyond polyline endpoints with edge clamping', () => {
+      // Point is north of the first point
+      const projection = projectPointToPolyline({ lat: -6.165, lng: 106.820 }, polyline);
+      expect(projection).not.toBeNull();
+      expect(projection!.projectedPoint[0]).toBeCloseTo(-6.170, 3);
+      expect(projection!.segmentIndex).toBe(0);
+      expect(projection!.fraction).toBe(0);
+    });
+  });
+
+  describe('Dynamic Step Auto-Advance (Lookahead)', () => {
+    const leg0Walk: RouteLeg = {
+      id: 'leg-walk-origin',
+      type: 'WALK',
+      from: { id: 'home', name: 'Rumah', lat: -6.210, lng: 106.840 },
+      to: { id: 'krl_sudirman', name: 'Stasiun Sudirman', lat: -6.2026, lng: 106.8243 },
+      polylineCoordinates: [
+        [-6.210, 106.840],
+        [-6.205, 106.830],
+        [-6.2026, 106.8243],
+      ],
+      distanceMeters: 800,
+      durationMinutes: 10,
+      status: 'active',
+      instruction: 'Jalan kaki ke Stasiun Sudirman',
+    };
+
+    const leg1Transit: RouteLeg = {
+      id: 'leg-krl-cikarang',
+      type: 'TRANSIT',
+      mode: 'KRL',
+      from: { id: 'krl_sudirman', name: 'Stasiun Sudirman', lat: -6.2026, lng: 106.8243 },
+      to: { id: 'krl_manggarai', name: 'Stasiun Manggarai', lat: -6.2095, lng: 106.8494 },
+      polylineCoordinates: [
+        [-6.2026, 106.8243],
+        [-6.2050, 106.8350],
+        [-6.2095, 106.8494],
+      ],
+      distanceMeters: 3200,
+      durationMinutes: 8,
+      status: 'upcoming',
+      instruction: 'Naik KRL ke Manggarai',
+    };
+
+    const leg2Walk: RouteLeg = {
+      id: 'leg-walk-destination',
+      type: 'WALK',
+      from: { id: 'krl_manggarai', name: 'Stasiun Manggarai', lat: -6.2095, lng: 106.8494 },
+      to: { id: 'office', name: 'Kantor', lat: -6.2120, lng: 106.8520 },
+      polylineCoordinates: [
+        [-6.2095, 106.8494],
+        [-6.2120, 106.8520],
+      ],
+      distanceMeters: 300,
+      durationMinutes: 4,
+      status: 'upcoming',
+      instruction: 'Jalan kaki ke Kantor',
+    };
+
+    const testLegs = [leg0Walk, leg1Transit, leg2Walk];
+
+    it('advances normally when user completes leg 0 target with 2 stable ticks', () => {
+      const sudirmanPos = { lat: -6.2026, lng: 106.8243 };
+
+      const tick1 = evaluateAdaptiveStep({
+        legs: testLegs,
+        currentLegIndex: 0,
+        userPos: sudirmanPos,
+        consecutiveInsideCount: 0,
+      });
+      expect(tick1.nextLegIndex).toBe(0);
+      expect(tick1.isCompleted).toBe(false);
+      expect(tick1.newConsecutiveCount).toBe(1);
+
+      const tick2 = evaluateAdaptiveStep({
+        legs: testLegs,
+        currentLegIndex: 0,
+        userPos: sudirmanPos,
+        consecutiveInsideCount: 1,
+      });
+      expect(tick2.nextLegIndex).toBe(1);
+      expect(tick2.isCompleted).toBe(true);
+      expect(tick2.newConsecutiveCount).toBe(0);
+    });
+
+    it('auto-advances with lookahead when user bypassed walk and is already on transit line', () => {
+      // User is halfway on transit line (between Sudirman and Manggarai), 1.5 km away from Sudirman
+      const midwayTransitPos = { lat: -6.2050, lng: 106.8350 };
+
+      const result = evaluateAdaptiveStep({
+        legs: testLegs,
+        currentLegIndex: 0, // was still at walk step
+        userPos: midwayTransitPos,
+        consecutiveInsideCount: 0,
+      });
+
+      // Should automatically look ahead and advance to leg 1 (Transit)
+      expect(result.nextLegIndex).toBe(1);
+      expect(result.isAdvancedByLookahead).toBe(true);
+    });
+
+    it('auto-advances to final walk if user is already at destination of transit leg', () => {
+      // User is already at Manggarai
+      const manggaraiPos = { lat: -6.2095, lng: 106.8494 };
+
+      const result = evaluateAdaptiveStep({
+        legs: testLegs,
+        currentLegIndex: 0,
+        userPos: manggaraiPos,
+        consecutiveInsideCount: 0,
+      });
+
+      // Should advance past leg 0 and leg 1 directly to leg 2 (Walk to Office)
+      expect(result.nextLegIndex).toBe(2);
+      expect(result.isAdvancedByLookahead).toBe(true);
+    });
+  });
+
+  describe('Snap-to-Route & Multi-Tick Off-Route Filter', () => {
+    const filterLegs: RouteLeg[] = [
+      {
+        id: 'leg-1',
+        type: 'TRANSIT',
+        from: { id: 's1', name: 'S1', lat: -6.170, lng: 106.820 },
+        to: { id: 's2', name: 'S2', lat: -6.180, lng: 106.820 },
+        polylineCoordinates: [
+          [-6.170, 106.820],
+          [-6.180, 106.820],
+        ],
+        distanceMeters: 1000,
+        durationMinutes: 3,
+        status: 'active',
+        instruction: 'Naik kereta',
+      },
+      {
+        id: 'leg-2',
+        type: 'TRANSIT',
+        from: { id: 's2', name: 'S2', lat: -6.180, lng: 106.820 },
+        to: { id: 's3', name: 'S3', lat: -6.190, lng: 106.820 },
+        polylineCoordinates: [
+          [-6.180, 106.820],
+          [-6.190, 106.820],
+        ],
+        distanceMeters: 1000,
+        durationMinutes: 3,
+        status: 'upcoming',
+        instruction: 'Lanjut kereta',
+      },
+    ];
+
+    it('does not trigger off-route on single GPS jitter spike (requires >= 3 ticks)', () => {
+      // 1st tick far off (~220m east)
+      const tick1 = evaluateOffRoute({
+        legs: filterLegs,
+        activeLegIndex: 0,
+        userPos: { lat: -6.175, lng: 106.822 },
+        consecutiveOffRouteCount: 0,
+      });
+      expect(tick1.isOffRoute).toBe(false);
+      expect(tick1.newConsecutiveOffRouteCount).toBe(1);
+
+      // 2nd tick far off
+      const tick2 = evaluateOffRoute({
+        legs: filterLegs,
+        activeLegIndex: 0,
+        userPos: { lat: -6.175, lng: 106.822 },
+        consecutiveOffRouteCount: tick1.newConsecutiveOffRouteCount,
+      });
+      expect(tick2.isOffRoute).toBe(false);
+      expect(tick2.newConsecutiveOffRouteCount).toBe(2);
+
+      // 3rd consecutive tick far off -> triggers off-route alert
+      const tick3 = evaluateOffRoute({
+        legs: filterLegs,
+        activeLegIndex: 0,
+        userPos: { lat: -6.175, lng: 106.822 },
+        consecutiveOffRouteCount: tick2.newConsecutiveOffRouteCount,
+      });
+      expect(tick3.isOffRoute).toBe(true);
+      expect(tick3.newConsecutiveOffRouteCount).toBe(3);
+
+      // Recovers on next tick -> immediately clears off-route
+      const recoveryTick = evaluateOffRoute({
+        legs: filterLegs,
+        activeLegIndex: 0,
+        userPos: { lat: -6.175, lng: 106.8201 }, // ~11m
+        consecutiveOffRouteCount: 3,
+      });
+      expect(recoveryTick.isOffRoute).toBe(false);
+      expect(recoveryTick.newConsecutiveOffRouteCount).toBe(0);
+    });
+
+    it('does not trigger off-route if user is near a future remaining leg', () => {
+      // User is on leg 0, but position is near leg 2's polyline
+      const result = evaluateOffRoute({
+        legs: filterLegs,
+        activeLegIndex: 0,
+        userPos: { lat: -6.185, lng: 106.8201 }, // On leg 2
+        consecutiveOffRouteCount: 2,
+      });
+      expect(result.isOffRoute).toBe(false);
+      expect(result.newConsecutiveOffRouteCount).toBe(0);
+    });
   });
 });
 
@@ -307,6 +537,11 @@ describe('Voice Guidance Engine', () => {
     navigator.speakPriority('Peringatan, satu stasiun lagi tiba di stasiun tujuanmu.');
     expect(mockCancel).toHaveBeenCalledTimes(1);
     expect(mockSpeak).toHaveBeenCalledTimes(2);
+
+    // speakLatest cancels prior speech and speaks latest instruction
+    navigator.speakLatest('key-next', 'Lanjut naik bus ke halte Monas.');
+    expect(mockCancel).toHaveBeenCalledTimes(2);
+    expect(mockSpeak).toHaveBeenCalledTimes(3);
   });
 
   it('is SSR-safe and does not throw when window is undefined', () => {

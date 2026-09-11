@@ -26,13 +26,98 @@ export function calculateDistanceToStop(
  */
 export function evaluateGeofence(
   distanceMeters: number,
-  type: NavigationLegType
+  type: NavigationLegType,
+  isStation = false
 ): boolean {
   if (type === 'WALK') {
-    return distanceMeters <= 25;
+    return distanceMeters <= (isStation ? 75 : 40);
   }
   // TRANSIT & TRANSFER
   return distanceMeters <= 80;
+}
+
+export function isStationTarget(stop?: StationStop | null): boolean {
+  if (!stop || !stop.id) return false;
+  const id = stop.id.toLowerCase();
+  return (
+    id.startsWith('krl_') ||
+    id.startsWith('tj_') ||
+    id.startsWith('mrt_') ||
+    id.startsWith('lrt_') ||
+    id.startsWith('bandara_') ||
+    id.startsWith('st_')
+  );
+}
+
+export interface PolylineProjection {
+  distanceMeters: number;
+  projectedPoint: [number, number];
+  segmentIndex: number;
+  fraction: number;
+}
+
+export function projectPointToPolyline(
+  point: { lat: number; lng: number },
+  polyline: [number, number][]
+): PolylineProjection | null {
+  if (!polyline || polyline.length === 0) return null;
+
+  if (polyline.length === 1) {
+    const single = polyline[0];
+    return {
+      distanceMeters: calculateHaversineDistance([point.lat, point.lng], single),
+      projectedPoint: single,
+      segmentIndex: 0,
+      fraction: 0,
+    };
+  }
+
+  let minDistance = Infinity;
+  let bestSegmentIndex = 0;
+  let bestFraction = 0;
+  let bestProj: [number, number] = polyline[0];
+
+  for (let i = 0; i < polyline.length - 1; i++) {
+    const a = polyline[i];
+    const b = polyline[i + 1];
+    const [lat1, lon1] = a;
+    const [lat2, lon2] = b;
+
+    const midLat = (lat1 + lat2) / 2;
+    const kx = Math.cos((midLat * Math.PI) / 180) * 111320;
+    const ky = 110540;
+
+    const dx = (lon2 - lon1) * kx;
+    const dy = (lat2 - lat1) * ky;
+    const px = (point.lng - lon1) * kx;
+    const py = (point.lat - lat1) * ky;
+
+    const lenSq = dx * dx + dy * dy;
+    let t = 0;
+    let projLat = lat1;
+    let projLng = lon1;
+
+    if (lenSq > 0) {
+      t = Math.max(0, Math.min(1, (px * dx + py * dy) / lenSq));
+      projLat = lat1 + t * (lat2 - lat1);
+      projLng = lon1 + t * (lon2 - lon1);
+    }
+
+    const dist = calculateHaversineDistance([point.lat, point.lng], [projLat, projLng]);
+    if (dist < minDistance) {
+      minDistance = dist;
+      bestSegmentIndex = i;
+      bestFraction = t;
+      bestProj = [projLat, projLng];
+    }
+  }
+
+  return {
+    distanceMeters: minDistance,
+    projectedPoint: bestProj,
+    segmentIndex: bestSegmentIndex,
+    fraction: bestFraction,
+  };
 }
 
 /**
@@ -69,43 +154,189 @@ export function isOffRoute(
   polyline: [number, number][],
   thresholdMeters = 100
 ): boolean {
-  if (!polyline || polyline.length < 2) return false;
+  const proj = projectPointToPolyline(userPos, polyline);
+  if (!proj) return false;
+  return proj.distanceMeters > thresholdMeters;
+}
 
-  let minDistance = Infinity;
+export interface AdaptiveStepResult {
+  nextLegIndex: number;
+  isCompleted: boolean;
+  distanceToActiveTarget: number;
+  newConsecutiveCount: number;
+  isAdvancedByLookahead: boolean;
+}
 
-  for (let i = 0; i < polyline.length - 1; i++) {
-    const a = polyline[i];
-    const b = polyline[i + 1];
+export function evaluateAdaptiveStep(params: {
+  legs: RouteLeg[];
+  currentLegIndex: number;
+  userPos: { lat: number; lng: number };
+  consecutiveInsideCount: number;
+}): AdaptiveStepResult {
+  const { legs, currentLegIndex, userPos, consecutiveInsideCount } = params;
 
-    // Perpendicular distance from userPos to segment [a, b]
-    const [lat1, lon1] = a;
-    const [lat2, lon2] = b;
-    const midLat = (lat1 + lat2) / 2;
-    const kx = Math.cos((midLat * Math.PI) / 180) * 111320;
-    const ky = 110540;
+  if (currentLegIndex >= legs.length) {
+    return {
+      nextLegIndex: Math.max(0, legs.length - 1),
+      isCompleted: true,
+      distanceToActiveTarget: 0,
+      newConsecutiveCount: 0,
+      isAdvancedByLookahead: false,
+    };
+  }
 
-    const dx = (lon2 - lon1) * kx;
-    const dy = (lat2 - lat1) * ky;
-    const px = (userPos.lng - lon1) * kx;
-    const py = (userPos.lat - lat1) * ky;
+  const currentLeg = legs[currentLegIndex];
+  const currentIsStation = isStationTarget(currentLeg.to);
+  const distToCurrentTarget = calculateDistanceToStop(userPos, currentLeg.to);
+  const insideCurrentTarget = evaluateGeofence(distToCurrentTarget, currentLeg.type, currentIsStation);
 
-    const lenSq = dx * dx + dy * dy;
-    let projLat = lat1;
-    let projLng = lon1;
+  // 1. Lookahead check for future steps (k > currentLegIndex)
+  for (let k = legs.length - 1; k > currentLegIndex; k--) {
+    const futureLeg = legs[k];
+    const futureIsStation = isStationTarget(futureLeg.to);
+    const distToFutureTarget = calculateDistanceToStop(userPos, futureLeg.to);
+    const insideFutureTarget = evaluateGeofence(distToFutureTarget, futureLeg.type, futureIsStation);
 
-    if (lenSq > 0) {
-      const t = Math.max(0, Math.min(1, (px * dx + py * dy) / lenSq));
-      projLat = lat1 + t * (lat2 - lat1);
-      projLng = lon1 + t * (lon2 - lon1);
+    // User reached destination of future leg k:
+    if (insideFutureTarget) {
+      const jumpIndex = Math.min(k + 1, legs.length - 1);
+      const activeLeg = legs[jumpIndex];
+      const remainingDist = calculateDistanceToStop(userPos, activeLeg.to);
+      return {
+        nextLegIndex: jumpIndex,
+        isCompleted: jumpIndex >= legs.length - 1 && insideFutureTarget,
+        distanceToActiveTarget: remainingDist,
+        newConsecutiveCount: 0,
+        isAdvancedByLookahead: true,
+      };
     }
 
-    const dist = calculateHaversineDistance([userPos.lat, userPos.lng], [projLat, projLng]);
-    if (dist < minDistance) {
-      minDistance = dist;
+    // User is on the polyline of future leg k:
+    if (futureLeg.polylineCoordinates && futureLeg.polylineCoordinates.length >= 2) {
+      const projFuture = projectPointToPolyline(userPos, futureLeg.polylineCoordinates);
+      if (projFuture && projFuture.distanceMeters <= 80) {
+        const projCurrent = projectPointToPolyline(userPos, currentLeg.polylineCoordinates);
+        const distToCurrentPolyline = projCurrent ? projCurrent.distanceMeters : Infinity;
+
+        // Commuter is clearly closer to future leg than current leg or far from current target
+        if (projFuture.distanceMeters < distToCurrentPolyline || distToCurrentTarget > 200) {
+          const remainingDist = calculateDistanceToStop(userPos, futureLeg.to);
+          return {
+            nextLegIndex: k,
+            isCompleted: false,
+            distanceToActiveTarget: remainingDist,
+            newConsecutiveCount: 0,
+            isAdvancedByLookahead: true,
+          };
+        }
+      }
     }
   }
 
-  return minDistance > thresholdMeters;
+  // 2. Standard step progression with 2-tick drift filter
+  if (insideCurrentTarget) {
+    const newCount = consecutiveInsideCount + 1;
+    if (newCount >= 2) {
+      const nextIndex = currentLegIndex + 1;
+      const isFinal = nextIndex >= legs.length;
+      const targetIndex = isFinal ? legs.length - 1 : nextIndex;
+      const nextTargetLeg = legs[targetIndex];
+      const remainingDist = isFinal ? 0 : calculateDistanceToStop(userPos, nextTargetLeg.to);
+
+      return {
+        nextLegIndex: targetIndex,
+        isCompleted: true,
+        distanceToActiveTarget: remainingDist,
+        newConsecutiveCount: 0,
+        isAdvancedByLookahead: false,
+      };
+    }
+
+    return {
+      nextLegIndex: currentLegIndex,
+      isCompleted: false,
+      distanceToActiveTarget: distToCurrentTarget,
+      newConsecutiveCount: newCount,
+      isAdvancedByLookahead: false,
+    };
+  }
+
+  return {
+    nextLegIndex: currentLegIndex,
+    isCompleted: false,
+    distanceToActiveTarget: distToCurrentTarget,
+    newConsecutiveCount: 0,
+    isAdvancedByLookahead: false,
+  };
+}
+
+export function evaluateOffRoute(params: {
+  legs: RouteLeg[];
+  activeLegIndex: number;
+  userPos: { lat: number; lng: number };
+  consecutiveOffRouteCount: number;
+  toleranceMeters?: number;
+  requiredTicks?: number;
+}): {
+  isOffRoute: boolean;
+  newConsecutiveOffRouteCount: number;
+  minDistanceToRoute: number;
+} {
+  const {
+    legs,
+    activeLegIndex,
+    userPos,
+    consecutiveOffRouteCount,
+    toleranceMeters = 100,
+    requiredTicks = 3,
+  } = params;
+
+  if (!legs || legs.length === 0 || activeLegIndex >= legs.length) {
+    return {
+      isOffRoute: false,
+      newConsecutiveOffRouteCount: 0,
+      minDistanceToRoute: 0,
+    };
+  }
+
+  let minDistanceToRoute = Infinity;
+
+  // Check against all remaining legs
+  for (let i = activeLegIndex; i < legs.length; i++) {
+    const leg = legs[i];
+
+    if (leg.polylineCoordinates && leg.polylineCoordinates.length > 0) {
+      const proj = projectPointToPolyline(userPos, leg.polylineCoordinates);
+      if (proj && proj.distanceMeters < minDistanceToRoute) {
+        minDistanceToRoute = proj.distanceMeters;
+      }
+    }
+
+    const distFrom = calculateDistanceToStop(userPos, leg.from);
+    if (distFrom < minDistanceToRoute) {
+      minDistanceToRoute = distFrom;
+    }
+
+    const distTo = calculateDistanceToStop(userPos, leg.to);
+    if (distTo < minDistanceToRoute) {
+      minDistanceToRoute = distTo;
+    }
+  }
+
+  if (minDistanceToRoute > toleranceMeters) {
+    const newCount = consecutiveOffRouteCount + 1;
+    return {
+      isOffRoute: newCount >= requiredTicks,
+      newConsecutiveOffRouteCount: newCount,
+      minDistanceToRoute,
+    };
+  }
+
+  return {
+    isOffRoute: false,
+    newConsecutiveOffRouteCount: 0,
+    minDistanceToRoute,
+  };
 }
 
 export interface ProcessGpsTickParams {
@@ -120,14 +351,10 @@ export interface ProcessGpsTickResult {
   distanceToTarget: number;
 }
 
-/**
- * GPS Drift Filter:
- * Ensures transition triggers ONLY if position is within geofence for >= 2 consecutive ticks
- */
 export function processGpsTick(params: ProcessGpsTickParams): ProcessGpsTickResult {
   const { currentLeg, userPos, consecutiveInsideCount } = params;
   const distanceToTarget = calculateDistanceToStop(userPos, currentLeg.to);
-  const inside = evaluateGeofence(distanceToTarget, currentLeg.type);
+  const inside = evaluateGeofence(distanceToTarget, currentLeg.type, isStationTarget(currentLeg.to));
 
   if (inside) {
     const newCount = consecutiveInsideCount + 1;
@@ -173,6 +400,7 @@ export function useNavigationTracker(
   }));
 
   const consecutiveCountRef = useRef<number>(0);
+  const consecutiveOffRouteRef = useRef<number>(0);
   const wakeLockRef = useRef<{ release: () => Promise<void> } | null>(null);
   const watchIdRef = useRef<number | null>(null);
   const lastProcessedPosRef = useRef<{ lat: number; lng: number } | null>(null);
@@ -286,24 +514,25 @@ export function useNavigationTracker(
           };
         }
 
-        // 1. Process GPS geofence tick with 2-tick drift filter
-        const tick = processGpsTick({
-          currentLeg,
+        // 1. Evaluate adaptive step progression (including lookahead)
+        const stepResult = evaluateAdaptiveStep({
+          legs: prev.legs,
+          currentLegIndex: prev.currentLegIndex,
           userPos,
           consecutiveInsideCount: consecutiveCountRef.current,
         });
 
-        consecutiveCountRef.current = tick.newConsecutiveCount;
+        consecutiveCountRef.current = stepResult.newConsecutiveCount;
 
-        // 2. If current leg completed -> advance to next leg
-        if (tick.isCompleted) {
-          const nextIndex = prev.currentLegIndex + 1;
-          const isFinal = nextIndex >= prev.legs.length;
+        // 2. Advance to next leg if completed or advanced via lookahead
+        if (stepResult.nextLegIndex > prev.currentLegIndex || stepResult.isCompleted) {
+          const nextIndex = stepResult.nextLegIndex;
+          const isFinal = nextIndex >= prev.legs.length - 1 && stepResult.isCompleted;
 
-          const updatedLegs = prev.legs.map((leg, idx) => {
-            if (idx <= prev.currentLegIndex) return { ...leg, status: 'completed' as const };
-            if (idx === nextIndex) return { ...leg, status: 'active' as const };
-            return leg;
+          const updatedLegs: RouteLeg[] = prev.legs.map((leg, idx) => {
+            if (idx < nextIndex) return { ...leg, status: 'completed' as const };
+            if (idx === nextIndex) return { ...leg, status: isFinal ? ('completed' as const) : ('active' as const) };
+            return { ...leg, status: 'upcoming' as const };
           });
 
           if (isFinal) {
@@ -327,7 +556,7 @@ export function useNavigationTracker(
             currentLocation: userPos,
             currentLegIndex: nextIndex,
             legs: updatedLegs,
-            distanceToNextStopMeters: nextLeg.distanceMeters,
+            distanceToNextStopMeters: Math.round(stepResult.distanceToActiveTarget),
             lastInstruction: nextLeg.instruction,
           };
         }
@@ -340,12 +569,22 @@ export function useNavigationTracker(
           newStatus = 'approaching_destination';
           onStatusChangeRef.current?.('approaching_destination');
         } else {
-          // 4. Check off-route
-          const off = isOffRoute(userPos, currentLeg.polylineCoordinates, 100);
-          if (off && prev.status !== 'approaching_destination') {
+          // 4. Snap-to-route off-route evaluation with 3-tick persistence filter
+          const offRouteResult = evaluateOffRoute({
+            legs: prev.legs,
+            activeLegIndex: prev.currentLegIndex,
+            userPos,
+            consecutiveOffRouteCount: consecutiveOffRouteRef.current,
+            toleranceMeters: 100,
+            requiredTicks: 3,
+          });
+
+          consecutiveOffRouteRef.current = offRouteResult.newConsecutiveOffRouteCount;
+
+          if (offRouteResult.isOffRoute && prev.status !== 'approaching_destination') {
             newStatus = 'off_route';
             onStatusChangeRef.current?.('off_route');
-          } else if (newStatus === 'off_route' && !off) {
+          } else if (newStatus === 'off_route' && !offRouteResult.isOffRoute) {
             newStatus = 'navigating';
             onStatusChangeRef.current?.('navigating');
           }
@@ -354,7 +593,7 @@ export function useNavigationTracker(
         return {
           ...prev,
           currentLocation: userPos,
-          distanceToNextStopMeters: Math.round(tick.distanceToTarget),
+          distanceToNextStopMeters: Math.round(stepResult.distanceToActiveTarget),
           status: newStatus,
           offRoute: newStatus === 'off_route',
         };

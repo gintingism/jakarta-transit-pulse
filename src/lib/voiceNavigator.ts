@@ -168,6 +168,25 @@ export class VoiceNavigator {
   }
 
   /**
+   * Speaks latest instruction, cancelling prior utterances to prevent queued pile-ups
+   */
+  public speakLatest(key: string, text: string): void {
+    if (this.spokenKeys.has(key)) return;
+    this.spokenKeys.add(key);
+    if (this.synth) {
+      this.synth.cancel();
+    }
+    this.speak(text, false);
+  }
+
+  /**
+   * Marks key as spoken so skipped steps are never spoken
+   */
+  public markAsSpoken(key: string): void {
+    this.spokenKeys.add(key);
+  }
+
+  /**
    * Interrupts current speech with priority alert (e.g. Anti-Bablas)
    */
   public speakPriority(text: string): void {

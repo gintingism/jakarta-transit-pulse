@@ -49,6 +49,9 @@ export default function NavigationHUD({
   legsRef.current = legs;
   const lastNotifiedPosRef = useRef<{ lat: number; lng: number } | null>(null);
 
+  const legChangeDebounceTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const activeLegRef = useRef<RouteLeg | null>(legs[0] || null);
+
   // Initialize VoiceNavigator instance once
   useEffect(() => {
     if (typeof window !== 'undefined') {
@@ -58,24 +61,49 @@ export default function NavigationHUD({
       // Unlock audio for autoplay bypass
       voiceNavRef.current.unlockAudio();
     }
+
+    return () => {
+      if (legChangeDebounceTimerRef.current) {
+        clearTimeout(legChangeDebounceTimerRef.current);
+      }
+    };
   }, []);
 
   const handleLegChange = useCallback((index: number, nextLeg: RouteLeg) => {
+    activeLegRef.current = nextLeg;
     onActiveLegChangeRef.current?.(nextLeg, index);
-    if (voiceNavRef.current && !voiceNavRef.current.getIsMuted()) {
-      voiceNavRef.current.speakOnce(
-        `leg-${nextLeg.id}`,
-        nextLeg.instruction
-      );
+
+    // Clear previous timer if rapid transitions occur
+    if (legChangeDebounceTimerRef.current) {
+      clearTimeout(legChangeDebounceTimerRef.current);
     }
+
+    // Mark previous/skipped legs as spoken to prevent queue pileup
+    const currentLegs = legsRef.current;
+    for (let i = 0; i < index; i++) {
+      const skippedLeg = currentLegs[i];
+      if (skippedLeg) {
+        voiceNavRef.current?.markAsSpoken(`leg-${skippedLeg.id}`);
+        voiceNavRef.current?.markAsSpoken(`initial-${skippedLeg.id}`);
+      }
+    }
+
+    // Debounce announcement of the new active step by 300ms using speakLatest
+    legChangeDebounceTimerRef.current = setTimeout(() => {
+      if (voiceNavRef.current && !voiceNavRef.current.getIsMuted()) {
+        voiceNavRef.current.speakLatest(
+          `leg-${nextLeg.id}`,
+          nextLeg.instruction
+        );
+      }
+    }, 300);
   }, []);
 
   const handleStatusChange = useCallback((status: NavigationStatus) => {
     if (!voiceNavRef.current || voiceNavRef.current.getIsMuted()) return;
 
     if (status === 'approaching_destination') {
-      const currentLegs = legsRef.current;
-      const curLeg = currentLegs[0]; // fallback
+      const curLeg = activeLegRef.current;
       const text = generateVoiceInstruction({
         type: 'ANTI_BABLAS_WARNING',
         stationName: curLeg?.to?.name || 'tujuan',
