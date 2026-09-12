@@ -377,13 +377,14 @@ export interface UseNavigationTrackerOptions {
   onLegChange?: (index: number, leg: RouteLeg) => void;
   onStatusChange?: (status: NavigationStatus) => void;
   onInstruction?: (instruction: string) => void;
+  onPositionUpdate?: (pos: NavigationPosition) => void;
 }
 
 export function useNavigationTracker(
   legs: RouteLeg[],
   options: UseNavigationTrackerOptions = {}
 ) {
-  const { enabled = true, onLegChange, onStatusChange, onInstruction } = options;
+  const { enabled = true, onLegChange, onStatusChange, onInstruction, onPositionUpdate } = options;
 
   const [navigationState, setNavigationState] = useState<NavigationState>(() => ({
     isActive: enabled && legs.length > 0,
@@ -415,6 +416,9 @@ export function useNavigationTracker(
   const onInstructionRef = useRef(onInstruction);
   onInstructionRef.current = onInstruction;
 
+  const onPositionUpdateRef = useRef(onPositionUpdate);
+  onPositionUpdateRef.current = onPositionUpdate;
+
   const legsRef = useRef(legs);
   legsRef.current = legs;
 
@@ -432,7 +436,7 @@ export function useNavigationTracker(
     }
   }, [legs]);
 
-  // Screen Wake Lock API management
+  // Screen Wake Lock API management (with automatic re-acquisition on visibility change)
   useEffect(() => {
     if (typeof window === 'undefined' || !enabled) return;
 
@@ -454,15 +458,23 @@ export function useNavigationTracker(
           }
         }
       } catch {
-        // Wake lock may fail due to low battery or browser permissions
         wakeLockRef.current = null;
       }
     };
 
     void requestWakeLock();
 
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible' && !wakeLockRef.current) {
+        void requestWakeLock();
+      }
+    };
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+
     return () => {
       isMounted = false;
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
       if (wakeLockRef.current) {
         try {
           void wakeLockRef.current.release();
@@ -503,6 +515,9 @@ export function useNavigationTracker(
         return;
       }
       lastProcessedPosRef.current = { lat: userPos.lat, lng: userPos.lng };
+
+      // Notify external position listeners (e.g. MapMarker, store)
+      onPositionUpdateRef.current?.(userPos);
 
       setNavigationState((prev) => {
         const currentLeg = prev.legs[prev.currentLegIndex];
@@ -600,16 +615,57 @@ export function useNavigationTracker(
       });
     };
 
-    const handleError = () => {
+    const handleFinalError = () => {
       setNavigationState((prev) => ({ ...prev, status: 'gps_lost' }));
       onStatusChangeRef.current?.('gps_lost');
     };
 
-    watchIdRef.current = navigator.geolocation.watchPosition(handleSuccess, handleError, {
+    const handleError = (err?: GeolocationPositionError) => {
+      // If high-accuracy timed out, fallback to standard Wi-Fi / cellular accuracy
+      if (err && err.code === 3) {
+        if ('geolocation' in navigator && watchIdRef.current !== null) {
+          navigator.geolocation.clearWatch(watchIdRef.current);
+          watchIdRef.current = navigator.geolocation.watchPosition(
+            handleSuccess,
+            handleFinalError,
+            {
+              enableHighAccuracy: false,
+              maximumAge: 5000,
+              timeout: 15000,
+            }
+          );
+          return;
+        }
+      }
+      handleFinalError();
+    };
+
+    const geoOptions: PositionOptions = {
       enableHighAccuracy: true,
-      maximumAge: 1000,
-      timeout: 5000,
-    });
+      maximumAge: 2000,
+      timeout: 15000,
+    };
+
+    // Immediate initial fix for fast rendering without waiting for watch interval
+    navigator.geolocation.getCurrentPosition(
+      handleSuccess,
+      (err) => {
+        if (err.code === 3) {
+          navigator.geolocation.getCurrentPosition(handleSuccess, () => {}, {
+            enableHighAccuracy: false,
+            maximumAge: 10000,
+            timeout: 15000,
+          });
+        }
+      },
+      geoOptions
+    );
+
+    watchIdRef.current = navigator.geolocation.watchPosition(
+      handleSuccess,
+      handleError,
+      geoOptions
+    );
 
     return () => {
       if (watchIdRef.current !== null && 'geolocation' in navigator) {

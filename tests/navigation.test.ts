@@ -18,6 +18,7 @@ import {
   VoiceNavigator,
   generateVoiceInstruction,
 } from '@/src/lib/voiceNavigator';
+import { BackgroundKeepAliveManager } from '@/src/lib/backgroundKeepAlive';
 import { RoutePlan } from '@/src/lib/transitEngine';
 import { STATIONS } from '@/src/data/transitNetwork';
 import { useTransitStore } from '@/stores/useTransitStore';
@@ -679,5 +680,134 @@ describe('Navigation State & Infinite Loop Prevention', () => {
     expect(secondCenter).toBe(firstCenter); // Reference identity preserved!
   });
 });
+
+describe('BackgroundKeepAliveManager & Lock Screen Keep-Alive', () => {
+  it('manages silent audio lifecycle and MediaSession metadata formatting', () => {
+    const mockResume = vi.fn();
+    const mockStart = vi.fn();
+    const mockStop = vi.fn();
+    const mockDisconnect = vi.fn();
+    const mockClose = vi.fn();
+
+    class FakeGain {
+      gain = { setValueAtTime: vi.fn() };
+      connect = vi.fn();
+    }
+
+    class FakeBufferSource {
+      buffer: unknown = null;
+      loop = false;
+      connect = vi.fn();
+      start = mockStart;
+      stop = mockStop;
+      disconnect = mockDisconnect;
+    }
+
+    class FakeAudioContext {
+      state = 'suspended';
+      sampleRate = 44100;
+      currentTime = 0;
+      destination = {};
+      resume = mockResume;
+      close = mockClose;
+      createBuffer = vi.fn().mockReturnValue({});
+      createGain = vi.fn().mockReturnValue(new FakeGain());
+      createBufferSource = vi.fn().mockReturnValue(new FakeBufferSource());
+    }
+
+    (globalThis as unknown as { AudioContext: unknown }).AudioContext = FakeAudioContext;
+    if (typeof window !== 'undefined') {
+      (window as unknown as { AudioContext: unknown }).AudioContext = FakeAudioContext;
+    }
+
+    // Mock navigator.mediaSession
+    let mediaMetadataInstance: { title: string; artist: string; album: string } | null = null;
+    class FakeMediaMetadata {
+      title: string;
+      artist: string;
+      album: string;
+      constructor(data: { title: string; artist: string; album: string }) {
+        this.title = data.title;
+        this.artist = data.artist;
+        this.album = data.album;
+        mediaMetadataInstance = this;
+      }
+    }
+    (globalThis as unknown as { MediaMetadata: unknown }).MediaMetadata = FakeMediaMetadata;
+
+    const mockVibrate = vi.fn();
+    Object.defineProperty(navigator, 'vibrate', {
+      value: mockVibrate,
+      configurable: true,
+      writable: true,
+    });
+
+    const fakeMediaSession = {
+      playbackState: 'none',
+      metadata: null,
+    };
+    Object.defineProperty(navigator, 'mediaSession', {
+      value: fakeMediaSession,
+      configurable: true,
+      writable: true,
+    });
+
+    const bgManager = new BackgroundKeepAliveManager(new FakeAudioContext() as unknown as AudioContext);
+
+    // 1. Start keep-alive
+    bgManager.start();
+    expect(bgManager.getIsRunning()).toBe(true);
+    expect(mockResume).toHaveBeenCalled();
+    expect(mockStart).toHaveBeenCalled();
+    expect(fakeMediaSession.playbackState).toBe('playing');
+
+    // 2. Update lock screen details (< 1000m)
+    bgManager.updateLockScreen({
+      instruction: 'Jalan kaki menuju Peron 1',
+      distanceMeters: 250,
+      targetName: 'Stasiun Manggarai',
+    });
+    expect(mediaMetadataInstance).not.toBeNull();
+    expect(mediaMetadataInstance!.title).toBe('Jalan kaki menuju Peron 1');
+    expect(mediaMetadataInstance!.artist).toBe('Jakarta Transit Pulse');
+    expect(mediaMetadataInstance!.album).toBe('250 m menuju Stasiun Manggarai');
+
+    // 3. Update lock screen details (> 1000m with lineName)
+    bgManager.updateLockScreen({
+      instruction: 'Naik KRL arah Stasiun Tanah Abang',
+      distanceMeters: 3200,
+      targetName: 'Stasiun Tanah Abang',
+      lineName: 'Lin Cikarang',
+    });
+    expect(mediaMetadataInstance!.title).toBe('Naik KRL arah Stasiun Tanah Abang');
+    expect(mediaMetadataInstance!.album).toBe('3.2 km menuju Stasiun Tanah Abang • Lin Cikarang');
+
+    // 4. Haptic vibration
+    bgManager.triggerHaptic([300, 150, 300]);
+    expect(mockVibrate).toHaveBeenCalledWith([300, 150, 300]);
+
+    // 5. Stop keep-alive
+    bgManager.stop();
+    expect(bgManager.getIsRunning()).toBe(false);
+    expect(mockStop).toHaveBeenCalled();
+    expect(fakeMediaSession.playbackState).toBe('none');
+  });
+
+  it('handles environment without AudioContext or MediaSession without throwing', () => {
+    const bgManager = new BackgroundKeepAliveManager();
+    expect(() => bgManager.start()).not.toThrow();
+    expect(() =>
+      bgManager.updateLockScreen({
+        instruction: 'Test',
+        distanceMeters: 100,
+        targetName: 'Test Target',
+      })
+    ).not.toThrow();
+    expect(() => bgManager.triggerHaptic()).not.toThrow();
+    expect(() => bgManager.sendNotification('Title', 'Body')).not.toThrow();
+    expect(() => bgManager.stop()).not.toThrow();
+  });
+});
+
 
 

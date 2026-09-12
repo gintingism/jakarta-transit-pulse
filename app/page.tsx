@@ -19,6 +19,7 @@ export default function HomePage() {
   const isNavigating = useTransitStore((s) => s.isNavigating);
   const navigationLegs = useTransitStore((s) => s.navigationLegs);
   const stopNavigation = useTransitStore((s) => s.stopNavigation);
+  const setUserLocation = useTransitStore((s) => s.setUserLocation);
 
   useEffect(() => {
     calculateCurrentRoute();
@@ -47,13 +48,21 @@ export default function HomePage() {
         <NavigationHUD
           legs={navigationLegs}
           onStopNavigation={stopNavigation}
+          onPositionUpdate={(pos) => {
+            setUserLocation(
+              [pos.lat, pos.lng],
+              pos.accuracy ?? null,
+              pos.heading ?? null,
+              pos.speed ?? null
+            );
+          }}
         />
       ) : (
         <FloatingHud />
       )}
 
       <MapWrapper />
-      <BottomDrawer />
+      {!isNavigating && <BottomDrawer />}
       <GeoAlarmModal />
       <AboutModal />
     </main>

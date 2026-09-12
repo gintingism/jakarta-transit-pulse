@@ -22,13 +22,22 @@ import {
   AlertTriangle,
   CheckCircle2,
   BellRing,
+  Bell,
   Navigation as NavigationIcon,
 } from 'lucide-react';
+import { BackgroundKeepAliveManager } from '@/src/lib/backgroundKeepAlive';
+import { useTransitStore } from '@/stores/useTransitStore';
 
 export interface NavigationHUDProps {
   legs: RouteLeg[];
   onStopNavigation: () => void;
-  onPositionUpdate?: (pos: { lat: number; lng: number }) => void;
+  onPositionUpdate?: (pos: {
+    lat: number;
+    lng: number;
+    accuracy?: number | null;
+    heading?: number | null;
+    speed?: number | null;
+  }) => void;
   onActiveLegChange?: (leg: RouteLeg, index: number) => void;
 }
 
@@ -38,9 +47,16 @@ export default function NavigationHUD({
   onPositionUpdate,
   onActiveLegChange,
 }: NavigationHUDProps) {
+  const [isMinimized, setIsMinimized] = useState(false);
   const [isHistoryOpen, setIsHistoryOpen] = useState(false);
   const [isSpeaking, setIsSpeaking] = useState(false);
   const voiceNavRef = useRef<VoiceNavigator | null>(null);
+  const bgKeepAliveRef = useRef<BackgroundKeepAliveManager | null>(null);
+
+  const isAlarmArmed = useTransitStore((s) => s.isAlarmArmed);
+  const armAlarm = useTransitStore((s) => s.armAlarm);
+  const disarmAlarm = useTransitStore((s) => s.disarmAlarm);
+
   const onPositionUpdateRef = useRef(onPositionUpdate);
   onPositionUpdateRef.current = onPositionUpdate;
   const onActiveLegChangeRef = useRef(onActiveLegChange);
@@ -52,7 +68,7 @@ export default function NavigationHUD({
   const legChangeDebounceTimerRef = useRef<NodeJS.Timeout | null>(null);
   const activeLegRef = useRef<RouteLeg | null>(legs[0] || null);
 
-  // Initialize VoiceNavigator instance once
+  // Initialize VoiceNavigator and BackgroundKeepAlive instances
   useEffect(() => {
     if (typeof window !== 'undefined') {
       voiceNavRef.current = new VoiceNavigator(undefined, (speaking) => {
@@ -60,12 +76,18 @@ export default function NavigationHUD({
       });
       // Unlock audio for autoplay bypass
       voiceNavRef.current.unlockAudio();
+
+      const bg = new BackgroundKeepAliveManager();
+      bg.start();
+      bgKeepAliveRef.current = bg;
     }
 
     return () => {
       if (legChangeDebounceTimerRef.current) {
         clearTimeout(legChangeDebounceTimerRef.current);
       }
+      bgKeepAliveRef.current?.stop();
+      bgKeepAliveRef.current = null;
     };
   }, []);
 
@@ -109,9 +131,19 @@ export default function NavigationHUD({
         stationName: curLeg?.to?.name || 'tujuan',
       });
       voiceNavRef.current.speakPriority(text);
+      bgKeepAliveRef.current?.triggerHaptic([400, 200, 400, 200, 800]);
+      bgKeepAliveRef.current?.sendNotification(
+        '⚠️ Waktunya Bersiap!',
+        `Satu stasiun lagi tiba di ${curLeg?.to?.name || 'tujuan'}. Bersiap turun!`
+      );
     } else if (status === 'arrived') {
       const text = generateVoiceInstruction({ type: 'ARRIVED' });
       voiceNavRef.current.speakPriority(text);
+      bgKeepAliveRef.current?.triggerHaptic([500, 200, 500]);
+      bgKeepAliveRef.current?.sendNotification(
+        '🎉 Tiba di Tujuan!',
+        'Kamu telah sampai di stasiun tujuan. Navigasi selesai.'
+      );
     } else if (status === 'off_route') {
       const text = generateVoiceInstruction({ type: 'OFF_ROUTE' });
       voiceNavRef.current.speakOnce('off-route-warning', text);
@@ -122,6 +154,9 @@ export default function NavigationHUD({
     enabled: true,
     onLegChange: handleLegChange,
     onStatusChange: handleStatusChange,
+    onPositionUpdate: (pos) => {
+      onPositionUpdateRef.current?.(pos);
+    },
   });
 
   // Sync mute state to VoiceNavigator
@@ -174,6 +209,27 @@ export default function NavigationHUD({
     [state.legs]
   );
 
+  const toggleAlarm = useCallback(() => {
+    if (isAlarmArmed) {
+      disarmAlarm();
+    } else {
+      const targetId = currentLeg?.to?.id;
+      armAlarm(targetId);
+    }
+  }, [isAlarmArmed, currentLeg, armAlarm, disarmAlarm]);
+
+  // Sync MediaSession lock screen whenever leg or distance updates
+  useEffect(() => {
+    if (currentLeg && bgKeepAliveRef.current) {
+      bgKeepAliveRef.current.updateLockScreen({
+        instruction: currentLeg.instruction,
+        distanceMeters: state.distanceToNextStopMeters,
+        targetName: currentLeg.to?.name || 'Tujuan',
+        lineName: currentLeg.lineName,
+      });
+    }
+  }, [currentLeg, state.distanceToNextStopMeters]);
+
   if (!legs || legs.length === 0 || !currentLeg) {
     return null;
   }
@@ -218,124 +274,221 @@ export default function NavigationHUD({
         </div>
       )}
 
-      {/* 2. Main Hero Turn-by-Turn Navigation Card */}
-      <div className="bg-[#0b101b]/95 backdrop-blur-xl border border-cyan-500/25 rounded-2xl shadow-2xl p-4 text-white overflow-hidden relative">
-        {/* Top bar: Mode indicator, Soundwave, & Controls */}
-        <div className="flex items-center justify-between pb-3 border-b border-zinc-800/80">
-          <div className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded-xl bg-zinc-800/90 border border-zinc-700/80 flex items-center justify-center shrink-0">
+      {/* 2. Minimized Pill vs Full Turn-by-Turn Card */}
+      {isMinimized ? (
+        <div
+          onClick={() => setIsMinimized(false)}
+          className="bg-[#0b101b]/95 backdrop-blur-xl border border-cyan-500/40 rounded-2xl shadow-2xl p-3 text-white flex items-center justify-between gap-3 cursor-pointer hover:border-cyan-400 transition select-none"
+        >
+          <div className="flex items-center gap-2.5 min-w-0">
+            <div className="w-9 h-9 rounded-xl bg-cyan-950/80 border border-cyan-500/40 flex items-center justify-center shrink-0">
               {getLegIcon(currentLeg)}
             </div>
 
-            <div>
-              <div className="flex items-center gap-1.5">
-                <span className="text-[11px] font-bold uppercase tracking-wider text-cyan-400 font-mono">
-                  {currentLeg.type === 'WALK'
-                    ? 'Jalan Kaki'
-                    : currentLeg.type === 'TRANSFER'
-                    ? 'Pindah Peron'
-                    : `${currentLeg.mode || 'TRANSIT'} ${currentLeg.lineName || ''}`}
+            <div className="min-w-0">
+              <div className="flex items-baseline gap-2">
+                <span className="text-base font-black font-mono text-cyan-400 shrink-0">
+                  {formatDistance(state.distanceToNextStopMeters)}
                 </span>
-
-                {/* Soundwave Pulse Indicator */}
-                {isSpeaking && (
-                  <div className="flex items-center gap-0.5 ml-1" title="Pemandu suara sedang berbicara">
-                    <span className="w-1 h-3 bg-cyan-400 rounded-full animate-bounce [animation-delay:-0.3s]" />
-                    <span className="w-1 h-4 bg-cyan-300 rounded-full animate-bounce [animation-delay:-0.15s]" />
-                    <span className="w-1 h-2.5 bg-cyan-400 rounded-full animate-bounce" />
-                  </div>
-                )}
+                <span className="text-xs font-semibold text-zinc-100 truncate">
+                  {currentLeg.instruction}
+                </span>
               </div>
-
-              <div className="text-[10px] text-zinc-400 truncate max-w-[200px]">
-                Tujuan segmen: {currentLeg.to?.name || 'Tujuan'}
+              <div className="flex items-center gap-2 text-[10px] text-zinc-400 truncate">
+                <span>Tujuan: {currentLeg.to?.name || 'Tujuan'}</span>
+                <span>•</span>
+                <span>Langkah {state.currentLegIndex + 1}/{state.legs.length}</span>
+                {isAlarmArmed && (
+                  <span className="text-amber-400 font-medium">
+                    • ⏰ Alarm
+                  </span>
+                )}
               </div>
             </div>
           </div>
 
-          {/* Action Control Buttons */}
-          <div className="flex items-center gap-1.5">
-            {/* Mute/Unmute Audio */}
+          <div className="flex items-center gap-1.5 shrink-0">
             <button
               type="button"
-              onClick={toggleMute}
-              className={`p-2 rounded-xl text-xs transition border cursor-pointer ${
-                state.isMuted
-                  ? 'bg-zinc-800/80 border-zinc-700 text-zinc-400 hover:text-zinc-200'
-                  : 'bg-cyan-500/15 border-cyan-500/40 text-cyan-400 hover:bg-cyan-500/25'
-              }`}
-              title={state.isMuted ? 'Aktifkan Suara Navigasi' : 'Bisukan Suara'}
-              aria-label={state.isMuted ? 'Unmute voice guidance' : 'Mute voice guidance'}
-            >
-              {state.isMuted ? <VolumeX className="w-4 h-4" /> : <Volume2 className="w-4 h-4" />}
-            </button>
-
-            {/* Recenter GPS / Follow Camera */}
-            <button
-              type="button"
-              onClick={toggleCenter}
-              className={`p-2 rounded-xl text-xs transition border cursor-pointer ${
+              onClick={(e) => {
+                e.stopPropagation();
+                toggleCenter();
+              }}
+              className={`p-2 rounded-xl border transition cursor-pointer ${
                 state.isCentered
-                  ? 'bg-emerald-500/20 border-emerald-500/40 text-emerald-400 hover:bg-emerald-500/30'
-                  : 'bg-zinc-800/80 border-zinc-700 text-zinc-400 hover:text-zinc-200'
+                  ? 'bg-emerald-500/20 border-emerald-500/40 text-emerald-400'
+                  : 'bg-zinc-800/80 border-zinc-700 text-zinc-400'
               }`}
-              title={state.isCentered ? 'Kamera Mengikuti Lokasi Anda' : 'Kunci Kamera ke Lokasi GPS'}
+              title="Kunci Kamera"
               aria-label="Center GPS"
             >
               <Crosshair className="w-4 h-4" />
             </button>
 
-            {/* Stop Navigation */}
             <button
               type="button"
-              onClick={onStopNavigation}
-              className="p-2 rounded-xl text-xs bg-rose-600/20 border border-rose-500/40 text-rose-400 hover:bg-rose-600/30 transition cursor-pointer"
-              title="Akhiri Navigasi"
-              aria-label="Stop navigation"
+              onClick={(e) => {
+                e.stopPropagation();
+                setIsMinimized(false);
+              }}
+              className="p-2 rounded-xl bg-cyan-500/15 border border-cyan-500/40 text-cyan-400 hover:bg-cyan-500/25 transition cursor-pointer"
+              title="Perbesar Tampilan Navigasi"
+              aria-label="Expand navigation HUD"
             >
-              <X className="w-4 h-4" />
+              <ChevronDown className="w-4 h-4" />
             </button>
           </div>
         </div>
+      ) : (
+        <div className="bg-[#0b101b]/95 backdrop-blur-xl border border-cyan-500/25 rounded-2xl shadow-2xl p-4 text-white overflow-hidden relative">
+          {/* Top bar: Mode indicator, Soundwave, & Controls */}
+          <div className="flex items-center justify-between pb-3 border-b border-zinc-800/80">
+            <div className="flex items-center gap-2">
+              <div className="w-8 h-8 rounded-xl bg-zinc-800/90 border border-zinc-700/80 flex items-center justify-center shrink-0">
+                {getLegIcon(currentLeg)}
+              </div>
 
-        {/* Hero Active Instruction */}
-        <div className="pt-3 pb-1 space-y-1">
-          <p className="text-sm sm:text-base font-black text-white leading-snug tracking-tight">
-            {currentLeg.instruction}
-          </p>
+              <div>
+                <div className="flex items-center gap-1.5">
+                  <span className="text-[11px] font-bold uppercase tracking-wider text-cyan-400 font-mono">
+                    {currentLeg.type === 'WALK'
+                      ? 'Jalan Kaki'
+                      : currentLeg.type === 'TRANSFER'
+                      ? 'Pindah Peron'
+                      : `${currentLeg.mode || 'TRANSIT'} ${currentLeg.lineName || ''}`}
+                  </span>
 
-          <div className="flex items-baseline gap-3 pt-1">
-            <div className="text-2xl font-black text-cyan-400 font-mono tracking-tight">
-              {formatDistance(state.distanceToNextStopMeters)}
+                  {/* Soundwave Pulse Indicator */}
+                  {isSpeaking && (
+                    <div className="flex items-center gap-0.5 ml-1" title="Pemandu suara sedang berbicara">
+                      <span className="w-1 h-3 bg-cyan-400 rounded-full animate-bounce [animation-delay:-0.3s]" />
+                      <span className="w-1 h-4 bg-cyan-300 rounded-full animate-bounce [animation-delay:-0.15s]" />
+                      <span className="w-1 h-2.5 bg-cyan-400 rounded-full animate-bounce" />
+                    </div>
+                  )}
+                </div>
+
+                <div className="text-[10px] text-zinc-400 truncate max-w-[150px] sm:max-w-[200px]">
+                  Tujuan: {currentLeg.to?.name || 'Tujuan'}
+                </div>
+              </div>
             </div>
 
-            <div className="text-xs text-zinc-400 font-medium">
-              Sisa ke stasiun/tujuan berikutnya
+            {/* Action Control Buttons */}
+            <div className="flex items-center gap-1">
+              {/* Disembark Alarm Toggle */}
+              <button
+                type="button"
+                onClick={toggleAlarm}
+                className={`p-2 rounded-xl text-xs transition border cursor-pointer ${
+                  isAlarmArmed
+                    ? 'bg-amber-500/20 border-amber-500/40 text-amber-300 hover:bg-amber-500/30'
+                    : 'bg-zinc-800/80 border-zinc-700 text-zinc-400 hover:text-zinc-200'
+                }`}
+                title={isAlarmArmed ? 'Alarm Turun Aktif (Klik untuk matikan)' : 'Pasang Alarm Pengingat Turun'}
+                aria-label="Toggle disembark alarm"
+              >
+                <Bell className="w-4 h-4" />
+              </button>
+
+              {/* Mute/Unmute Audio */}
+              <button
+                type="button"
+                onClick={toggleMute}
+                className={`p-2 rounded-xl text-xs transition border cursor-pointer ${
+                  state.isMuted
+                    ? 'bg-zinc-800/80 border-zinc-700 text-zinc-400 hover:text-zinc-200'
+                    : 'bg-cyan-500/15 border-cyan-500/40 text-cyan-400 hover:bg-cyan-500/25'
+                }`}
+                title={state.isMuted ? 'Aktifkan Suara Navigasi' : 'Bisukan Suara'}
+                aria-label={state.isMuted ? 'Unmute voice guidance' : 'Mute voice guidance'}
+              >
+                {state.isMuted ? <VolumeX className="w-4 h-4" /> : <Volume2 className="w-4 h-4" />}
+              </button>
+
+              {/* Recenter GPS / Follow Camera */}
+              <button
+                type="button"
+                onClick={toggleCenter}
+                className={`p-2 rounded-xl text-xs transition border cursor-pointer ${
+                  state.isCentered
+                    ? 'bg-emerald-500/20 border-emerald-500/40 text-emerald-400 hover:bg-emerald-500/30'
+                    : 'bg-zinc-800/80 border-zinc-700 text-zinc-400 hover:text-zinc-200'
+                }`}
+                title={state.isCentered ? 'Kamera Mengikuti Lokasi Anda' : 'Kunci Kamera ke Lokasi GPS'}
+                aria-label="Center GPS"
+              >
+                <Crosshair className="w-4 h-4" />
+              </button>
+
+              {/* Minimize Card */}
+              <button
+                type="button"
+                onClick={() => setIsMinimized(true)}
+                className="p-2 rounded-xl text-xs bg-zinc-800/80 border border-zinc-700 text-zinc-300 hover:text-white hover:bg-zinc-700 transition cursor-pointer"
+                title="Ciutkan Tampilan (Minimize)"
+                aria-label="Minimize navigation card"
+              >
+                <ChevronUp className="w-4 h-4 text-cyan-400" />
+              </button>
+
+              {/* Stop Navigation */}
+              <button
+                type="button"
+                onClick={onStopNavigation}
+                className="p-2 rounded-xl text-xs bg-rose-600/20 border border-rose-500/40 text-rose-400 hover:bg-rose-600/30 transition cursor-pointer"
+                title="Akhiri Navigasi"
+                aria-label="Stop navigation"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+          </div>
+
+          {/* Hero Active Instruction */}
+          <div className="pt-3 pb-1 space-y-1">
+            <p className="text-sm sm:text-base font-black text-white leading-snug tracking-tight">
+              {currentLeg.instruction}
+            </p>
+
+            <div className="flex items-baseline gap-3 pt-1">
+              <div className="text-2xl font-black text-cyan-400 font-mono tracking-tight">
+                {formatDistance(state.distanceToNextStopMeters)}
+              </div>
+
+              <div className="text-xs text-zinc-400 font-medium">
+                Sisa ke stasiun/tujuan berikutnya
+              </div>
+            </div>
+          </div>
+
+          {/* Bottom Metrics Bar: Progress & Step counter */}
+          <div className="mt-3 pt-2.5 border-t border-zinc-800/80 flex items-center justify-between text-[11px] text-zinc-400">
+            <div className="flex items-center gap-1.5 font-medium">
+              <NavigationIcon className="w-3.5 h-3.5 text-cyan-400" />
+              <span>
+                Langkah {state.currentLegIndex + 1} dari {state.legs.length}
+              </span>
+            </div>
+
+            <div className="font-mono text-zinc-300 flex items-center gap-2">
+              {isAlarmArmed && (
+                <span className="text-[10px] text-amber-400 font-sans font-semibold px-1.5 py-0.5 rounded bg-amber-400/10 border border-amber-400/20">
+                  ⏰ Alarm Aktif
+                </span>
+              )}
+              {state.status === 'arrived' ? (
+                <span className="text-emerald-400 font-bold">Tiba di Tujuan</span>
+              ) : (
+                <span>Est. {currentLeg.durationMinutes} mnt</span>
+              )}
             </div>
           </div>
         </div>
-
-        {/* Bottom Metrics Bar: Progress & Step counter */}
-        <div className="mt-3 pt-2.5 border-t border-zinc-800/80 flex items-center justify-between text-[11px] text-zinc-400">
-          <div className="flex items-center gap-1.5 font-medium">
-            <NavigationIcon className="w-3.5 h-3.5 text-cyan-400" />
-            <span>
-              Langkah {state.currentLegIndex + 1} dari {state.legs.length}
-            </span>
-          </div>
-
-          <div className="font-mono text-zinc-300">
-            {state.status === 'arrived' ? (
-              <span className="text-emerald-400 font-bold">Tiba di Tujuan</span>
-            ) : (
-              <span>Est. {currentLeg.durationMinutes} mnt</span>
-            )}
-          </div>
-        </div>
-      </div>
+      )}
 
       {/* 3. Completed Steps Accordion */}
-      {completedLegs.length > 0 && (
+      {!isMinimized && completedLegs.length > 0 && (
         <div className="bg-[#0b101b]/90 backdrop-blur-md border border-zinc-800/80 rounded-xl overflow-hidden shadow-lg text-xs text-zinc-300">
           <button
             type="button"
