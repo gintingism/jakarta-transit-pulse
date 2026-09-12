@@ -75,8 +75,6 @@ export default function NavigationHUD({
       voiceNavRef.current = getVoiceNavigator(undefined, (speaking) => {
         setIsSpeaking(speaking);
       });
-      // Unlock audio for autoplay bypass
-      voiceNavRef.current.unlockAudio();
 
       const bg = new BackgroundKeepAliveManager();
       bg.start();
@@ -87,7 +85,6 @@ export default function NavigationHUD({
       if (legChangeDebounceTimerRef.current) {
         clearTimeout(legChangeDebounceTimerRef.current);
       }
-      voiceNavRef.current?.resetHistory();
       bgKeepAliveRef.current?.stop();
       bgKeepAliveRef.current = null;
     };
@@ -228,13 +225,21 @@ export default function NavigationHUD({
   }, [isAlarmArmed, currentLeg, armAlarm, disarmAlarm]);
 
   const handleToggleMute = useCallback(() => {
+    const nextMuted = !state.isMuted;
     toggleMute();
-    if (state.isMuted) {
+    voiceNavRef.current?.setMuted(nextMuted);
+    if (!nextMuted) {
       setTimeout(() => {
         voiceNavRef.current?.speak('Panduan suara diaktifkan', true);
-      }, 100);
+      }, 50);
     }
   }, [toggleMute, state.isMuted]);
+
+  const replayCurrentInstruction = useCallback(() => {
+    if (!voiceNavRef.current || !currentLeg) return;
+    voiceNavRef.current.setMuted(false);
+    voiceNavRef.current.speak(currentLeg.instruction, true);
+  }, [currentLeg]);
 
   const handleStopNavigation = useCallback(() => {
     voiceNavRef.current?.resetHistory();
@@ -331,6 +336,19 @@ export default function NavigationHUD({
           </div>
 
           <div className="flex items-center gap-1.5 shrink-0">
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                replayCurrentInstruction();
+              }}
+              className="p-2 rounded-xl bg-cyan-500/10 border border-cyan-500/30 text-cyan-400 hover:bg-cyan-500/20 transition cursor-pointer"
+              title="Dengarkan Ulang Panduan Suara"
+              aria-label="Replay voice guidance"
+            >
+              <Volume2 className="w-4 h-4" />
+            </button>
+
             <button
               type="button"
               onClick={(e) => {
@@ -470,9 +488,20 @@ export default function NavigationHUD({
 
           {/* Hero Active Instruction */}
           <div className="pt-3 pb-1 space-y-1">
-            <p className="text-sm sm:text-base font-black text-white leading-snug tracking-tight">
-              {currentLeg.instruction}
-            </p>
+            <div className="flex items-start justify-between gap-2">
+              <p className="text-sm sm:text-base font-black text-white leading-snug tracking-tight">
+                {currentLeg.instruction}
+              </p>
+              <button
+                type="button"
+                onClick={replayCurrentInstruction}
+                className="p-1.5 rounded-lg bg-cyan-500/10 hover:bg-cyan-500/25 border border-cyan-500/30 text-cyan-400 hover:text-cyan-300 transition shrink-0 cursor-pointer"
+                title="Dengarkan Ulang Panduan Suara Langkah Ini"
+                aria-label="Replay current step instruction"
+              >
+                <Volume2 className="w-4 h-4" />
+              </button>
+            </div>
 
             <div className="flex items-baseline gap-3 pt-1">
               <div className="text-2xl font-black text-cyan-400 font-mono tracking-tight">

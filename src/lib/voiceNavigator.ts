@@ -71,7 +71,7 @@ export class VoiceNavigator {
     if (!this.synth) return;
 
     const findVoice = () => {
-      this.ensureVoiceSelected();
+      this.selectBestVoice();
     };
 
     findVoice();
@@ -81,8 +81,8 @@ export class VoiceNavigator {
     }
   }
 
-  private ensureVoiceSelected(): void {
-    if (this.selectedVoice || !this.synth) return;
+  private selectBestVoice(): void {
+    if (!this.synth) return;
     const voices = this.synth.getVoices();
     if (!voices || voices.length === 0) return;
 
@@ -105,12 +105,16 @@ export class VoiceNavigator {
       );
     }
 
-    // 3. Fallback to default or first available voice so browser never fails silently
-    if (!match) {
-      match = voices.find((v) => v.default) || voices[0] || null;
+    // 3. Prefer Indonesian voice if found
+    if (match) {
+      this.selectedVoice = match;
+      return;
     }
 
-    this.selectedVoice = match || null;
+    // 4. Fallback to default or first available voice so browser never fails silently
+    if (!this.selectedVoice) {
+      this.selectedVoice = voices.find((v) => v.default) || voices[0] || null;
+    }
   }
 
   /**
@@ -122,7 +126,6 @@ export class VoiceNavigator {
       if (this.synth.paused) {
         this.synth.resume();
       }
-      this.synth.cancel();
     } catch {
       // Ignore initial gesture unlock errors
     }
@@ -152,7 +155,7 @@ export class VoiceNavigator {
    * Returns current selected voice (for debugging/testing)
    */
   public getSelectedVoice(): SpeechSynthesisVoice | null {
-    this.ensureVoiceSelected();
+    this.selectBestVoice();
     return this.selectedVoice;
   }
 
@@ -173,7 +176,7 @@ export class VoiceNavigator {
 
       if (typeof SpeechSynthesisUtterance === 'undefined') return;
 
-      this.ensureVoiceSelected();
+      this.selectBestVoice();
 
       const utterance = new SpeechSynthesisUtterance(text);
       if (this.selectedVoice) {
@@ -184,6 +187,7 @@ export class VoiceNavigator {
       }
       utterance.rate = 1.0;
       utterance.pitch = 1.0;
+      utterance.volume = 1.0;
 
       // Retain utterance reference to protect from garbage collection halts in Chromium
       this.currentUtterance = utterance;
@@ -213,6 +217,12 @@ export class VoiceNavigator {
       if (this.synth.paused) {
         this.synth.resume();
       }
+
+      setTimeout(() => {
+        if (this.synth?.paused) {
+          this.synth.resume();
+        }
+      }, 50);
     } catch (err) {
       console.warn('[VoiceNavigator] Failed to speak:', err);
       this.onSpeakingChange?.(false);

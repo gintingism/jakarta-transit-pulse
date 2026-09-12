@@ -473,6 +473,7 @@ export default function RouteCard({
                     : `Mulai perjalanan. ${firstLeg.instruction || ''}`;
 
                 const voiceNav = getVoiceNavigator();
+                voiceNav.setMuted(false);
                 voiceNav.unlockAudio();
                 voiceNav.speak(initialText, true);
                 voiceNav.markAsSpoken(`initial-${firstLeg.id}`);
