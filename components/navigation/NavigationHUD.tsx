@@ -7,7 +7,7 @@ import {
   NavigationStatus,
 } from '@/src/types/navigation';
 import { useNavigationTracker } from '@/src/lib/navigationTracker';
-import { VoiceNavigator, generateVoiceInstruction } from '@/src/lib/voiceNavigator';
+import { getVoiceNavigator, generateVoiceInstruction, VoiceNavigator } from '@/src/lib/voiceNavigator';
 import {
   Footprints,
   Train,
@@ -72,7 +72,7 @@ export default function NavigationHUD({
   // Initialize VoiceNavigator and BackgroundKeepAlive instances
   useEffect(() => {
     if (typeof window !== 'undefined') {
-      voiceNavRef.current = new VoiceNavigator(undefined, (speaking) => {
+      voiceNavRef.current = getVoiceNavigator(undefined, (speaking) => {
         setIsSpeaking(speaking);
       });
       // Unlock audio for autoplay bypass
@@ -87,6 +87,7 @@ export default function NavigationHUD({
       if (legChangeDebounceTimerRef.current) {
         clearTimeout(legChangeDebounceTimerRef.current);
       }
+      voiceNavRef.current?.resetHistory();
       bgKeepAliveRef.current?.stop();
       bgKeepAliveRef.current = null;
     };
@@ -138,8 +139,9 @@ export default function NavigationHUD({
         `Satu stasiun lagi tiba di ${curLeg?.to?.name || 'tujuan'}. Bersiap turun!`
       );
     } else if (status === 'arrived') {
+      playTransitArrivalChime();
       const text = generateVoiceInstruction({ type: 'ARRIVED' });
-      voiceNavRef.current.speakPriority(text);
+      voiceNavRef.current?.speakPriority(text);
       bgKeepAliveRef.current?.triggerHaptic([500, 200, 500]);
       bgKeepAliveRef.current?.sendNotification(
         '🎉 Tiba di Tujuan!',
@@ -147,7 +149,7 @@ export default function NavigationHUD({
       );
     } else if (status === 'off_route') {
       const text = generateVoiceInstruction({ type: 'OFF_ROUTE' });
-      voiceNavRef.current.speakOnce('off-route-warning', text);
+      voiceNavRef.current?.speakOnce('off-route-warning', text);
     }
   }, []);
 
@@ -202,24 +204,11 @@ export default function NavigationHUD({
             })
           : `Mulai perjalanan. ${firstLeg.instruction || ''}`;
 
-      // Play arrival chime for instant audio feedback
-      playTransitArrivalChime();
-
-      // Ensure voice navigator speaks initial instruction after brief mount delay
-      const timer = setTimeout(() => {
-        if (!voiceNavRef.current && typeof window !== 'undefined') {
-          voiceNavRef.current = new VoiceNavigator(undefined, (speaking) => {
-            setIsSpeaking(speaking);
-          });
-        }
-        if (voiceNavRef.current && !voiceNavRef.current.getIsMuted()) {
-          voiceNavRef.current.speak(initialText, true);
-          voiceNavRef.current.markAsSpoken(`initial-${firstLeg.id}`);
-          voiceNavRef.current.markAsSpoken(`leg-${firstLeg.id}`);
-        }
-      }, 250);
-
-      return () => clearTimeout(timer);
+      const nav = voiceNavRef.current || getVoiceNavigator();
+      if (!nav.getIsMuted()) {
+        nav.speakOnce(`initial-${firstLeg.id}`, initialText);
+        nav.markAsSpoken(`leg-${firstLeg.id}`);
+      }
     }
   }, [legs]);
 
@@ -246,6 +235,11 @@ export default function NavigationHUD({
       }, 100);
     }
   }, [toggleMute, state.isMuted]);
+
+  const handleStopNavigation = useCallback(() => {
+    voiceNavRef.current?.resetHistory();
+    onStopNavigation();
+  }, [onStopNavigation]);
 
   // Sync MediaSession lock screen whenever leg or distance updates
   useEffect(() => {
@@ -464,7 +458,7 @@ export default function NavigationHUD({
               {/* Stop Navigation */}
               <button
                 type="button"
-                onClick={onStopNavigation}
+                onClick={handleStopNavigation}
                 className="p-2 rounded-xl text-xs bg-rose-600/20 border border-rose-500/40 text-rose-400 hover:bg-rose-600/30 transition cursor-pointer"
                 title="Akhiri Navigasi"
                 aria-label="Stop navigation"

@@ -3,6 +3,8 @@
 import React, { useState, useEffect } from 'react';
 import { RoutePlan, formatDistance, calculateTripImpact } from '@/src/lib/transitEngine';
 import { fetchStationWeather, TransitWeather } from '@/src/lib/weatherService';
+import { getVoiceNavigator, generateVoiceInstruction } from '@/src/lib/voiceNavigator';
+import { convertRoutePlanToLegs } from '@/src/types/navigation';
 import { useTransitStore } from '@/stores/useTransitStore';
 import {
   Clock,
@@ -458,13 +460,23 @@ export default function RouteCard({
           <button
             type="button"
             onClick={() => {
-              if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
-                try {
-                  window.speechSynthesis.cancel();
-                  window.speechSynthesis.resume();
-                } catch {
-                  // Ignore
-                }
+              const legs = convertRoutePlanToLegs(route);
+              if (legs && legs.length > 0) {
+                const firstLeg = legs[0];
+                const initialText =
+                  firstLeg.type === 'WALK'
+                    ? generateVoiceInstruction({
+                        type: 'START_WALK',
+                        distanceMeters: firstLeg.distanceMeters || 0,
+                        targetName: firstLeg.to?.name || 'tujuan',
+                      })
+                    : `Mulai perjalanan. ${firstLeg.instruction || ''}`;
+
+                const voiceNav = getVoiceNavigator();
+                voiceNav.unlockAudio();
+                voiceNav.speak(initialText, true);
+                voiceNav.markAsSpoken(`initial-${firstLeg.id}`);
+                voiceNav.markAsSpoken(`leg-${firstLeg.id}`);
               }
               startNavigation(route);
             }}

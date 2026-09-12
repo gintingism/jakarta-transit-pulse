@@ -35,6 +35,7 @@ export class VoiceNavigator {
   private selectedVoice: SpeechSynthesisVoice | null = null;
   private isMuted = false;
   private onSpeakingChange?: (isSpeaking: boolean) => void;
+  private currentUtterance: SpeechSynthesisUtterance | null = null;
 
   constructor(
     customSynth?: SpeechSynthesis | null,
@@ -62,25 +63,54 @@ export class VoiceNavigator {
     this.initVoices();
   }
 
+  public setOnSpeakingChange(cb?: (isSpeaking: boolean) => void): void {
+    this.onSpeakingChange = cb;
+  }
+
   private initVoices(): void {
     if (!this.synth) return;
 
-    const findIndonesianVoice = () => {
-      if (!this.synth) return;
-      const voices = this.synth.getVoices();
-      const indonesian = voices.find(
-        (v) => v.lang === 'id-ID' || v.lang === 'id' || v.lang.startsWith('id_')
-      );
-      if (indonesian) {
-        this.selectedVoice = indonesian;
-      }
+    const findVoice = () => {
+      this.ensureVoiceSelected();
     };
 
-    findIndonesianVoice();
+    findVoice();
 
     if ('onvoiceschanged' in this.synth) {
-      this.synth.onvoiceschanged = findIndonesianVoice;
+      this.synth.onvoiceschanged = findVoice;
     }
+  }
+
+  private ensureVoiceSelected(): void {
+    if (this.selectedVoice || !this.synth) return;
+    const voices = this.synth.getVoices();
+    if (!voices || voices.length === 0) return;
+
+    // 1. Indonesian language tag matching
+    let match = voices.find(
+      (v) =>
+        v.lang === 'id-ID' ||
+        v.lang === 'id' ||
+        v.lang.toLowerCase().startsWith('id-') ||
+        v.lang.toLowerCase().startsWith('id_') ||
+        v.lang.toLowerCase() === 'id'
+    );
+
+    // 2. Indonesian voice name matching
+    if (!match) {
+      match = voices.find(
+        (v) =>
+          v.name.toLowerCase().includes('indonesia') ||
+          v.lang.toLowerCase().includes('indonesia')
+      );
+    }
+
+    // 3. Fallback to default or first available voice so browser never fails silently
+    if (!match) {
+      match = voices.find((v) => v.default) || voices[0] || null;
+    }
+
+    this.selectedVoice = match || null;
   }
 
   /**
@@ -102,6 +132,7 @@ export class VoiceNavigator {
     this.isMuted = muted;
     if (muted && this.synth) {
       this.synth.cancel();
+      this.currentUtterance = null;
       this.onSpeakingChange?.(false);
     }
     if (typeof window !== 'undefined') {
@@ -115,6 +146,14 @@ export class VoiceNavigator {
 
   public getIsMuted(): boolean {
     return this.isMuted;
+  }
+
+  /**
+   * Returns current selected voice (for debugging/testing)
+   */
+  public getSelectedVoice(): SpeechSynthesisVoice | null {
+    this.ensureVoiceSelected();
+    return this.selectedVoice;
   }
 
   /**
@@ -134,34 +173,37 @@ export class VoiceNavigator {
 
       if (typeof SpeechSynthesisUtterance === 'undefined') return;
 
+      this.ensureVoiceSelected();
+
       const utterance = new SpeechSynthesisUtterance(text);
-      utterance.lang = 'id-ID';
-      utterance.rate = 1.0; // natural commuter pacing
-      utterance.pitch = 1.0;
-
-      if (!this.selectedVoice) {
-        const voices = this.synth.getVoices();
-        const indonesian = voices.find(
-          (v) => v.lang === 'id-ID' || v.lang === 'id' || v.lang.startsWith('id_')
-        );
-        if (indonesian) {
-          this.selectedVoice = indonesian;
-        }
-      }
-
       if (this.selectedVoice) {
         utterance.voice = this.selectedVoice;
+        utterance.lang = this.selectedVoice.lang || 'id-ID';
+      } else {
+        utterance.lang = 'id-ID';
       }
+      utterance.rate = 1.0;
+      utterance.pitch = 1.0;
+
+      // Retain utterance reference to protect from garbage collection halts in Chromium
+      this.currentUtterance = utterance;
 
       utterance.onstart = () => {
         this.onSpeakingChange?.(true);
       };
 
       utterance.onend = () => {
+        if (this.currentUtterance === utterance) {
+          this.currentUtterance = null;
+        }
         this.onSpeakingChange?.(false);
       };
 
-      utterance.onerror = () => {
+      utterance.onerror = (e) => {
+        if (this.currentUtterance === utterance) {
+          this.currentUtterance = null;
+        }
+        console.warn('[VoiceNavigator] Speech synthesis error:', e.error);
         this.onSpeakingChange?.(false);
       };
 
@@ -171,7 +213,8 @@ export class VoiceNavigator {
       if (this.synth.paused) {
         this.synth.resume();
       }
-    } catch {
+    } catch (err) {
+      console.warn('[VoiceNavigator] Failed to speak:', err);
       this.onSpeakingChange?.(false);
     }
   }
@@ -205,6 +248,13 @@ export class VoiceNavigator {
   }
 
   /**
+   * Checks if key has already been spoken
+   */
+  public hasSpoken(key: string): boolean {
+    return this.spokenKeys.has(key);
+  }
+
+  /**
    * Interrupts current speech with priority alert (e.g. Anti-Bablas)
    */
   public speakPriority(text: string): void {
@@ -216,9 +266,40 @@ export class VoiceNavigator {
    */
   public resetHistory(): void {
     this.spokenKeys.clear();
+    this.currentUtterance = null;
     if (this.synth) {
       this.synth.cancel();
     }
     this.onSpeakingChange?.(false);
+  }
+}
+
+let sharedVoiceNavigator: VoiceNavigator | null = null;
+
+/**
+ * Returns singleton instance of VoiceNavigator for app-wide turn-by-turn speech
+ */
+export function getVoiceNavigator(
+  customSynth?: SpeechSynthesis | null,
+  onSpeakingChange?: (isSpeaking: boolean) => void
+): VoiceNavigator {
+  if (customSynth !== undefined) {
+    return new VoiceNavigator(customSynth, onSpeakingChange);
+  }
+  if (!sharedVoiceNavigator) {
+    sharedVoiceNavigator = new VoiceNavigator(undefined, onSpeakingChange);
+  } else if (onSpeakingChange) {
+    sharedVoiceNavigator.setOnSpeakingChange(onSpeakingChange);
+  }
+  return sharedVoiceNavigator;
+}
+
+/**
+ * Resets the singleton instance (useful in testing)
+ */
+export function resetSharedVoiceNavigator(): void {
+  if (sharedVoiceNavigator) {
+    sharedVoiceNavigator.resetHistory();
+    sharedVoiceNavigator = null;
   }
 }

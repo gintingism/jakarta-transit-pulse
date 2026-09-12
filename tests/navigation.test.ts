@@ -17,6 +17,8 @@ import {
 import {
   VoiceNavigator,
   generateVoiceInstruction,
+  getVoiceNavigator,
+  resetSharedVoiceNavigator,
 } from '@/src/lib/voiceNavigator';
 import { BackgroundKeepAliveManager } from '@/src/lib/backgroundKeepAlive';
 import { RoutePlan } from '@/src/lib/transitEngine';
@@ -549,6 +551,49 @@ describe('Voice Guidance Engine', () => {
     const ssrNavigator = new VoiceNavigator(null);
     expect(() => ssrNavigator.speak('Test')).not.toThrow();
     expect(() => ssrNavigator.unlockAudio()).not.toThrow();
+  });
+
+  it('gracefully falls back to default voice if no id-ID voice exists on device', () => {
+    const mockSpeak = vi.fn();
+    const mockCancel = vi.fn();
+    const englishVoice = { lang: 'en-US', name: 'English David', default: true };
+    const frenchVoice = { lang: 'fr-FR', name: 'French Hortense', default: false };
+
+    const fakeSpeechSynthesis = {
+      speak: mockSpeak,
+      cancel: mockCancel,
+      getVoices: vi.fn().mockReturnValue([englishVoice, frenchVoice]),
+      onvoiceschanged: null,
+      speaking: false,
+    };
+
+    const navigator = new VoiceNavigator(fakeSpeechSynthesis as unknown as SpeechSynthesis);
+    expect(navigator.getSelectedVoice()).toEqual(englishVoice);
+
+    navigator.speak('Mulai perjalanan.');
+    expect(mockSpeak).toHaveBeenCalledTimes(1);
+  });
+
+  it('shares state across getVoiceNavigator singleton and clears on resetHistory', () => {
+    resetSharedVoiceNavigator();
+    const mockSpeak = vi.fn();
+    const mockCancel = vi.fn();
+
+    const fakeSynth = {
+      speak: mockSpeak,
+      cancel: mockCancel,
+      getVoices: vi.fn().mockReturnValue([{ lang: 'id-ID', name: 'Indonesian', default: true }]),
+      onvoiceschanged: null,
+      speaking: false,
+    };
+
+    const instance1 = getVoiceNavigator(fakeSynth as unknown as SpeechSynthesis);
+    instance1.markAsSpoken('leg-1');
+    expect(instance1.hasSpoken('leg-1')).toBe(true);
+
+    instance1.resetHistory();
+    expect(instance1.hasSpoken('leg-1')).toBe(false);
+    expect(mockCancel).toHaveBeenCalled();
   });
 
   it('safely handles null, empty, or fallback route plans without throwing', () => {
