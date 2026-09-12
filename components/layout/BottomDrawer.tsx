@@ -123,6 +123,7 @@ export default function BottomDrawer() {
               </button>
 
               <button
+                id="tour-alarm-tab"
                 type="button"
                 onClick={(e) => {
                   e.stopPropagation();
@@ -239,7 +240,7 @@ export default function BottomDrawer() {
               <span className="hidden sm:inline">•</span>
               <span>Oleh <strong className="font-semibold text-slate-600 dark:text-zinc-400">Bonifasius Toto Neguisa Ginting</strong> (@gintingism)</span>
               <span className="hidden sm:inline">•</span>
-              <span className="inline-block px-1.5 py-0.2 rounded bg-slate-100 dark:bg-zinc-800 text-[9px] text-slate-500 dark:text-zinc-400 border border-slate-200 dark:border-zinc-700">GNU AGPLv3</span>
+              <span className="inline-block px-1.5 py-0.2 rounded bg-slate-100 dark:bg-zinc-800 text-[9px] text-slate-500 dark:text-zinc-400 border border-slate-200 dark:border-zinc-700">All Rights Reserved</span>
             </div>
           </div>
         </div>

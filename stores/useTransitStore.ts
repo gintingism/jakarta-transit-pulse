@@ -106,6 +106,11 @@ interface TransitStore {
   startApproachSimulation: (targetStopId?: string) => void;
   stopApproachSimulation: () => void;
   stepApproachSimulation: (deltaProgress: number) => void;
+
+  // Onboarding Tour
+  isTourOpen: boolean;
+  openTour: () => void;
+  closeTour: () => void;
 }
 
 export const useTransitStore = create<TransitStore>((set, get) => ({
@@ -124,6 +129,7 @@ export const useTransitStore = create<TransitStore>((set, get) => ({
   isDrawerExpanded: true,
   activeSegmentId: null,
   isAboutModalOpen: false,
+  isTourOpen: false,
 
   // Live Navigation State
   isNavigating: false,
@@ -369,6 +375,8 @@ export const useTransitStore = create<TransitStore>((set, get) => ({
     }));
   },
   setAboutModalOpen: (open) => set({ isAboutModalOpen: open }),
+  openTour: () => set({ isTourOpen: true }),
+  closeTour: () => set({ isTourOpen: false }),
 
   setUserCoords: (coords) => {
     if (!coords) {

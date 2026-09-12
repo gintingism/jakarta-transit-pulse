@@ -393,8 +393,8 @@ export default function AboutModal() {
 
           <div className="pt-0.5">
             <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[9.5px] font-medium bg-slate-200/80 dark:bg-zinc-800/80 text-slate-600 dark:text-zinc-400 border border-slate-300/70 dark:border-zinc-700/70">
-              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
-              Berlisensi terbuka di bawah GNU AGPLv3
+              <span className="w-1.5 h-1.5 rounded-full bg-slate-400" />
+              © 2026 All Rights Reserved
             </span>
           </div>
         </div>

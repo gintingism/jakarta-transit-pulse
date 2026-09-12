@@ -12,6 +12,7 @@ import {
   LocateFixed,
   Loader2,
   Info,
+  HelpCircle,
 } from 'lucide-react';
 import { ThemeToggle } from '@/components/ThemeToggle';
 
@@ -32,6 +33,7 @@ export default function FloatingHud() {
   const setMapCenter = useTransitStore((s) => s.setMapCenter);
   const isLocating = useTransitStore((s) => s.isLocating);
   const setAboutModalOpen = useTransitStore((s) => s.setAboutModalOpen);
+  const openTour = useTransitStore((s) => s.openTour);
 
   const targetStation = alarmTargetStopId ? STATION_MAP[alarmTargetStopId] : null;
 
@@ -157,6 +159,7 @@ export default function FloatingHud() {
 
         {/* Quick GPS Locate & Follow Button */}
         <button
+          id="tour-recenter-btn"
           type="button"
           onClick={handleLocateMe}
           disabled={isLocating}
@@ -190,6 +193,17 @@ export default function FloatingHud() {
 
         {/* Theme Toggle Button */}
         <ThemeToggle />
+
+        {/* Tour Guide Help Button */}
+        <button
+          type="button"
+          onClick={openTour}
+          className="p-2 sm:p-2.5 rounded-2xl bg-white/95 dark:bg-zinc-900/90 border border-slate-200/80 dark:border-zinc-800/80 backdrop-blur-md shadow-xl text-slate-700 dark:text-zinc-300 hover:text-emerald-600 dark:hover:text-emerald-400 hover:scale-105 active:scale-95 transition cursor-pointer"
+          title="Panduan Penggunaan Aplikasi"
+          aria-label="Panduan Penggunaan Aplikasi"
+        >
+          <HelpCircle className="w-4 h-4" />
+        </button>
 
         {/* About Developer & App Info Modal Trigger */}
         <button

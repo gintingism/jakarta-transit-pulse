@@ -66,7 +66,7 @@ export default function RouteFinder() {
   return (
     <div className="space-y-4 text-slate-900 dark:text-zinc-100">
       {/* Route Inputs Card */}
-      <div className="bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-xl p-4 shadow-xl">
+      <div id="tour-route-input" className="bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-xl p-4 shadow-xl">
         <div className="flex items-center justify-between mb-3 pb-2 border-b border-slate-200 dark:border-zinc-800/80">
           <div className="flex items-center gap-1.5">
             <Navigation className="w-3.5 h-3.5 text-sky-400" />
@@ -209,11 +209,13 @@ export default function RouteFinder() {
           <span>Menghitung rute multi-modal & jalur pejalan kaki...</span>
         </div>
       ) : routePlan ? (
-        <RouteCard
-          route={routePlan}
-          isAlarmArmed={Boolean(isDestinationArmed)}
-          onSetAlarm={handleSetAlarm}
-        />
+        <div id="tour-route-results">
+          <RouteCard
+            route={routePlan}
+            isAlarmArmed={Boolean(isDestinationArmed)}
+            onSetAlarm={handleSetAlarm}
+          />
+        </div>
       ) : (originPlace || originStopId) && (destinationPlace || destinationStopId) ? (
         <div className="bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-xl p-4 text-center text-xs text-slate-600 dark:text-zinc-400">
           Tidak ditemukan rute transit yang terhubung. Coba pilih stasiun transit perantara.

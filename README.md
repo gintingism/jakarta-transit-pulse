@@ -109,6 +109,8 @@ Dibuat oleh **Bonifasius Toto Neguisa Ginting (@gintingism)** untuk seluruh peju
 
 ---
 
-### Lisensi
+### Hak Cipta & Lisensi
 
-Didistribusikan di bawah lisensi **GNU Affero General Public License v3.0 (GNU AGPLv3)**. Proyek ini bersifat *copyleft open-source* untuk menjamin kebebasan kode sumber bagi seluruh komunitas komuter dan pengembang publik. Lihat berkas [LICENSE](LICENSE) untuk ketentuan hukum lengkap.
+> **Hak Cipta © 2026 Bonifasius Toto Neguisa Ginting. All rights reserved.**
+>
+> Repositori ini dipublikasikan secara publik murni sebagai etalase portofolio dan peninjauan pribadi. Kode sumber tidak dilisensikan di bawah lisensi open source. Penggunaan, penyalinan, modifikasi, pendistribusian ulang, maupun deployment ulang (*re-hosting*) tanpa izin tertulis resmi tidak diperbolehkan. Fitur dukungan/donasi bersifat sukarela sebagai apresiasi dan tidak memberikan hak cipta atau lisensi apa pun.

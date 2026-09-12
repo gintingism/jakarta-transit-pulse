@@ -11,6 +11,7 @@ import NavigationHUD from '@/components/navigation/NavigationHUD';
 import { useGeoAlert } from '@/hooks/useGeoAlert';
 import { useTransitStore } from '@/stores/useTransitStore';
 import { initAudioContext } from '@/lib/audio';
+import TourCoachmark from '@/components/onboarding/TourCoachmark';
 
 export default function HomePage() {
   useGeoAlert();
@@ -65,6 +66,7 @@ export default function HomePage() {
       {!isNavigating && <BottomDrawer />}
       <GeoAlarmModal />
       <AboutModal />
+      <TourCoachmark />
     </main>
   );
 }
