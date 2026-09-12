@@ -89,11 +89,10 @@ export class VoiceNavigator {
   public unlockAudio(): void {
     if (!this.synth || typeof window === 'undefined') return;
     try {
-      if (typeof SpeechSynthesisUtterance !== 'undefined') {
-        const silentUtterance = new SpeechSynthesisUtterance('');
-        silentUtterance.volume = 0;
-        this.synth.speak(silentUtterance);
+      if (this.synth.paused) {
+        this.synth.resume();
       }
+      this.synth.cancel();
     } catch {
       // Ignore initial gesture unlock errors
     }
@@ -129,12 +128,26 @@ export class VoiceNavigator {
         this.synth.cancel();
       }
 
+      if (this.synth.paused) {
+        this.synth.resume();
+      }
+
       if (typeof SpeechSynthesisUtterance === 'undefined') return;
 
       const utterance = new SpeechSynthesisUtterance(text);
       utterance.lang = 'id-ID';
-      utterance.rate = 1.05; // natural commuter pacing
+      utterance.rate = 1.0; // natural commuter pacing
       utterance.pitch = 1.0;
+
+      if (!this.selectedVoice) {
+        const voices = this.synth.getVoices();
+        const indonesian = voices.find(
+          (v) => v.lang === 'id-ID' || v.lang === 'id' || v.lang.startsWith('id_')
+        );
+        if (indonesian) {
+          this.selectedVoice = indonesian;
+        }
+      }
 
       if (this.selectedVoice) {
         utterance.voice = this.selectedVoice;
@@ -153,6 +166,11 @@ export class VoiceNavigator {
       };
 
       this.synth.speak(utterance);
+
+      // Workaround for Chrome bug where synthesis pauses right after speaking
+      if (this.synth.paused) {
+        this.synth.resume();
+      }
     } catch {
       this.onSpeakingChange?.(false);
     }

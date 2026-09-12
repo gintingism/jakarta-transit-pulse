@@ -457,7 +457,17 @@ export default function RouteCard({
         <div className="flex items-center gap-2 flex-wrap justify-end">
           <button
             type="button"
-            onClick={() => startNavigation(route)}
+            onClick={() => {
+              if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
+                try {
+                  window.speechSynthesis.cancel();
+                  window.speechSynthesis.resume();
+                } catch {
+                  // Ignore
+                }
+              }
+              startNavigation(route);
+            }}
             className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold bg-cyan-600 hover:bg-cyan-500 text-white transition shadow-sm hover:shadow-cyan-500/25 active:scale-95 cursor-pointer"
             title="Mulai Panduan Navigasi Turn-by-Turn GPS & Suara"
           >

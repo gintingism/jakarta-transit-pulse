@@ -27,6 +27,7 @@ import {
 } from 'lucide-react';
 import { BackgroundKeepAliveManager } from '@/src/lib/backgroundKeepAlive';
 import { useTransitStore } from '@/stores/useTransitStore';
+import { playTransitArrivalChime } from '@/lib/audio';
 
 export interface NavigationHUDProps {
   legs: RouteLeg[];
@@ -186,11 +187,12 @@ export default function NavigationHUD({
     }
   }, [state.currentLocation, state.isCentered]);
 
-  // Initial instruction speech
+  // Initial instruction speech on navigation start
   useEffect(() => {
-    if (legs.length > 0 && voiceNavRef.current && !voiceNavRef.current.getIsMuted()) {
+    if (legs.length > 0) {
       const firstLeg = legs[0];
       if (!firstLeg) return;
+
       const initialText =
         firstLeg.type === 'WALK'
           ? generateVoiceInstruction({
@@ -198,8 +200,26 @@ export default function NavigationHUD({
               distanceMeters: firstLeg.distanceMeters || 0,
               targetName: firstLeg.to?.name || 'tujuan',
             })
-          : firstLeg.instruction || '';
-      voiceNavRef.current.speakOnce(`initial-${firstLeg.id}`, initialText);
+          : `Mulai perjalanan. ${firstLeg.instruction || ''}`;
+
+      // Play arrival chime for instant audio feedback
+      playTransitArrivalChime();
+
+      // Ensure voice navigator speaks initial instruction after brief mount delay
+      const timer = setTimeout(() => {
+        if (!voiceNavRef.current && typeof window !== 'undefined') {
+          voiceNavRef.current = new VoiceNavigator(undefined, (speaking) => {
+            setIsSpeaking(speaking);
+          });
+        }
+        if (voiceNavRef.current && !voiceNavRef.current.getIsMuted()) {
+          voiceNavRef.current.speak(initialText, true);
+          voiceNavRef.current.markAsSpoken(`initial-${firstLeg.id}`);
+          voiceNavRef.current.markAsSpoken(`leg-${firstLeg.id}`);
+        }
+      }, 250);
+
+      return () => clearTimeout(timer);
     }
   }, [legs]);
 
@@ -217,6 +237,15 @@ export default function NavigationHUD({
       armAlarm(targetId);
     }
   }, [isAlarmArmed, currentLeg, armAlarm, disarmAlarm]);
+
+  const handleToggleMute = useCallback(() => {
+    toggleMute();
+    if (state.isMuted) {
+      setTimeout(() => {
+        voiceNavRef.current?.speak('Panduan suara diaktifkan', true);
+      }, 100);
+    }
+  }, [toggleMute, state.isMuted]);
 
   // Sync MediaSession lock screen whenever leg or distance updates
   useEffect(() => {
@@ -394,7 +423,7 @@ export default function NavigationHUD({
               {/* Mute/Unmute Audio */}
               <button
                 type="button"
-                onClick={toggleMute}
+                onClick={handleToggleMute}
                 className={`p-2 rounded-xl text-xs transition border cursor-pointer ${
                   state.isMuted
                     ? 'bg-zinc-800/80 border-zinc-700 text-zinc-400 hover:text-zinc-200'
