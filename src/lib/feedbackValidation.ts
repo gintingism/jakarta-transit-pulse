@@ -1,4 +1,4 @@
-﻿export type FeedbackCategory =
+export type FeedbackCategory =
   | 'GPS_NAVIGATION'
   | 'TRANSIT_ROUTE'
   | 'FEATURE_REQUEST'
@@ -274,6 +274,11 @@ export class SimpleRateLimiter {
     key: string,
     now: number = Date.now()
   ): { allowed: boolean; retryAfterSeconds: number } {
+    // Prune stale entries if map gets large
+    if (this.requests.size > 200) {
+      this.prune(now);
+    }
+
     const timestamps = this.requests.get(key) || [];
     const validTimestamps = timestamps.filter((t) => now - t < this.windowMs);
 
@@ -283,12 +288,28 @@ export class SimpleRateLimiter {
         1,
         Math.ceil((this.windowMs - (now - oldest)) / 1000)
       );
+      this.requests.set(key, validTimestamps);
       return { allowed: false, retryAfterSeconds };
     }
 
     validTimestamps.push(now);
     this.requests.set(key, validTimestamps);
     return { allowed: true, retryAfterSeconds: 0 };
+  }
+
+  public prune(now: number = Date.now()): void {
+    this.requests.forEach((timestamps: number[], key: string) => {
+      const active = timestamps.filter((t: number) => now - t < this.windowMs);
+      if (active.length === 0) {
+        this.requests.delete(key);
+      } else {
+        this.requests.set(key, active);
+      }
+    });
+  }
+
+  public getEntryCount(): number {
+    return this.requests.size;
   }
 
   public reset(): void {

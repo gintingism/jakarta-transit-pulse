@@ -1,4 +1,4 @@
-﻿import { describe, it, expect, beforeEach } from 'vitest';
+import { describe, it, expect, beforeEach } from 'vitest';
 import { APP_VERSION, CHANGELOG_ENTRIES } from '@/src/data/changelog';
 import {
   validateFeedbackPayload,
@@ -199,5 +199,15 @@ describe('SimpleRateLimiter', () => {
 
     // ip-b should still be allowed
     expect(limiter.isAllowed('ip-b', now).allowed).toBe(true);
+  });
+
+  it('should prune expired keys from memory map', () => {
+    const now = 100000;
+    limiter.isAllowed('stale-ip', now);
+    expect(limiter.getEntryCount()).toBe(1);
+
+    // After window expires
+    limiter.prune(now + 65000);
+    expect(limiter.getEntryCount()).toBe(0);
   });
 });

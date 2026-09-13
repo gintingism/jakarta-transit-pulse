@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 
 import React, { useEffect, useRef, useState, useCallback } from 'react';
 import { useTransitStore } from '@/stores/useTransitStore';
@@ -70,11 +70,25 @@ function computePopoverPos(
   placement: TourStep['placement'],
   vw: number,
   vh: number
-): PopoverPosition {
+): { pos: PopoverPosition; effectivePlacement: TourStep['placement'] } {
+  let effectivePlacement = placement;
+
+  // On mobile (< 640px), horizontal placement often collides with full-width drawers.
+  // Prefer vertical placement (top or bottom) based on available space.
+  if (vw < 640) {
+    if (rect.top > POPOVER_H_EST + PADDING * 2) {
+      effectivePlacement = 'top';
+    } else if (vh - (rect.top + rect.height) > POPOVER_H_EST + PADDING * 2) {
+      effectivePlacement = 'bottom';
+    } else {
+      effectivePlacement = 'top';
+    }
+  }
+
   let top = 0;
   let left = 0;
 
-  switch (placement) {
+  switch (effectivePlacement) {
     case 'right':
       top = rect.top + rect.height / 2 - POPOVER_H_EST / 2;
       left = rect.left + rect.width + PADDING;
@@ -96,7 +110,7 @@ function computePopoverPos(
   left = Math.max(PADDING, Math.min(left, vw - POPOVER_W - PADDING));
   top = Math.max(PADDING, Math.min(top, vh - POPOVER_H_EST - PADDING));
 
-  return { top, left };
+  return { pos: { top, left }, effectivePlacement };
 }
 
 function getArrowStyle(
@@ -151,16 +165,27 @@ export default function TourCoachmark() {
   const [stepIndex, setStepIndex] = useState<number | null>(null);
   const [spotlightRect, setSpotlightRect] = useState<SpotlightRect | null>(null);
   const [popoverPos, setPopoverPos] = useState<PopoverPosition>({ top: 0, left: 0 });
+  const [currentPlacement, setCurrentPlacement] = useState<TourStep['placement']>('right');
   const [visible, setVisible] = useState(false);
   const resizeObserverRef = useRef<ResizeObserver | null>(null);
 
   const computeSpotlight = useCallback(
     (targetId: string, idx: number) => {
       const el = document.getElementById(targetId);
-      if (!el) return;
-      const bcr = el.getBoundingClientRect();
       const vw = window.innerWidth;
       const vh = window.innerHeight;
+
+      if (!el) {
+        // Graceful fallback if target element is temporarily unmounted
+        setSpotlightRect(null);
+        setPopoverPos({
+          top: Math.max(PADDING, Math.round(vh / 2 - POPOVER_H_EST / 2)),
+          left: Math.max(PADDING, Math.round(vw / 2 - POPOVER_W / 2)),
+        });
+        return;
+      }
+
+      const bcr = el.getBoundingClientRect();
       const rect: SpotlightRect = {
         top: bcr.top - PADDING,
         left: bcr.left - PADDING,
@@ -170,7 +195,9 @@ export default function TourCoachmark() {
       setSpotlightRect(rect);
       const step = TOUR_STEPS[idx];
       if (step) {
-        setPopoverPos(computePopoverPos(rect, step.placement, vw, vh));
+        const { pos, effectivePlacement } = computePopoverPos(rect, step.placement, vw, vh);
+        setPopoverPos(pos);
+        setCurrentPlacement(effectivePlacement);
       }
     },
     []
@@ -295,7 +322,7 @@ export default function TourCoachmark() {
         {spotlightRect && (
           <div
             className="absolute w-3 h-3 bg-zinc-900 rotate-45"
-            style={getArrowStyle(step.placement, spotlightRect, popoverPos)}
+            style={getArrowStyle(currentPlacement, spotlightRect, popoverPos)}
           />
         )}
 

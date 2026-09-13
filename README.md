@@ -48,6 +48,15 @@ Makanya project ini dibikin: biar ada navigator transit yang beneran ngerti kond
 - **Share Rute via URL (Deep Link)**
   Tinggal klik tombol Bagikan di kartu rute. Parameter stasiun asal dan tujuan otomatis nempel di URL, jadi temen lu tinggal buka linknya dan langsung dapet rute yang sama persis.
 
+- **Tur Panduan Onboarding (Coachmark Interaktif)**
+  Tur 4 langkah yang memandu pengguna baru memahami alur input rute, pemilihan opsi transit & tarif, pemasangan alarm anti-bablas, hingga tombol live ikuti posisi GPS.
+
+- **Sistem Log Pembaruan & Versioning (Changelog)**
+  Dialog "Apa yang Baru" terstruktur per rilis versi (Fitur Baru, Perbaikan, Peningkatan) lengkap dengan indikator titik merah otomatis saat rilis versi baru diterbitkan.
+
+- **Formulir Feedback Pengguna (Integrasi Discord Webhook)**
+  Saluran pelaporan kendala rute/GPS dan saran fitur langsung dari antarmuka web, terhubung langsung ke Discord pengembang lengkap dengan metadata diagnostik otomatis dan proteksi rate limiting.
+
 ---
 
 ### Di Balik Layar (Engineering Stuff)
@@ -55,8 +64,8 @@ Makanya project ini dibikin: biar ada navigator transit yang beneran ngerti kond
 Project ini dibikin bukan cuma buat pajangan:
 - **No `any` club**: TypeScript-nya strictly typed dari ujung kepala sampe ujung kaki.
 - **Pure domain logic**: Algoritma graf rute, hitungan tarif, dan formula jarak (Haversine) dipisah total di folder `src/lib/`. Gak dicampur aduk sama komponen UI atau Leaflet, jadi enteng dan gampang dites.
-- **114 automated unit tests**: Dites menyeluruh pake Vitest. Dari mulai skenario jarak per pecahan kilometer KRL, tarif relasi KA Bandara bolak-balik, konversi kecepatan live, estimasi cuaca stasiun (BMKG/Open-Meteo), turn-by-turn navigation logic, CARTO tile proxy security, geofencing drift, hingga rute transit multi-moda.
-- **Peta gratisan rasa premium**: Gak pake Google Maps API yang rawan bikin developer kena tagihan kartu kredit mendadak. Peta jalan pake kombinasi Leaflet, CartoDB Dark Matter, dan OpenStreetMap tiles dengan custom dark styling.
+- **139 automated unit tests**: Dites menyeluruh pake Vitest. Dari mulai skenario jarak per pecahan kilometer KRL, tarif relasi KA Bandara bolak-balik, konversi kecepatan live, estimasi cuaca stasiun (BMKG/Open-Meteo), turn-by-turn navigation logic, CARTO tile proxy security, geofencing drift, hingga validasi payload feedback Discord & rate limiting.
+- **Peta gratisan rasa premium**: Gak pake Google Maps API yang rawan bikin developer kena tagihan kartu kredit mendadak. Peta jalan pake kombinasi Leaflet, CartoDB Dark Matter (dengan server-side API proxy aman), dan OpenStreetMap tiles dengan custom dark styling.
 
 ---
 
@@ -92,10 +101,10 @@ Tinggal buka `http://localhost:3000` di browser.
 npm test
 ```
 
-Output bakal nunjukin 114 test ijo semua:
+Output bakal nunjukin 139 test ijo semua:
 ```
-Test Files  8 passed (8)
-Tests       114 passed (114)
+Test Files  9 passed (9)
+Tests       139 passed (139)
 ```
 
 ---

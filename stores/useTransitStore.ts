@@ -386,7 +386,12 @@ export const useTransitStore = create<TransitStore>((set, get) => ({
     }));
   },
   setAboutModalOpen: (open) => set({ isAboutModalOpen: open }),
-  openTour: () => set({ isTourOpen: true }),
+  openTour: () =>
+    set({
+      isTourOpen: true,
+      isDrawerExpanded: true,
+      activeTab: 'planner',
+    }),
   closeTour: () => set({ isTourOpen: false }),
   setChangelogModalOpen: (open) => set({ isChangelogModalOpen: open }),
   setFeedbackModalOpen: (open) => set({ isFeedbackModalOpen: open }),

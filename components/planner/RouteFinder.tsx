@@ -203,32 +203,32 @@ export default function RouteFinder() {
       </div>
 
       {/* Computed Route Card Result */}
-      {isRoutingLoading ? (
-        <div className="bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-xl p-5 text-center text-xs text-slate-600 dark:text-zinc-400 flex flex-col items-center justify-center gap-2">
-          <div className="w-5 h-5 border-2 border-sky-400 border-t-transparent rounded-full animate-spin" />
-          <span>Menghitung rute multi-modal & jalur pejalan kaki...</span>
-        </div>
-      ) : routePlan ? (
-        <div id="tour-route-results">
+      <div id="tour-route-results" className="w-full">
+        {isRoutingLoading ? (
+          <div className="bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-xl p-5 text-center text-xs text-slate-600 dark:text-zinc-400 flex flex-col items-center justify-center gap-2">
+            <div className="w-5 h-5 border-2 border-sky-400 border-t-transparent rounded-full animate-spin" />
+            <span>Menghitung rute multi-modal & jalur pejalan kaki...</span>
+          </div>
+        ) : routePlan ? (
           <RouteCard
             route={routePlan}
             isAlarmArmed={Boolean(isDestinationArmed)}
             onSetAlarm={handleSetAlarm}
           />
-        </div>
-      ) : (originPlace || originStopId) && (destinationPlace || destinationStopId) ? (
-        <div className="bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-xl p-4 text-center text-xs text-slate-600 dark:text-zinc-400">
-          Tidak ditemukan rute transit yang terhubung. Coba pilih stasiun transit perantara.
-        </div>
-      ) : (originPlace || originStopId) ? (
-        <div className="bg-white dark:bg-zinc-900/50 border border-dashed border-slate-200 dark:border-zinc-800 rounded-xl p-5 text-center text-slate-500 dark:text-zinc-500 text-xs leading-relaxed">
-          Lokasi asal sudah siap. Ketik stasiun atau tempat tujuan pada kolom <strong>Mau ke Mana?</strong> di atas, atau klik salah satu rekomendasi tujuan cepat untuk melihat rute transit!
-        </div>
-      ) : (
-        <div className="bg-white dark:bg-zinc-900/50 border border-dashed border-slate-200 dark:border-zinc-800 rounded-xl p-5 text-center text-slate-500 dark:text-zinc-500 text-xs leading-relaxed">
-          Pilih lokasi asal dan tujuan di atas atau gunakan tombol <strong>Lokasi Saya</strong> untuk langsung merencanakan perjalanan dari tempat Anda berdiri!
-        </div>
-      )}
+        ) : (originPlace || originStopId) && (destinationPlace || destinationStopId) ? (
+          <div className="bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-xl p-4 text-center text-xs text-slate-600 dark:text-zinc-400">
+            Tidak ditemukan rute transit yang terhubung. Coba pilih stasiun transit perantara.
+          </div>
+        ) : (originPlace || originStopId) ? (
+          <div className="bg-white dark:bg-zinc-900/50 border border-dashed border-slate-200 dark:border-zinc-800 rounded-xl p-5 text-center text-slate-500 dark:text-zinc-500 text-xs leading-relaxed">
+            Lokasi asal sudah siap. Ketik stasiun atau tempat tujuan pada kolom <strong>Mau ke Mana?</strong> di atas, atau klik salah satu rekomendasi tujuan cepat untuk melihat rute transit!
+          </div>
+        ) : (
+          <div className="bg-white dark:bg-zinc-900/50 border border-dashed border-slate-200 dark:border-zinc-800 rounded-xl p-5 text-center text-slate-500 dark:text-zinc-500 text-xs leading-relaxed">
+            Pilih lokasi asal dan tujuan di atas atau gunakan tombol <strong>Lokasi Saya</strong> untuk langsung merencanakan perjalanan dari tempat Anda berdiri!
+          </div>
+        )}
+      </div>
     </div>
   );
 }
