@@ -53,11 +53,24 @@ export default function AboutModal() {
 
   const handleCopyNmid = async () => {
     try {
-      await navigator.clipboard.writeText(DEVELOPER_CONFIG.qris.nmid);
+      if (typeof navigator !== 'undefined' && navigator.clipboard && navigator.clipboard.writeText) {
+        await navigator.clipboard.writeText(DEVELOPER_CONFIG.qris.nmid);
+        setCopiedNmid(true);
+        setTimeout(() => setCopiedNmid(false), 2000);
+        return;
+      }
+      // Fallback for older browsers
+      const textArea = document.createElement('textarea');
+      textArea.value = DEVELOPER_CONFIG.qris.nmid;
+      textArea.style.position = 'fixed';
+      textArea.style.opacity = '0';
+      document.body.appendChild(textArea);
+      textArea.select();
+      document.execCommand('copy');
+      document.body.removeChild(textArea);
       setCopiedNmid(true);
       setTimeout(() => setCopiedNmid(false), 2000);
     } catch {
-      // Fallback if clipboard API fails
       setCopiedNmid(false);
     }
   };

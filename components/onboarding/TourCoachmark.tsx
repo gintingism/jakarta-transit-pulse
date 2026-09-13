@@ -224,30 +224,6 @@ export default function TourCoachmark() {
     }
   }, [isTourOpen]);
 
-  // Track target position
-  useEffect(() => {
-    if (stepIndex === null || !visible) return;
-    const step = TOUR_STEPS[stepIndex];
-    if (!step) return;
-
-    computeSpotlight(step.targetId, stepIndex);
-
-    const el = document.getElementById(step.targetId);
-    if (el && typeof ResizeObserver !== 'undefined') {
-      resizeObserverRef.current?.disconnect();
-      const ro = new ResizeObserver(() => computeSpotlight(step.targetId, stepIndex));
-      ro.observe(el);
-      resizeObserverRef.current = ro;
-    }
-
-    const handleResize = () => computeSpotlight(step.targetId, stepIndex);
-    window.addEventListener('resize', handleResize);
-    return () => {
-      window.removeEventListener('resize', handleResize);
-      resizeObserverRef.current?.disconnect();
-    };
-  }, [stepIndex, visible, computeSpotlight]);
-
   const completeTour = useCallback(() => {
     if (typeof window !== 'undefined') {
       localStorage.setItem(TOUR_STORAGE_KEY, 'true');
@@ -257,6 +233,46 @@ export default function TourCoachmark() {
     setSpotlightRect(null);
     closeTour();
   }, [closeTour]);
+
+  const isAlarmTriggered = useTransitStore((s) => s.isAlarmTriggered);
+
+  // Auto-dismiss tour if emergency geo-alarm triggers
+  useEffect(() => {
+    if (isAlarmTriggered && visible) {
+      completeTour();
+    }
+  }, [isAlarmTriggered, visible, completeTour]);
+
+  // Track target position
+  useEffect(() => {
+    if (stepIndex === null || !visible) return;
+    const step = TOUR_STEPS[stepIndex];
+    if (!step) return;
+
+    // Bring target into view if partially off-screen
+    const el = document.getElementById(step.targetId);
+    if (el) {
+      el.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'nearest' });
+    }
+
+    computeSpotlight(step.targetId, stepIndex);
+
+    if (el && typeof ResizeObserver !== 'undefined') {
+      resizeObserverRef.current?.disconnect();
+      const ro = new ResizeObserver(() => computeSpotlight(step.targetId, stepIndex));
+      ro.observe(el);
+      resizeObserverRef.current = ro;
+    }
+
+    const handleReposition = () => computeSpotlight(step.targetId, stepIndex);
+    window.addEventListener('resize', handleReposition);
+    window.addEventListener('scroll', handleReposition, { capture: true, passive: true });
+    return () => {
+      window.removeEventListener('resize', handleReposition);
+      window.removeEventListener('scroll', handleReposition, { capture: true });
+      resizeObserverRef.current?.disconnect();
+    };
+  }, [stepIndex, visible, computeSpotlight]);
 
   const handleNext = useCallback(() => {
     if (stepIndex === null) return;

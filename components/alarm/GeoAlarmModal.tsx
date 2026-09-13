@@ -47,7 +47,7 @@ export default function GeoAlarmModal(props: GeoAlarmModalProps) {
     distanceMeters !== null ? formatDistance(distanceMeters) : `< ${thresholdMeters} m`;
 
   return (
-    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/85 backdrop-blur-md animate-fade-in">
+    <div className="fixed inset-0 z-[10001] flex items-center justify-center p-4 bg-black/85 backdrop-blur-md animate-fade-in">
       <div className="relative w-full max-w-sm bg-slate-50 dark:bg-zinc-950 border-2 border-rose-500/80 rounded-2xl p-6 shadow-[0_0_50px_rgba(244,63,94,0.3)] text-center text-slate-900 dark:text-zinc-100 animate-scale-up">
         {/* Pulsing Warning Badge */}
         <div className="flex justify-center mb-4">

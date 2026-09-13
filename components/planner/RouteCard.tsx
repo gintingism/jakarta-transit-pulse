@@ -70,7 +70,7 @@ export default function RouteCard({
   const totalWalkMeters = firstMileMeters + lastMileMeters + transferMeters;
   const impact = calculateTripImpact(route.totalDistanceKm, route.totalFareIdr, totalWalkMeters);
 
-  const handleShare = () => {
+  const handleShare = async () => {
     if (typeof window === 'undefined') return;
     const url = new URL(window.location.href);
     const fromVal = originStopId || originPlace?.name;
@@ -80,9 +80,41 @@ export default function RouteCard({
     if (toVal) url.searchParams.set('to', toVal);
     if (routePreference) url.searchParams.set('pref', routePreference);
 
-    void navigator.clipboard.writeText(url.toString());
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2200);
+    const shareUrl = url.toString();
+
+    // Mobile Web Share API support
+    if (typeof navigator !== 'undefined' && navigator.share) {
+      try {
+        await navigator.share({
+          title: 'Jakarta Transit Pulse - Rute Perjalanan',
+          text: `Rute transit dari ${originDisplay} ke ${destDisplay} (~${route.totalDurationMinutes} mnt):`,
+          url: shareUrl,
+        });
+        return;
+      } catch {
+        // User cancelled or share declined, continue to clipboard copy
+      }
+    }
+
+    // Safe clipboard fallback
+    try {
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        await navigator.clipboard.writeText(shareUrl);
+      } else {
+        const textArea = document.createElement('textarea');
+        textArea.value = shareUrl;
+        textArea.style.position = 'fixed';
+        textArea.style.opacity = '0';
+        document.body.appendChild(textArea);
+        textArea.select();
+        document.execCommand('copy');
+        document.body.removeChild(textArea);
+      }
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2200);
+    } catch {
+      setCopied(false);
+    }
   };
 
   return (
