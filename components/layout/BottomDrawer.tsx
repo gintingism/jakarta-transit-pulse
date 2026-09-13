@@ -17,7 +17,9 @@ import {
   Github,
   Info,
   Coffee,
+  MessageSquarePlus,
 } from 'lucide-react';
+import { APP_VERSION } from '@/src/data/changelog';
 
 export default function BottomDrawer() {
   const activeTab = useTransitStore((s) => s.activeTab);
@@ -27,6 +29,9 @@ export default function BottomDrawer() {
   const isAlarmArmed = useTransitStore((s) => s.isAlarmArmed);
   const routePlan = useTransitStore((s) => s.routePlan);
   const setAboutModalOpen = useTransitStore((s) => s.setAboutModalOpen);
+  const setChangelogModalOpen = useTransitStore((s) => s.setChangelogModalOpen);
+  const setFeedbackModalOpen = useTransitStore((s) => s.setFeedbackModalOpen);
+  const hasUnreadChangelog = useTransitStore((s) => s.hasUnreadChangelog);
 
   const handleTabClick = (tab: 'planner' | 'alarm') => {
     setActiveTab(tab);
@@ -205,6 +210,16 @@ export default function BottomDrawer() {
               <span className="text-slate-300 dark:text-zinc-700">•</span>
               <button
                 type="button"
+                onClick={() => setFeedbackModalOpen(true)}
+                className="hover:text-emerald-600 dark:hover:text-emerald-400 transition cursor-pointer flex items-center gap-1 font-semibold text-emerald-600 dark:text-emerald-400"
+                aria-label="Buka formulir feedback pengguna"
+              >
+                <MessageSquarePlus className="w-3.5 h-3.5" />
+                <span>Beri Masukan</span>
+              </button>
+              <span className="text-slate-300 dark:text-zinc-700">•</span>
+              <button
+                type="button"
                 onClick={() => setAboutModalOpen(true)}
                 className="hover:text-amber-600 dark:hover:text-amber-400 text-amber-600 dark:text-amber-400 transition cursor-pointer flex items-center gap-1 font-semibold"
                 aria-label="Dukung proyek via QRIS"
@@ -239,6 +254,18 @@ export default function BottomDrawer() {
               <span>&copy; {new Date().getFullYear()} Jakarta Transit Pulse</span>
               <span className="hidden sm:inline">•</span>
               <span>Oleh <strong className="font-semibold text-slate-600 dark:text-zinc-400">Bonifasius Toto Neguisa Ginting</strong> (@gintingism)</span>
+              <span className="hidden sm:inline">•</span>
+              <button
+                type="button"
+                onClick={() => setChangelogModalOpen(true)}
+                className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded bg-sky-100 dark:bg-sky-950/80 text-[9.5px] font-mono font-bold text-sky-700 dark:text-sky-300 border border-sky-300 dark:border-sky-800/80 hover:bg-sky-200 dark:hover:bg-sky-900 transition cursor-pointer"
+                title="Buka log pembaruan versi (Changelog)"
+              >
+                <span>{APP_VERSION}</span>
+                {hasUnreadChangelog && (
+                  <span className="w-1.5 h-1.5 rounded-full bg-rose-500 animate-pulse" />
+                )}
+              </button>
               <span className="hidden sm:inline">•</span>
               <span className="inline-block px-1.5 py-0.2 rounded bg-slate-100 dark:bg-zinc-800 text-[9px] text-slate-500 dark:text-zinc-400 border border-slate-200 dark:border-zinc-700">All Rights Reserved</span>
             </div>

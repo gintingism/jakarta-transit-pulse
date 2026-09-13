@@ -111,6 +111,14 @@ interface TransitStore {
   isTourOpen: boolean;
   openTour: () => void;
   closeTour: () => void;
+
+  // Changelog & Feedback Modals
+  isChangelogModalOpen: boolean;
+  setChangelogModalOpen: (open: boolean) => void;
+  isFeedbackModalOpen: boolean;
+  setFeedbackModalOpen: (open: boolean) => void;
+  hasUnreadChangelog: boolean;
+  setHasUnreadChangelog: (unread: boolean) => void;
 }
 
 export const useTransitStore = create<TransitStore>((set, get) => ({
@@ -130,6 +138,9 @@ export const useTransitStore = create<TransitStore>((set, get) => ({
   activeSegmentId: null,
   isAboutModalOpen: false,
   isTourOpen: false,
+  isChangelogModalOpen: false,
+  isFeedbackModalOpen: false,
+  hasUnreadChangelog: false,
 
   // Live Navigation State
   isNavigating: false,
@@ -377,6 +388,9 @@ export const useTransitStore = create<TransitStore>((set, get) => ({
   setAboutModalOpen: (open) => set({ isAboutModalOpen: open }),
   openTour: () => set({ isTourOpen: true }),
   closeTour: () => set({ isTourOpen: false }),
+  setChangelogModalOpen: (open) => set({ isChangelogModalOpen: open }),
+  setFeedbackModalOpen: (open) => set({ isFeedbackModalOpen: open }),
+  setHasUnreadChangelog: (unread) => set({ hasUnreadChangelog: unread }),
 
   setUserCoords: (coords) => {
     if (!coords) {

@@ -12,6 +12,9 @@ import { useGeoAlert } from '@/hooks/useGeoAlert';
 import { useTransitStore } from '@/stores/useTransitStore';
 import { initAudioContext } from '@/lib/audio';
 import TourCoachmark from '@/components/onboarding/TourCoachmark';
+import ChangelogModal, { CHANGELOG_STORAGE_KEY } from '@/components/ChangelogModal';
+import FeedbackModal from '@/components/FeedbackModal';
+import { APP_VERSION } from '@/src/data/changelog';
 
 export default function HomePage() {
   useGeoAlert();
@@ -21,9 +24,18 @@ export default function HomePage() {
   const navigationLegs = useTransitStore((s) => s.navigationLegs);
   const stopNavigation = useTransitStore((s) => s.stopNavigation);
   const setUserLocation = useTransitStore((s) => s.setUserLocation);
+  const setHasUnreadChangelog = useTransitStore((s) => s.setHasUnreadChangelog);
 
   useEffect(() => {
     calculateCurrentRoute();
+
+    // Check if there is an unread changelog / app version update
+    if (typeof window !== 'undefined') {
+      const lastSeen = localStorage.getItem(CHANGELOG_STORAGE_KEY);
+      if (lastSeen !== APP_VERSION) {
+        setHasUnreadChangelog(true);
+      }
+    }
 
     // Resume audio context on first user gesture (browser autoplay policy)
     const handleFirstInteraction = () => {
@@ -66,6 +78,8 @@ export default function HomePage() {
       {!isNavigating && <BottomDrawer />}
       <GeoAlarmModal />
       <AboutModal />
+      <ChangelogModal />
+      <FeedbackModal />
       <TourCoachmark />
     </main>
   );

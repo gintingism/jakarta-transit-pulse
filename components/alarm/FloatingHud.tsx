@@ -13,6 +13,8 @@ import {
   Loader2,
   Info,
   HelpCircle,
+  Sparkles,
+  MessageSquarePlus,
 } from 'lucide-react';
 import { ThemeToggle } from '@/components/ThemeToggle';
 
@@ -34,6 +36,10 @@ export default function FloatingHud() {
   const isLocating = useTransitStore((s) => s.isLocating);
   const setAboutModalOpen = useTransitStore((s) => s.setAboutModalOpen);
   const openTour = useTransitStore((s) => s.openTour);
+  const isChangelogModalOpen = useTransitStore((s) => s.isChangelogModalOpen);
+  const setChangelogModalOpen = useTransitStore((s) => s.setChangelogModalOpen);
+  const setFeedbackModalOpen = useTransitStore((s) => s.setFeedbackModalOpen);
+  const hasUnreadChangelog = useTransitStore((s) => s.hasUnreadChangelog);
 
   const targetStation = alarmTargetStopId ? STATION_MAP[alarmTargetStopId] : null;
 
@@ -194,11 +200,39 @@ export default function FloatingHud() {
         {/* Theme Toggle Button */}
         <ThemeToggle />
 
+        {/* Changelog & Updates Modal Trigger */}
+        <button
+          type="button"
+          onClick={() => setChangelogModalOpen(true)}
+          className="relative p-2 sm:p-2.5 rounded-2xl bg-white/95 dark:bg-zinc-900/90 border border-slate-200/80 dark:border-zinc-800/80 backdrop-blur-md shadow-xl text-slate-700 dark:text-zinc-300 hover:text-amber-500 dark:hover:text-amber-400 hover:scale-105 active:scale-95 transition cursor-pointer"
+          title="Apa yang Baru (Log Pembaruan Versi)"
+          aria-label="Log Pembaruan Versi"
+        >
+          <Sparkles className="w-4 h-4" />
+          {hasUnreadChangelog && (
+            <span className="absolute top-1.5 right-1.5 flex h-2 w-2">
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-rose-400 opacity-75" />
+              <span className="relative inline-flex rounded-full h-2 w-2 bg-rose-500" />
+            </span>
+          )}
+        </button>
+
+        {/* User Feedback Form Trigger */}
+        <button
+          type="button"
+          onClick={() => setFeedbackModalOpen(true)}
+          className="p-2 sm:p-2.5 rounded-2xl bg-white/95 dark:bg-zinc-900/90 border border-slate-200/80 dark:border-zinc-800/80 backdrop-blur-md shadow-xl text-slate-700 dark:text-zinc-300 hover:text-emerald-600 dark:hover:text-emerald-400 hover:scale-105 active:scale-95 transition cursor-pointer"
+          title="Beri Masukan & Lapor Kendala"
+          aria-label="Beri Masukan & Lapor Kendala"
+        >
+          <MessageSquarePlus className="w-4 h-4" />
+        </button>
+
         {/* Tour Guide Help Button */}
         <button
           type="button"
           onClick={openTour}
-          className="p-2 sm:p-2.5 rounded-2xl bg-white/95 dark:bg-zinc-900/90 border border-slate-200/80 dark:border-zinc-800/80 backdrop-blur-md shadow-xl text-slate-700 dark:text-zinc-300 hover:text-emerald-600 dark:hover:text-emerald-400 hover:scale-105 active:scale-95 transition cursor-pointer"
+          className="p-2 sm:p-2.5 rounded-2xl bg-white/95 dark:bg-zinc-900/90 border border-slate-200/80 dark:border-zinc-800/80 backdrop-blur-md shadow-xl text-slate-700 dark:text-zinc-300 hover:text-sky-600 dark:hover:text-sky-400 hover:scale-105 active:scale-95 transition cursor-pointer"
           title="Panduan Penggunaan Aplikasi"
           aria-label="Panduan Penggunaan Aplikasi"
         >
@@ -209,11 +243,16 @@ export default function FloatingHud() {
         <button
           type="button"
           onClick={() => setAboutModalOpen(true)}
-          className="p-2 sm:p-2.5 rounded-2xl bg-white/95 dark:bg-zinc-900/90 border border-slate-200/80 dark:border-zinc-800/80 backdrop-blur-md shadow-xl text-slate-700 dark:text-zinc-300 hover:text-sky-600 dark:hover:text-sky-400 hover:scale-105 active:scale-95 transition cursor-pointer"
+          className="relative p-2 sm:p-2.5 rounded-2xl bg-white/95 dark:bg-zinc-900/90 border border-slate-200/80 dark:border-zinc-800/80 backdrop-blur-md shadow-xl text-slate-700 dark:text-zinc-300 hover:text-sky-600 dark:hover:text-sky-400 hover:scale-105 active:scale-95 transition cursor-pointer"
           title="Tentang Pengembang & Aplikasi"
           aria-label="Tentang Pengembang & Aplikasi"
         >
           <Info className="w-4 h-4 text-slate-600 dark:text-zinc-300 hover:text-sky-500" />
+          {hasUnreadChangelog && (
+            <span className="absolute top-1.5 right-1.5 flex h-2 w-2">
+              <span className="relative inline-flex rounded-full h-2 w-2 bg-rose-500" />
+            </span>
+          )}
         </button>
       </div>
     </div>

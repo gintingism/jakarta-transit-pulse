@@ -21,7 +21,9 @@ import {
   Check,
   Download,
   QrCode,
+  MessageSquarePlus,
 } from 'lucide-react';
+import { APP_VERSION } from '@/src/data/changelog';
 
 export const DEVELOPER_CONFIG = {
   name: 'Bonifasius Toto Neguisa Ginting',
@@ -45,6 +47,8 @@ export const DEVELOPER_CONFIG = {
 export default function AboutModal() {
   const isAboutModalOpen = useTransitStore((s) => s.isAboutModalOpen);
   const setAboutModalOpen = useTransitStore((s) => s.setAboutModalOpen);
+  const setChangelogModalOpen = useTransitStore((s) => s.setChangelogModalOpen);
+  const setFeedbackModalOpen = useTransitStore((s) => s.setFeedbackModalOpen);
   const [copiedNmid, setCopiedNmid] = useState(false);
 
   const handleCopyNmid = async () => {
@@ -111,6 +115,17 @@ export default function AboutModal() {
                 <span className="text-[10px] font-bold px-1.5 py-0.5 bg-rose-100 dark:bg-rose-950/80 text-rose-700 dark:text-rose-300 rounded border border-rose-200 dark:border-rose-800/60 font-mono">
                   AntiBablas
                 </span>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setAboutModalOpen(false);
+                    setChangelogModalOpen(true);
+                  }}
+                  className="text-[10px] font-mono font-bold px-1.5 py-0.5 bg-sky-100 dark:bg-sky-950/80 text-sky-700 dark:text-sky-300 rounded border border-sky-200 dark:border-sky-800/60 hover:bg-sky-200 dark:hover:bg-sky-900 transition cursor-pointer"
+                  title="Lihat Apa yang Baru di Versi Ini"
+                >
+                  {APP_VERSION}
+                </button>
               </div>
               <p className="text-xs text-slate-500 dark:text-zinc-400 mt-0.5">
                 Modern Multi-Modal Transit Planner & GPS Geo-Alarm
@@ -353,12 +368,35 @@ export default function AboutModal() {
             </div>
           </div>
 
+          {/* User Feedback Callout */}
+          <div className="p-3 rounded-xl bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-900/50 flex items-center justify-between gap-3">
+            <div className="flex items-center gap-2 text-emerald-900 dark:text-emerald-300">
+              <MessageSquarePlus className="w-4 h-4 shrink-0 text-emerald-600 dark:text-emerald-400" />
+              <div className="text-[11px]">
+                <div className="font-bold">Punya Masukan atau Laporan Kendala?</div>
+                <div className="text-[10px] text-emerald-700 dark:text-emerald-400">
+                  Bantu tingkatkan akurasi rute dan kenyamanan navigasi transit.
+                </div>
+              </div>
+            </div>
+            <button
+              type="button"
+              onClick={() => {
+                setAboutModalOpen(false);
+                setFeedbackModalOpen(true);
+              }}
+              className="px-2.5 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white font-semibold text-[11px] transition shrink-0 cursor-pointer shadow-xs active:scale-95"
+            >
+              Beri Masukan
+            </button>
+          </div>
+
           {/* Project Repository Link */}
           <div className="p-3 rounded-xl bg-sky-50 dark:bg-sky-950/40 border border-sky-200 dark:border-sky-900/50 flex items-center justify-between gap-3">
             <div className="flex items-center gap-2 text-sky-900 dark:text-sky-300">
               <Github className="w-4 h-4 shrink-0" />
               <div className="text-[11px]">
-                <div className="font-bold">Kode Sumber Terbuka (Open Source)</div>
+                <div className="font-bold">Repositori Portofolio & Kode Sumber</div>
                 <div className="text-[10px] text-sky-700 dark:text-sky-400">
                   github.com/gintingism/jakarta-transit-pulse
                 </div>
@@ -391,7 +429,19 @@ export default function AboutModal() {
             <span className="text-sky-600 dark:text-sky-400 font-mono text-[9.5px]">({DEVELOPER_CONFIG.handle})</span>
           </div>
 
-          <div className="pt-0.5">
+          <div className="pt-0.5 flex flex-wrap items-center justify-center gap-2">
+            <button
+              type="button"
+              onClick={() => {
+                setAboutModalOpen(false);
+                setChangelogModalOpen(true);
+              }}
+              className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[9.5px] font-mono font-bold bg-sky-100 dark:bg-sky-950/80 text-sky-700 dark:text-sky-300 border border-sky-300 dark:border-sky-800 hover:bg-sky-200 transition cursor-pointer"
+              title="Lihat Log Pembaruan"
+            >
+              <Sparkles className="w-2.5 h-2.5 text-sky-500" />
+              <span>{APP_VERSION} Changelog</span>
+            </button>
             <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[9.5px] font-medium bg-slate-200/80 dark:bg-zinc-800/80 text-slate-600 dark:text-zinc-400 border border-slate-300/70 dark:border-zinc-700/70">
               <span className="w-1.5 h-1.5 rounded-full bg-slate-400" />
               © 2026 All Rights Reserved
