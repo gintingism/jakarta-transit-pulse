@@ -47,7 +47,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en" suppressHydrationWarning className="h-full w-full">
+    <html lang="id" suppressHydrationWarning className="h-full w-full">
       <head>
         <meta name="mobile-web-app-capable" content="yes" />
       </head>
