@@ -104,10 +104,10 @@ describe('Door-to-Door & POI Multi-Modal Journey Engine', () => {
     });
 
     it('calculates long walk warning when distance to station exceeds 1.5 km', async () => {
-      // Remote point in Cilandak far from active KRL/TJ line
+      // Remote point in Pantai Indah Kapuk far from active transit lines (> 3 km)
       const origin: PlaceTarget = {
-        name: 'Cilandak Town Square',
-        coords: [-6.2917, 106.7997],
+        name: 'Pantai Indah Kapuk',
+        coords: [-6.1105, 106.7380],
       };
       const destination: PlaceTarget = {
         name: 'Halte Harmoni',

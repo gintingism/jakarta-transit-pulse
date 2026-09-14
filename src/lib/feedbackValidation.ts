@@ -18,6 +18,8 @@ export interface FeedbackPayload {
   message: string;
   contact?: string;
   metadata?: FeedbackMetadata;
+  botToken?: string;
+  honeypot?: string;
 }
 
 export interface ValidationSuccess {
@@ -31,6 +33,106 @@ export interface ValidationFailure {
 }
 
 export type ValidationResult = ValidationSuccess | ValidationFailure;
+
+const VERIFICATION_SECRET = 'transit-pulse-bot-shield-2026';
+export const MIN_HUMAN_DELAY_MS = 400; // minimum interaction time
+export const TOKEN_TTL_MS = 30 * 60 * 1000; // 30 minutes valid window
+
+/**
+ * Pure deterministic hash function for stateless human challenge tokens.
+ * Works seamlessly across browser, Node.js server, and test runners with zero dependencies.
+ */
+export function computeVerificationHash(str: string): string {
+  let h1 = 0xdeadbeef;
+  let h2 = 0x41c6ce57;
+  for (let i = 0; i < str.length; i++) {
+    const ch = str.charCodeAt(i);
+    h1 = Math.imul(h1 ^ ch, 2654435761);
+    h2 = Math.imul(h2 ^ ch, 1597334677);
+  }
+  h1 = Math.imul(h1 ^ (h1 >>> 16), 2246822507);
+  h1 ^= Math.imul(h2 ^ (h2 >>> 13), 3266489909);
+  h2 = Math.imul(h2 ^ (h2 >>> 16), 2246822507);
+  h2 ^= Math.imul(h1 ^ (h1 >>> 13), 3266489909);
+  return (4294967296 * (2097151 & h2) + (h1 >>> 0)).toString(36);
+}
+
+/**
+ * Generates a signed human verification token when user checks "Saya bukan robot"
+ */
+export function generateHumanVerificationToken(issuedAt: number = Date.now()): string {
+  const hash = computeVerificationHash(`${issuedAt}:${VERIFICATION_SECRET}`);
+  return `${issuedAt}.${hash}`;
+}
+
+/**
+ * Validates the human challenge token and ensures honeypot field is untouched
+ */
+export function verifyHumanChallenge(
+  token: unknown,
+  honeypot?: unknown,
+  now: number = Date.now()
+): { isValid: boolean; error?: string } {
+  // 1. Honeypot check: automated form bots always fill every visible/invisible input field
+  if (honeypot !== undefined && honeypot !== null && String(honeypot).trim().length > 0) {
+    return {
+      isValid: false,
+      error: 'Pengiriman ditolak karena terdeteksi aktivitas bot otomatis.',
+    };
+  }
+
+  // 2. Token presence check
+  if (typeof token !== 'string' || !token.includes('.')) {
+    return {
+      isValid: false,
+      error: 'Mohon selesaikan verifikasi "Saya bukan robot" terlebih dahulu.',
+    };
+  }
+
+  const parts = token.split('.');
+  if (parts.length !== 2) {
+    return {
+      isValid: false,
+      error: 'Token verifikasi robot tidak valid.',
+    };
+  }
+
+  const [timeStr, hash] = parts;
+  const timestamp = parseInt(timeStr, 10);
+  if (isNaN(timestamp)) {
+    return {
+      isValid: false,
+      error: 'Format waktu token verifikasi robot tidak valid.',
+    };
+  }
+
+  // 3. Signature verification
+  const expectedHash = computeVerificationHash(`${timestamp}:${VERIFICATION_SECRET}`);
+  if (hash !== expectedHash) {
+    return {
+      isValid: false,
+      error: 'Tanda verifikasi robot tidak sah atau telah dimodifikasi.',
+    };
+  }
+
+  // 4. Elapsed time checks (instant bot script detection & token expiration)
+  const elapsed = now - timestamp;
+  if (elapsed < MIN_HUMAN_DELAY_MS) {
+    return {
+      isValid: false,
+      error: 'Pengiriman terdeteksi terlalu cepat. Mohon coba sesaat lagi.',
+    };
+  }
+
+  if (elapsed > TOKEN_TTL_MS) {
+    return {
+      isValid: false,
+      error: 'Sesi verifikasi "Saya bukan robot" telah kadaluarsa. Mohon centang ulang kotak verifikasi.',
+    };
+  }
+
+  return { isValid: true };
+}
 
 export const FEEDBACK_CATEGORIES: Record<
   FeedbackCategory,
@@ -70,14 +172,37 @@ export function isFeedbackCategory(val: unknown): val is FeedbackCategory {
   return typeof val === 'string' && VALID_CATEGORIES.includes(val as FeedbackCategory);
 }
 
-export function validateFeedbackPayload(input: unknown): ValidationResult {
+export interface FeedbackValidationOptions {
+  now?: number;
+  skipBotCheck?: boolean;
+}
+
+export function validateFeedbackPayload(
+  input: unknown,
+  options?: FeedbackValidationOptions | number
+): ValidationResult {
+  const opts: FeedbackValidationOptions =
+    typeof options === 'number' ? { now: options } : options || {};
+  const now = opts.now ?? Date.now();
+
   if (!input || typeof input !== 'object') {
     return { isValid: false, error: 'Payload harus berupa objek JSON.' };
   }
 
   const record = input as Record<string, unknown>;
 
-  // Validate category
+  // 1. Anti-Bot Human Verification & Honeypot Trap
+  if (!opts.skipBotCheck) {
+    const challengeResult = verifyHumanChallenge(record.botToken, record.honeypot, now);
+    if (!challengeResult.isValid) {
+      return {
+        isValid: false,
+        error: challengeResult.error || 'Verifikasi robot gagal.',
+      };
+    }
+  }
+
+  // 2. Validate category
   if (!isFeedbackCategory(record.category)) {
     return {
       isValid: false,
@@ -162,6 +287,7 @@ export function validateFeedbackPayload(input: unknown): ValidationResult {
       message: trimmedMessage,
       contact: sanitizedContact,
       metadata: sanitizedMetadata,
+      botToken: record.botToken as string,
     },
   };
 }

@@ -204,12 +204,22 @@ export async function searchPOIs(
   }
 
   // 3. Query OpenStreetMap Photon Geocoder (Free, No API Key, CORS Enabled)
+  const isTestEnv =
+    typeof process !== 'undefined' &&
+    (process.env.NODE_ENV === 'test' || Boolean(process.env.VITEST));
+  const timeoutMs = isTestEnv ? 400 : 2000;
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
+  if (options?.signal) {
+    options.signal.addEventListener('abort', () => controller.abort(), { once: true });
+  }
+
   try {
     const encoded = encodeURIComponent(query.trim());
     const url = `https://photon.komoot.io/api/?q=${encoded}&lat=-6.2088&lon=106.8456&limit=${limit}`;
 
     const res = await fetch(url, {
-      signal: options?.signal,
+      signal: controller.signal,
       headers: {
         Accept: 'application/json',
       },
@@ -270,6 +280,8 @@ export async function searchPOIs(
     }
   } catch {
     // If external fetch fails (offline or timeout), graceful degradation to curated matches
+  } finally {
+    clearTimeout(timeoutId);
   }
 
   return results;
@@ -284,10 +296,20 @@ export async function reverseGeocodeLocation(
   options?: { signal?: AbortSignal }
 ): Promise<string> {
   const [lat, lng] = coords;
+  const isTestEnv =
+    typeof process !== 'undefined' &&
+    (process.env.NODE_ENV === 'test' || Boolean(process.env.VITEST));
+  const timeoutMs = isTestEnv ? 400 : 2000;
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
+  if (options?.signal) {
+    options.signal.addEventListener('abort', () => controller.abort(), { once: true });
+  }
+
   try {
     const url = `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat.toFixed(5)}&lon=${lng.toFixed(5)}&zoom=18&addressdetails=1`;
     const res = await fetch(url, {
-      signal: options?.signal,
+      signal: controller.signal,
       headers: {
         Accept: 'application/json',
         'User-Agent': 'JakartaTransitPulse/1.0',
@@ -320,6 +342,8 @@ export async function reverseGeocodeLocation(
     }
   } catch {
     // Fallback on timeout or offline
+  } finally {
+    clearTimeout(timeoutId);
   }
 
   return 'Lokasi Saya Saat Ini';

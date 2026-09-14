@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 
 import React, { useState, useEffect } from 'react';
 import { useTransitStore } from '@/stores/useTransitStore';
@@ -6,6 +6,7 @@ import { APP_VERSION } from '@/src/data/changelog';
 import {
   FeedbackCategory,
   FEEDBACK_CATEGORIES,
+  generateHumanVerificationToken,
 } from '@/src/lib/feedbackValidation';
 import {
   X,
@@ -61,6 +62,10 @@ export default function FeedbackModal() {
   const [submitSuccess, setSubmitSuccess] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [showMetadata, setShowMetadata] = useState(false);
+  const [botVerified, setBotVerified] = useState(false);
+  const [botVerifying, setBotVerifying] = useState(false);
+  const [botToken, setBotToken] = useState<string | null>(null);
+  const [honeypot, setHoneypot] = useState('');
 
   // Close modal on Escape key press
   useEffect(() => {
@@ -83,7 +88,25 @@ export default function FeedbackModal() {
       setCategory('GPS_NAVIGATION');
       setSubmitSuccess(false);
       setErrorMessage(null);
+      setBotVerified(false);
+      setBotVerifying(false);
+      setBotToken(null);
+      setHoneypot('');
     }, 250);
+  };
+
+  const handleVerifyBot = () => {
+    if (botVerified || botVerifying || isSubmitting) return;
+    setBotVerifying(true);
+    setErrorMessage(null);
+
+    // Human challenge calculation delay (~600ms to exceed MIN_HUMAN_DELAY_MS safely)
+    setTimeout(() => {
+      const token = generateHumanVerificationToken();
+      setBotToken(token);
+      setBotVerified(true);
+      setBotVerifying(false);
+    }, 600);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -93,6 +116,11 @@ export default function FeedbackModal() {
     const trimmedMsg = message.trim();
     if (trimmedMsg.length < 5) {
       setErrorMessage('Mohon jelaskan masukan Anda dengan minimal 5 karakter.');
+      return;
+    }
+
+    if (!botVerified || !botToken) {
+      setErrorMessage('Mohon selesaikan verifikasi "Saya bukan robot" terlebih dahulu.');
       return;
     }
 
@@ -121,6 +149,8 @@ export default function FeedbackModal() {
           message: trimmedMsg,
           contact: contact.trim() || undefined,
           metadata,
+          botToken,
+          honeypot: honeypot.trim() || undefined,
         }),
       });
 
@@ -348,6 +378,105 @@ export default function FeedbackModal() {
                 )}
               </div>
 
+              {/* Invisible Honeypot Trap for Form Crawlers & Bots */}
+              <div
+                style={{
+                  opacity: 0,
+                  position: 'absolute',
+                  top: 0,
+                  left: 0,
+                  height: 0,
+                  width: 0,
+                  zIndex: -1,
+                  overflow: 'hidden',
+                  pointerEvents: 'none',
+                }}
+                aria-hidden="true"
+                tabIndex={-1}
+              >
+                <label htmlFor="bot_hp_field">Do not fill this field</label>
+                <input
+                  id="bot_hp_field"
+                  type="text"
+                  name="bot_hp_field"
+                  value={honeypot}
+                  onChange={(e) => setHoneypot(e.target.value)}
+                  tabIndex={-1}
+                  autoComplete="off"
+                />
+              </div>
+
+              {/* Interactive Anti-Bot Human Verification Widget */}
+              <div
+                onClick={handleVerifyBot}
+                role="checkbox"
+                aria-checked={botVerified}
+                aria-label="Verifikasi Saya bukan robot"
+                tabIndex={0}
+                onKeyDown={(e) => {
+                  if (e.key === ' ' || e.key === 'Enter') {
+                    e.preventDefault();
+                    handleVerifyBot();
+                  }
+                }}
+                className={`p-3 rounded-xl border transition-all select-none flex items-center justify-between gap-3 ${
+                  botVerified
+                    ? 'bg-emerald-500/10 border-emerald-500/40 text-emerald-950 dark:text-emerald-100'
+                    : botVerifying
+                    ? 'bg-slate-100 dark:bg-zinc-950/90 border-slate-300 dark:border-zinc-700 cursor-wait'
+                    : 'bg-slate-50 dark:bg-zinc-950 border-slate-200 dark:border-zinc-800 hover:border-emerald-500/50 cursor-pointer shadow-sm'
+                }`}
+              >
+                <div className="flex items-center gap-3">
+                  <div
+                    className={`w-6 h-6 rounded-md flex items-center justify-center transition-all ${
+                      botVerified
+                        ? 'bg-emerald-600 text-white shadow-sm shadow-emerald-600/30'
+                        : botVerifying
+                        ? 'border-2 border-emerald-500/60 bg-white dark:bg-zinc-900'
+                        : 'border-2 border-slate-300 dark:border-zinc-600 bg-white dark:bg-zinc-900 hover:border-emerald-500'
+                    }`}
+                  >
+                    {botVerifying ? (
+                      <Loader2 className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400 animate-spin" />
+                    ) : botVerified ? (
+                      <CheckCircle2 className="w-4 h-4" />
+                    ) : null}
+                  </div>
+
+                  <div>
+                    <div className="text-xs font-bold flex items-center gap-1.5 text-slate-800 dark:text-zinc-100">
+                      {botVerified ? (
+                        <span className="text-emerald-600 dark:text-emerald-400">
+                          Terverifikasi sebagai manusia
+                        </span>
+                      ) : botVerifying ? (
+                        <span className="text-slate-600 dark:text-zinc-300">
+                          Memverifikasi interaksi...
+                        </span>
+                      ) : (
+                        <span>Saya bukan robot</span>
+                      )}
+                    </div>
+                    <div className="text-[10px] text-slate-500 dark:text-zinc-400">
+                      {botVerified
+                        ? 'Tantangan keamanan berhasil dipenuhi'
+                        : 'Klik kotak untuk validasi keamanan pengiriman'}
+                    </div>
+                  </div>
+                </div>
+
+                <div className="flex flex-col items-end text-right text-slate-400 dark:text-zinc-500 shrink-0">
+                  <div className="flex items-center gap-1 text-[10px] font-semibold tracking-tight">
+                    <ShieldCheck className="w-3.5 h-3.5 text-emerald-500" />
+                    <span>Anti-Spam</span>
+                  </div>
+                  <span className="text-[9px] text-slate-400 dark:text-zinc-500">
+                    Transit Shield
+                  </span>
+                </div>
+              </div>
+
               {/* Submit Action */}
               <div className="pt-2 flex items-center justify-end gap-2 border-t border-slate-200/80 dark:border-zinc-800/80">
                 <button
@@ -361,7 +490,7 @@ export default function FeedbackModal() {
 
                 <button
                   type="submit"
-                  disabled={isSubmitting || message.trim().length < 5}
+                  disabled={isSubmitting || message.trim().length < 5 || !botVerified}
                   className="flex items-center gap-1.5 px-4.5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs transition active:scale-95 shadow-md shadow-emerald-600/25 disabled:opacity-50 disabled:pointer-events-none cursor-pointer"
                 >
                   {isSubmitting ? (

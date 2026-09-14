@@ -1,4 +1,4 @@
-﻿export interface ChangelogChange {
+export interface ChangelogChange {
   type: 'feat' | 'fix' | 'perf';
   text: string;
 }
@@ -20,7 +20,7 @@ export const CHANGELOG_ENTRIES: ChangelogEntry[] = [
     changes: [
       {
         type: 'feat',
-        text: 'Sistem formulir feedback & pelaporan kendala terintegrasi langsung dengan Discord Webhook.',
+        text: 'Sistem formulir feedback terintegrasi Discord Webhook dilengkapi verifikasi anti-bot "Saya bukan robot" & honeypot.',
       },
       {
         type: 'feat',

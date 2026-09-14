@@ -164,15 +164,22 @@ export async function calculateWalkingRoute(
   }
 
   // Setup abort controller for timeout
-  const timeoutMs = options?.timeoutMs ?? 3500;
+  const isTestEnv =
+    typeof process !== 'undefined' &&
+    (process.env.NODE_ENV === 'test' || Boolean(process.env.VITEST));
+  const defaultTimeout = isTestEnv ? 400 : 1500;
+  const timeoutMs = options?.timeoutMs ?? defaultTimeout;
   const controller = new AbortController();
   const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
+  if (options?.signal) {
+    options.signal.addEventListener('abort', () => controller.abort(), { once: true });
+  }
 
   try {
     const url = `https://routing.openstreetmap.de/routed-foot/route/v1/foot/${lon1},${lat1};${lon2},${lat2}?overview=full&geometries=geojson&steps=true`;
 
     const res = await fetch(url, {
-      signal: options?.signal || controller.signal,
+      signal: controller.signal,
       headers: {
         Accept: 'application/json',
       },

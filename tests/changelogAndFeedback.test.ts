@@ -5,6 +5,7 @@ import {
   formatDiscordWebhookPayload,
   SimpleRateLimiter,
   FeedbackPayload,
+  generateHumanVerificationToken,
 } from '@/src/lib/feedbackValidation';
 
 describe('Changelog Data Integrity', () => {
@@ -34,11 +35,14 @@ describe('Changelog Data Integrity', () => {
 });
 
 describe('Feedback Payload Validation', () => {
+  const validToken = generateHumanVerificationToken(Date.now() - 1000);
+
   it('should successfully validate a well-formed payload', () => {
     const raw = {
       category: 'GPS_NAVIGATION',
       message: 'GPS akurasi melonjak saat melewati terowongan Manggarai.',
       contact: 'test@example.com',
+      botToken: validToken,
       metadata: {
         userAgent: 'Mozilla/5.0 Test',
         screenResolution: '390x844',
@@ -55,6 +59,7 @@ describe('Feedback Payload Validation', () => {
       expect(res.sanitized.contact).toBe('test@example.com');
       expect(res.sanitized.metadata?.screenResolution).toBe('390x844');
       expect(res.sanitized.metadata?.userLocation).toEqual([-6.2093, 106.8489]);
+      expect(res.sanitized.botToken).toBe(validToken);
     }
   });
 
@@ -62,6 +67,7 @@ describe('Feedback Payload Validation', () => {
     const raw = {
       category: 'INVALID_CATEGORY',
       message: 'Test valid message longer than five chars',
+      botToken: validToken,
     };
     const res = validateFeedbackPayload(raw);
     expect(res.isValid).toBe(false);
@@ -74,6 +80,7 @@ describe('Feedback Payload Validation', () => {
     const raw = {
       category: 'FEATURE_REQUEST',
       message: 'Hi',
+      botToken: validToken,
     };
     const res = validateFeedbackPayload(raw);
     expect(res.isValid).toBe(false);
@@ -86,6 +93,7 @@ describe('Feedback Payload Validation', () => {
     const raw = {
       category: 'UI_UX',
       message: 'A'.repeat(2001),
+      botToken: validToken,
     };
     const res = validateFeedbackPayload(raw);
     expect(res.isValid).toBe(false);
@@ -99,6 +107,7 @@ describe('Feedback Payload Validation', () => {
       category: 'OTHER',
       message: 'Valid feedback message for test.',
       contact: 'A'.repeat(105),
+      botToken: validToken,
     };
     const res = validateFeedbackPayload(raw);
     expect(res.isValid).toBe(false);
@@ -112,12 +121,29 @@ describe('Feedback Payload Validation', () => {
       category: 'TRANSIT_ROUTE',
       message: 'Ada rute yang keliru di koridor 1.',
       contact: '   ',
+      botToken: validToken,
     };
     const res = validateFeedbackPayload(raw);
     expect(res.isValid).toBe(true);
     if (res.isValid) {
       expect(res.sanitized.contact).toBeUndefined();
     }
+  });
+
+  it('should reject when bot verification is missing or honeypot is filled', () => {
+    const withoutBotToken = {
+      category: 'OTHER',
+      message: 'Valid message without robot verification.',
+    };
+    expect(validateFeedbackPayload(withoutBotToken).isValid).toBe(false);
+
+    const withHoneypot = {
+      category: 'OTHER',
+      message: 'Valid message with robot verification but honeypot filled.',
+      botToken: validToken,
+      honeypot: 'bot-spam-url.com',
+    };
+    expect(validateFeedbackPayload(withHoneypot).isValid).toBe(false);
   });
 });
 
