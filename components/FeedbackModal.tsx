@@ -1,13 +1,13 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useTransitStore } from '@/stores/useTransitStore';
 import { APP_VERSION } from '@/src/data/changelog';
 import {
   FeedbackCategory,
   FEEDBACK_CATEGORIES,
-  generateHumanVerificationToken,
 } from '@/src/lib/feedbackValidation';
+import { Turnstile, TurnstileInstance } from '@marsidev/react-turnstile';
 import {
   X,
   MessageSquarePlus,
@@ -63,9 +63,12 @@ export default function FeedbackModal() {
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [showMetadata, setShowMetadata] = useState(false);
   const [botVerified, setBotVerified] = useState(false);
-  const [botVerifying, setBotVerifying] = useState(false);
   const [botToken, setBotToken] = useState<string | null>(null);
   const [honeypot, setHoneypot] = useState('');
+  const turnstileRef = useRef<TurnstileInstance | null>(null);
+
+  const turnstileSiteKey =
+    process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY?.trim() || '1x00000000000000000000AA';
 
   // Close modal on Escape key press
   useEffect(() => {
@@ -89,24 +92,14 @@ export default function FeedbackModal() {
       setSubmitSuccess(false);
       setErrorMessage(null);
       setBotVerified(false);
-      setBotVerifying(false);
       setBotToken(null);
       setHoneypot('');
+      try {
+        turnstileRef.current?.reset();
+      } catch {
+        // Safe no-op if widget is unmounted
+      }
     }, 250);
-  };
-
-  const handleVerifyBot = () => {
-    if (botVerified || botVerifying || isSubmitting) return;
-    setBotVerifying(true);
-    setErrorMessage(null);
-
-    // Human challenge calculation delay (~600ms to exceed MIN_HUMAN_DELAY_MS safely)
-    setTimeout(() => {
-      const token = generateHumanVerificationToken();
-      setBotToken(token);
-      setBotVerified(true);
-      setBotVerifying(false);
-    }, 600);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -406,74 +399,44 @@ export default function FeedbackModal() {
                 />
               </div>
 
-              {/* Interactive Anti-Bot Human Verification Widget */}
-              <div
-                onClick={handleVerifyBot}
-                role="checkbox"
-                aria-checked={botVerified}
-                aria-label="Verifikasi Saya bukan robot"
-                tabIndex={0}
-                onKeyDown={(e) => {
-                  if (e.key === ' ' || e.key === 'Enter') {
-                    e.preventDefault();
-                    handleVerifyBot();
-                  }
-                }}
-                className={`p-3 rounded-xl border transition-all select-none flex items-center justify-between gap-3 ${
-                  botVerified
-                    ? 'bg-emerald-500/10 border-emerald-500/40 text-emerald-950 dark:text-emerald-100'
-                    : botVerifying
-                    ? 'bg-slate-100 dark:bg-zinc-950/90 border-slate-300 dark:border-zinc-700 cursor-wait'
-                    : 'bg-slate-50 dark:bg-zinc-950 border-slate-200 dark:border-zinc-800 hover:border-emerald-500/50 cursor-pointer shadow-sm'
-                }`}
-              >
-                <div className="flex items-center gap-3">
-                  <div
-                    className={`w-6 h-6 rounded-md flex items-center justify-center transition-all ${
-                      botVerified
-                        ? 'bg-emerald-600 text-white shadow-sm shadow-emerald-600/30'
-                        : botVerifying
-                        ? 'border-2 border-emerald-500/60 bg-white dark:bg-zinc-900'
-                        : 'border-2 border-slate-300 dark:border-zinc-600 bg-white dark:bg-zinc-900 hover:border-emerald-500'
-                    }`}
-                  >
-                    {botVerifying ? (
-                      <Loader2 className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400 animate-spin" />
-                    ) : botVerified ? (
-                      <CheckCircle2 className="w-4 h-4" />
-                    ) : null}
-                  </div>
-
-                  <div>
-                    <div className="text-xs font-bold flex items-center gap-1.5 text-slate-800 dark:text-zinc-100">
-                      {botVerified ? (
-                        <span className="text-emerald-600 dark:text-emerald-400">
-                          Terverifikasi sebagai manusia
-                        </span>
-                      ) : botVerifying ? (
-                        <span className="text-slate-600 dark:text-zinc-300">
-                          Memverifikasi interaksi...
-                        </span>
-                      ) : (
-                        <span>Saya bukan robot</span>
-                      )}
-                    </div>
-                    <div className="text-[10px] text-slate-500 dark:text-zinc-400">
-                      {botVerified
-                        ? 'Tantangan keamanan berhasil dipenuhi'
-                        : 'Klik kotak untuk validasi keamanan pengiriman'}
-                    </div>
-                  </div>
+              {/* Cloudflare Turnstile "Saya Bukan Robot" Widget */}
+              <div className="space-y-1.5 pt-1">
+                <div className="flex items-center justify-between text-slate-700 dark:text-zinc-300">
+                  <span className="font-bold text-xs flex items-center gap-1.5">
+                    <ShieldCheck className="w-3.5 h-3.5 text-emerald-500" />
+                    Verifikasi Keamanan <span className="text-rose-500">*</span>
+                  </span>
+                  <span className="text-[10px] text-slate-400 dark:text-zinc-500 font-medium">
+                    Cloudflare Turnstile
+                  </span>
                 </div>
 
-                <div className="flex flex-col items-end text-right text-slate-400 dark:text-zinc-500 shrink-0">
-                  <div className="flex items-center gap-1 text-[10px] font-semibold tracking-tight">
-                    <ShieldCheck className="w-3.5 h-3.5 text-emerald-500" />
-                    <span>Anti-Spam</span>
-                  </div>
-                  <span className="text-[9px] text-slate-400 dark:text-zinc-500">
-                    Transit Shield
-                  </span>
+                <div className="flex justify-center p-2 rounded-xl bg-slate-50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 min-h-[66px] items-center overflow-hidden">
+                  <Turnstile
+                    ref={turnstileRef}
+                    siteKey={turnstileSiteKey}
+                    onSuccess={(token) => {
+                      setBotToken(token);
+                      setBotVerified(true);
+                      setErrorMessage(null);
+                    }}
+                    onError={() => {
+                      setBotVerified(false);
+                      setBotToken(null);
+                      setErrorMessage(
+                        'Verifikasi Cloudflare Turnstile gagal. Silakan periksa koneksi internet Anda.'
+                      );
+                    }}
+                    onExpire={() => {
+                      setBotVerified(false);
+                      setBotToken(null);
+                    }}
+                    options={{
+                      theme: 'auto',
+                      language: 'id',
+                      size: 'flexible',
+                    }}
+                  />
                 </div>
               </div>
 

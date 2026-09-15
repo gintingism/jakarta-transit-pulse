@@ -1,8 +1,10 @@
-﻿import { NextRequest, NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import {
   validateFeedbackPayload,
   formatDiscordWebhookPayload,
   SimpleRateLimiter,
+  verifyTurnstileToken,
+  isInternalChallengeToken,
 } from '@/src/lib/feedbackValidation';
 
 // In-memory rate limiter: maximum 3 submissions per minute per client IP
@@ -60,6 +62,26 @@ export async function POST(request: NextRequest): Promise<Response> {
   }
 
   const sanitized = validation.sanitized;
+
+  // Verify Cloudflare Turnstile token if secret key is configured and not internal challenge
+  const turnstileSecretKey = process.env.TURNSTILE_SECRET_KEY?.trim();
+  const isInternal = isInternalChallengeToken(sanitized.botToken || '');
+
+  if (!isInternal && turnstileSecretKey) {
+    const turnstileResult = await verifyTurnstileToken(
+      sanitized.botToken,
+      turnstileSecretKey,
+      clientIp
+    );
+
+    if (!turnstileResult.isValid) {
+      return NextResponse.json(
+        { error: turnstileResult.error || 'Verifikasi Cloudflare Turnstile gagal.' },
+        { status: 400 }
+      );
+    }
+  }
+
   const webhookUrl = process.env.FEEDBACK_WEBHOOK_URL?.trim();
 
   // If webhook is not configured, log locally and return graceful response

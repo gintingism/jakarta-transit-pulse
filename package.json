@@ -12,6 +12,7 @@
     "type-check": "tsc --noEmit"
   },
   "dependencies": {
+    "@marsidev/react-turnstile": "^1.6.1",
     "canvas-confetti": "^1.9.3",
     "clsx": "^2.1.1",
     "leaflet": "^1.9.4",

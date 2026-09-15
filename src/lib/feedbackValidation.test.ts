@@ -3,6 +3,7 @@ import {
   validateFeedbackPayload,
   generateHumanVerificationToken,
   verifyHumanChallenge,
+  verifyTurnstileToken,
   formatDiscordWebhookPayload,
   SimpleRateLimiter,
   MIN_HUMAN_DELAY_MS,
@@ -202,5 +203,57 @@ describe('SimpleRateLimiter', () => {
     // After 61 seconds, request should be allowed again
     const allowedLater = limiter.isAllowed('user-1', t0 + 61000);
     expect(allowedLater.allowed).toBe(true);
+  });
+});
+
+describe('Cloudflare Turnstile Server Verification', () => {
+  it('rejects empty or non-string token', async () => {
+    const res1 = await verifyTurnstileToken('');
+    expect(res1.isValid).toBe(false);
+    expect(res1.error).toContain('Mohon selesaikan verifikasi Cloudflare Turnstile');
+
+    const res2 = await verifyTurnstileToken(null);
+    expect(res2.isValid).toBe(false);
+  });
+
+  it('validates successfully with official testing pass key', async () => {
+    const res = await verifyTurnstileToken(
+      '0.test_turnstile_response_token',
+      '1x0000000000000000000000000000000AA'
+    );
+    expect(res.isValid).toBe(true);
+    expect(res.error).toBeUndefined();
+  });
+
+  it('rejects invalid test tokens', async () => {
+    const res = await verifyTurnstileToken(
+      'invalid-test-token',
+      '1x0000000000000000000000000000000AA'
+    );
+    expect(res.isValid).toBe(false);
+    expect(res.error).toContain('tidak valid atau telah kedaluwarsa');
+  });
+
+  it('rejects when testing secret key is set to always block', async () => {
+    const res = await verifyTurnstileToken(
+      'valid_looking_token',
+      '2x0000000000000000000000000000000AB'
+    );
+    expect(res.isValid).toBe(false);
+    expect(res.error).toContain('ditolak');
+  });
+
+  it('validates feedback payload containing turnstile token', () => {
+    const input = {
+      category: 'UI_UX',
+      message: 'Perlu mode kontras tinggi untuk siang hari.',
+      botToken: '0.X123456789_turnstile_sample',
+      honeypot: '',
+    };
+    const res = validateFeedbackPayload(input);
+    expect(res.isValid).toBe(true);
+    if (res.isValid) {
+      expect(res.sanitized.botToken).toBe('0.X123456789_turnstile_sample');
+    }
   });
 });
