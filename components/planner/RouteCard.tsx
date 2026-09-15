@@ -123,11 +123,11 @@ export default function RouteCard({
       <div className="border-b border-slate-200 dark:border-zinc-800/90 pb-3 space-y-2">
         <div className="flex items-center justify-between">
           <div className="flex items-baseline gap-2">
-            <div className="flex items-center gap-1.5 text-slate-900 dark:text-zinc-100 font-bold text-base">
+            <div className="flex items-center gap-1.5 text-slate-900 dark:text-zinc-100 font-bold text-base tabular-nums">
               <Clock className="w-4 h-4 text-sky-500" />
               <span>~{route.totalDurationMinutes} mnt</span>
             </div>
-            <span className="text-xs font-medium text-slate-500 dark:text-zinc-400">
+            <span className="text-xs font-medium text-slate-500 dark:text-zinc-400 tabular-nums">
               ({route.totalDistanceKm} km)
             </span>
           </div>
@@ -155,7 +155,7 @@ export default function RouteCard({
             </button>
 
             {/* Total Fare Badge */}
-            <div className="flex items-center gap-1 text-xs font-bold text-emerald-700 dark:text-emerald-300 bg-emerald-50 dark:bg-emerald-950/80 border border-emerald-200 dark:border-emerald-800/60 px-2.5 py-1 rounded-lg">
+            <div className="flex items-center gap-1 text-xs font-bold text-emerald-700 dark:text-emerald-300 bg-emerald-50 dark:bg-emerald-950/80 border border-emerald-200 dark:border-emerald-800/60 px-2.5 py-1 rounded-lg tabular-nums">
               <CreditCard className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
               <span>Rp {route.totalFareIdr.toLocaleString('id-ID')}</span>
             </div>
@@ -169,14 +169,14 @@ export default function RouteCard({
               : `${route.segments.length - 1}x Transit Multi-Moda`}
           </span>
           <span className="text-slate-400 dark:text-zinc-600">•</span>
-          <span className="text-slate-500 dark:text-zinc-400">
+          <span className="text-slate-500 dark:text-zinc-400 tabular-nums">
             {route.allStops.length} stasiun total
           </span>
           {weather && (
             <>
               <span className="text-slate-400 dark:text-zinc-600">•</span>
               <span
-                className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-md border font-medium text-[11px] ${
+                className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-md border font-medium text-[11px] tabular-nums ${
                   weather.isRaining
                     ? 'bg-amber-50 dark:bg-amber-950/70 border-amber-300 dark:border-amber-800 text-amber-800 dark:text-amber-300'
                     : 'bg-sky-50 dark:bg-sky-950/60 border-sky-200 dark:border-sky-800/60 text-sky-800 dark:text-sky-300'
@@ -235,21 +235,21 @@ export default function RouteCard({
         <div className="grid grid-cols-3 gap-2 text-center pt-1 border-t border-emerald-500/20">
           <div className="p-2 rounded-lg bg-white/90 dark:bg-zinc-900/90 border border-emerald-200 dark:border-emerald-900/50 shadow-xs">
             <div className="text-[10px] text-slate-500 dark:text-zinc-400 font-medium">Hemat vs Ojol</div>
-            <div className="text-xs font-mono font-bold text-emerald-600 dark:text-emerald-400 mt-0.5">
+            <div className="text-xs font-mono font-bold tabular-nums text-emerald-600 dark:text-emerald-400 mt-0.5">
               Rp {impact.costSavedVsOjolIdr.toLocaleString('id-ID')}
             </div>
           </div>
 
           <div className="p-2 rounded-lg bg-white/90 dark:bg-zinc-900/90 border border-teal-200 dark:border-teal-900/50 shadow-xs">
             <div className="text-[10px] text-slate-500 dark:text-zinc-400 font-medium">Emisi CO₂</div>
-            <div className="text-xs font-mono font-bold text-teal-600 dark:text-teal-400 mt-0.5">
+            <div className="text-xs font-mono font-bold tabular-nums text-teal-600 dark:text-teal-400 mt-0.5">
               -{impact.co2SavedKg} kg
             </div>
           </div>
 
           <div className="p-2 rounded-lg bg-white/90 dark:bg-zinc-900/90 border border-sky-200 dark:border-sky-900/50 shadow-xs">
             <div className="text-[10px] text-slate-500 dark:text-zinc-400 font-medium">Kalori Jalan</div>
-            <div className="text-xs font-mono font-bold text-sky-600 dark:text-sky-400 mt-0.5">
+            <div className="text-xs font-mono font-bold tabular-nums text-sky-600 dark:text-sky-400 mt-0.5">
               ~{impact.caloriesBurnedKcal} kkal
             </div>
           </div>
@@ -264,7 +264,7 @@ export default function RouteCard({
               <CreditCard className="w-3.5 h-3.5 text-emerald-500" />
               Rincian Tarif Resmi:
             </span>
-            <span className="font-mono text-emerald-700 dark:text-emerald-400 font-bold">
+            <span className="font-mono tabular-nums text-emerald-700 dark:text-emerald-400 font-bold">
               Total Rp {route.totalFareIdr.toLocaleString('id-ID')}
             </span>
           </div>
@@ -275,7 +275,7 @@ export default function RouteCard({
                 className="flex items-center justify-between text-[11px] text-slate-600 dark:text-zinc-400 py-0.5 border-b border-slate-100 dark:border-zinc-900 last:border-0"
               >
                 <span>{b.description}</span>
-                <span className="font-mono font-medium text-slate-800 dark:text-zinc-200">
+                <span className="font-mono tabular-nums font-medium text-slate-800 dark:text-zinc-200">
                   Rp {b.fare.toLocaleString('id-ID')}
                 </span>
               </div>
@@ -315,7 +315,7 @@ export default function RouteCard({
                     }`}>
                       <Focus className="w-3 h-3" /> {isFirstMileActive ? 'Sedang Disorot' : 'Sorot Peta'}
                     </span>
-                    <span className="text-[11px] text-slate-600 dark:text-zinc-400 font-mono">
+                    <span className="text-[11px] text-slate-600 dark:text-zinc-400 font-mono tabular-nums">
                       ~{route.firstMileWalk.durationMinutes} mnt ({formatDistance(route.firstMileWalk.distanceMeters)})
                     </span>
                   </div>
@@ -331,7 +331,7 @@ export default function RouteCard({
                     </span>
                   </div>
                 )}
-                <div className="mt-2 pt-1.5 border-t border-slate-200 dark:border-zinc-800 flex items-center justify-between text-[10px] text-slate-500 dark:text-zinc-500 font-mono">
+                <div className="mt-2 pt-1.5 border-t border-slate-200 dark:border-zinc-800 flex items-center justify-between text-[10px] text-slate-500 dark:text-zinc-500 font-mono tabular-nums">
                   <span>Trotoar pejalan kaki</span>
                   <span className="text-emerald-600 dark:text-emerald-400 font-semibold">Tarif: Rp 0</span>
                 </div>
@@ -376,7 +376,7 @@ export default function RouteCard({
                       }`}>
                         <Focus className="w-3 h-3" /> {isSegActive ? 'Sedang Disorot' : 'Sorot Peta'}
                       </span>
-                      <span className="text-[11px] text-slate-600 dark:text-zinc-400 font-mono">
+                      <span className="text-[11px] text-slate-600 dark:text-zinc-400 font-mono tabular-nums">
                         ~{seg.durationMinutes} mnt ({seg.stopCount - 1} halte/stasiun)
                       </span>
                     </div>
@@ -392,7 +392,7 @@ export default function RouteCard({
                     {seg.instruction}
                   </p>
 
-                  <div className="mt-2 pt-2 border-t border-slate-200 dark:border-zinc-800 flex items-center justify-between text-[10px] text-slate-600 dark:text-zinc-400 font-mono">
+                  <div className="mt-2 pt-2 border-t border-slate-200 dark:border-zinc-800 flex items-center justify-between text-[10px] text-slate-600 dark:text-zinc-400 font-mono tabular-nums">
                     <span>Jarak: {seg.distanceKm} km</span>
                     <span className="text-emerald-600 dark:text-emerald-400 font-semibold">
                       Tarif: Rp {seg.fareIdr.toLocaleString('id-ID')}
@@ -447,7 +447,7 @@ export default function RouteCard({
                     }`}>
                       <Focus className="w-3 h-3" /> {isLastMileActive ? 'Sedang Disorot' : 'Sorot Peta'}
                     </span>
-                    <span className="text-[11px] text-slate-600 dark:text-zinc-400 font-mono">
+                    <span className="text-[11px] text-slate-600 dark:text-zinc-400 font-mono tabular-nums">
                       ~{route.lastMileWalk.durationMinutes} mnt ({formatDistance(route.lastMileWalk.distanceMeters)})
                     </span>
                   </div>
@@ -463,7 +463,7 @@ export default function RouteCard({
                     </span>
                   </div>
                 )}
-                <div className="mt-2 pt-1.5 border-t border-slate-200 dark:border-zinc-800 flex items-center justify-between text-[10px] text-slate-500 dark:text-zinc-500 font-mono">
+                <div className="mt-2 pt-1.5 border-t border-slate-200 dark:border-zinc-800 flex items-center justify-between text-[10px] text-slate-500 dark:text-zinc-500 font-mono tabular-nums">
                   <span>Trotoar pejalan kaki</span>
                   <span className="text-emerald-600 dark:text-emerald-400 font-semibold">Tarif: Rp 0</span>
                 </div>
@@ -554,7 +554,7 @@ export default function RouteCard({
               className="py-1 flex items-center justify-between"
             >
               <div className="flex items-center gap-2">
-                <span className="text-[10px] text-slate-500 dark:text-zinc-500 font-mono w-4">
+                <span className="text-[10px] text-slate-500 dark:text-zinc-500 font-mono tabular-nums w-4">
                   {i + 1}.
                 </span>
                 <span className={i === 0 || i === route.allStops.length - 1 ? 'font-semibold text-slate-900 dark:text-zinc-100' : ''}>

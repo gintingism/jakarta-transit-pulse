@@ -79,7 +79,7 @@ export default function GeoAlarmModal(props: GeoAlarmModalProps) {
             {targetStation.name}
           </div>
 
-          <div className="mt-2 inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-rose-50 dark:bg-rose-950/60 border border-rose-200 dark:border-rose-800/80 text-rose-700 dark:text-rose-200 text-xs font-mono font-semibold">
+          <div className="mt-2 inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-rose-50 dark:bg-rose-950/60 border border-rose-200 dark:border-rose-800/80 text-rose-700 dark:text-rose-200 text-xs font-mono font-semibold tabular-nums">
             <span>Sisa Jarak:</span>
             <span className="text-rose-900 dark:text-white font-bold">{formatted}</span>
           </div>

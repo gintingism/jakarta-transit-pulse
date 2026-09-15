@@ -289,7 +289,7 @@ export default function FeedbackModal() {
                     Penjelasan Kendala / Saran <span className="text-rose-500">*</span>
                   </label>
                   <span
-                    className={`text-[10px] font-mono ${
+                    className={`text-[10px] font-mono tabular-nums ${
                       message.length > 1900
                         ? 'text-rose-500 font-bold'
                         : 'text-slate-400 dark:text-zinc-500'
@@ -359,7 +359,7 @@ export default function FeedbackModal() {
                     {userCoords && (
                       <div className="flex items-center gap-1.5">
                         <MapPin className="w-3 h-3 text-emerald-400" />
-                        <span>
+                        <span className="tabular-nums">
                           GPS Terakhir: {userCoords[0].toFixed(4)}, {userCoords[1].toFixed(4)}
                         </span>
                       </div>

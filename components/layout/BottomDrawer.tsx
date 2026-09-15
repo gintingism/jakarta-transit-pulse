@@ -44,7 +44,7 @@ export default function BottomDrawer() {
     <div
       className={`fixed z-30 transition-all duration-300 ease-in-out bg-white dark:bg-zinc-900/95 backdrop-blur-xl border-slate-200 dark:border-zinc-800 shadow-2xl flex flex-col
         /* Mobile: Bottom Sheet */
-        bottom-0 left-0 right-0 border-t rounded-t-2xl
+        bottom-0 left-0 right-0 border-t rounded-t-3xl
         /* Desktop: Spacious Left Command Sidebar */
         md:top-20 md:left-4 md:right-auto md:w-[440px] lg:w-[460px] xl:w-[480px] md:border md:rounded-2xl
         ${
@@ -69,7 +69,7 @@ export default function BottomDrawer() {
             e.stopPropagation();
             toggleDrawer();
           }}
-          className="w-10 h-1 bg-slate-300 dark:bg-zinc-700 hover:bg-slate-400 dark:hover:bg-zinc-500 rounded-full mx-auto mb-2 md:hidden cursor-pointer"
+          className="w-12 h-1.5 bg-slate-300 dark:bg-zinc-700/80 hover:bg-slate-400 dark:hover:bg-zinc-600 rounded-full mx-auto my-1.5 md:hidden cursor-pointer transition"
         />
 
         {/* Header content when collapsed with an active route: concise mini route pill */}
@@ -86,7 +86,7 @@ export default function BottomDrawer() {
                   {routePlan.destinationPlaceName || routePlan.destination.name}
                 </span>
               </div>
-              <span className="text-[11px] font-mono text-emerald-600 dark:text-emerald-400 font-bold shrink-0 bg-emerald-50 dark:bg-emerald-950/80 px-1.5 py-0.5 rounded border border-emerald-200 dark:border-emerald-800/60">
+              <span className="text-[11px] font-mono tabular-nums text-emerald-600 dark:text-emerald-400 font-bold shrink-0 bg-emerald-50 dark:bg-emerald-950/80 px-1.5 py-0.5 rounded border border-emerald-200 dark:border-emerald-800/60">
                 Rp {routePlan.totalFareIdr.toLocaleString('id-ID')}
               </span>
             </div>

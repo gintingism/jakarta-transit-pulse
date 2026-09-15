@@ -315,7 +315,7 @@ export default function NavigationHUD({
 
             <div className="min-w-0">
               <div className="flex items-baseline gap-2">
-                <span className="text-base font-black font-mono text-cyan-400 shrink-0">
+                <span className="text-base font-black font-mono tabular-nums text-cyan-400 shrink-0">
                   {formatDistance(state.distanceToNextStopMeters)}
                 </span>
                 <span className="text-xs font-semibold text-zinc-100 truncate">
@@ -325,7 +325,7 @@ export default function NavigationHUD({
               <div className="flex items-center gap-2 text-[10px] text-zinc-400 truncate">
                 <span>Tujuan: {currentLeg.to?.name || 'Tujuan'}</span>
                 <span>•</span>
-                <span>Langkah {state.currentLegIndex + 1}/{state.legs.length}</span>
+                <span className="tabular-nums">Langkah {state.currentLegIndex + 1}/{state.legs.length}</span>
                 {isAlarmArmed && (
                   <span className="text-amber-400 font-medium">
                     • ⏰ Alarm
@@ -504,7 +504,7 @@ export default function NavigationHUD({
             </div>
 
             <div className="flex items-baseline gap-3 pt-1">
-              <div className="text-2xl font-black text-cyan-400 font-mono tracking-tight">
+              <div className="text-2xl font-black text-cyan-400 font-mono tabular-nums tracking-tight">
                 {formatDistance(state.distanceToNextStopMeters)}
               </div>
 
@@ -518,12 +518,12 @@ export default function NavigationHUD({
           <div className="mt-3 pt-2.5 border-t border-zinc-800/80 flex items-center justify-between text-[11px] text-zinc-400">
             <div className="flex items-center gap-1.5 font-medium">
               <NavigationIcon className="w-3.5 h-3.5 text-cyan-400" />
-              <span>
+              <span className="tabular-nums">
                 Langkah {state.currentLegIndex + 1} dari {state.legs.length}
               </span>
             </div>
 
-            <div className="font-mono text-zinc-300 flex items-center gap-2">
+            <div className="font-mono tabular-nums text-zinc-300 flex items-center gap-2">
               {isAlarmArmed && (
                 <span className="text-[10px] text-amber-400 font-sans font-semibold px-1.5 py-0.5 rounded bg-amber-400/10 border border-amber-400/20">
                   ⏰ Alarm Aktif

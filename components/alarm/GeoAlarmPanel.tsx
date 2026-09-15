@@ -143,7 +143,7 @@ export default function GeoAlarmPanel() {
                 <Sliders className="w-3 h-3 text-sky-400" />
                 Bunyikan Alarm Pada Jarak:
               </span>
-              <span className="text-xs font-mono font-semibold text-sky-600 dark:text-sky-300">
+              <span className="text-xs font-mono font-semibold tabular-nums text-sky-600 dark:text-sky-300">
                 {alarmThresholdMeters} meter sebelum tiba
               </span>
             </div>
@@ -156,7 +156,7 @@ export default function GeoAlarmPanel() {
               onChange={(e) => setAlarmThreshold(Number(e.target.value))}
               className="w-full accent-sky-500 cursor-pointer h-1.5 bg-slate-100 dark:bg-zinc-800 rounded-lg"
             />
-            <div className="flex justify-between text-[10px] font-mono text-slate-500 dark:text-zinc-500 mt-1">
+            <div className="flex justify-between text-[10px] font-mono tabular-nums text-slate-500 dark:text-zinc-500 mt-1">
               <span>200m (Dekat)</span>
               <span>400m (Standar)</span>
               <span>1.200m (Awal)</span>
@@ -170,7 +170,7 @@ export default function GeoAlarmPanel() {
                 <Radio className="w-3.5 h-3.5 text-sky-400" />
                 Sisa Jarak ke Stasiun:
               </span>
-              <span className="text-sm font-mono font-semibold text-slate-900 dark:text-zinc-100">
+              <span className="text-sm font-mono font-semibold tabular-nums text-slate-900 dark:text-zinc-100">
                 {currentDistanceMeters !== null
                   ? formatDistance(currentDistanceMeters)
                   : userCoords

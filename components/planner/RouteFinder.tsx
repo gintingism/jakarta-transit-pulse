@@ -17,21 +17,23 @@ import {
 interface QuickDestination {
   name: string;
   category: 'poi' | 'krl' | 'tj' | 'mrt' | 'lrt';
+  modeLabel?: string;
+  color: string;
   coords: [number, number];
   stationId?: string;
 }
 
 const QUICK_DESTINATIONS: QuickDestination[] = [
-  { name: 'Monas', category: 'poi', coords: [-6.1754, 106.8272], stationId: 'tj_monas' },
-  { name: 'Bundaran HI', category: 'mrt', coords: [-6.19185, 106.82306], stationId: 'mrt_bundaran_hi' },
-  { name: 'Dukuh Atas TOD', category: 'mrt', coords: [-6.2008, 106.82283], stationId: 'mrt_dukuh_atas' },
-  { name: 'Halim (Whoosh)', category: 'lrt', coords: [-6.24479, 106.88566], stationId: 'lrt_halim' },
-  { name: 'Grand Indonesia', category: 'poi', coords: [-6.1958, 106.8215] },
-  { name: 'GBK Senayan', category: 'poi', coords: [-6.2186, 106.8018], stationId: 'mrt_istora' },
-  { name: 'Plaza Blok M', category: 'mrt', coords: [-6.24442, 106.79824], stationId: 'mrt_blokm' },
-  { name: 'Stasiun Manggarai', category: 'krl', coords: [-6.2093, 106.8489], stationId: 'krl_manggarai' },
-  { name: 'Bandara Soekarno-Hatta (SHIA)', category: 'krl', coords: [-6.12748, 106.65179], stationId: 'ka_bandara_shia' },
-  { name: 'Halte Harmoni', category: 'tj', coords: [-6.1625, 106.8199], stationId: 'tj_harmoni' },
+  { name: 'Monas', category: 'tj', modeLabel: 'TJ', color: '#0072BC', coords: [-6.1754, 106.8272], stationId: 'tj_monas' },
+  { name: 'Bundaran HI', category: 'mrt', modeLabel: 'MRT', color: '#005BAA', coords: [-6.19185, 106.82306], stationId: 'mrt_bundaran_hi' },
+  { name: 'Dukuh Atas TOD', category: 'mrt', modeLabel: 'TOD', color: '#005BAA', coords: [-6.2008, 106.82283], stationId: 'mrt_dukuh_atas' },
+  { name: 'Halim (Whoosh)', category: 'lrt', modeLabel: 'LRT', color: '#E04E26', coords: [-6.24479, 106.88566], stationId: 'lrt_halim' },
+  { name: 'Grand Indonesia', category: 'poi', modeLabel: 'Mall', color: '#F59E0B', coords: [-6.1958, 106.8215] },
+  { name: 'GBK Senayan', category: 'mrt', modeLabel: 'MRT', color: '#005BAA', coords: [-6.2186, 106.8018], stationId: 'mrt_istora' },
+  { name: 'Plaza Blok M', category: 'mrt', modeLabel: 'MRT', color: '#005BAA', coords: [-6.24442, 106.79824], stationId: 'mrt_blokm' },
+  { name: 'Stasiun Manggarai', category: 'krl', modeLabel: 'KRL', color: '#D32F2F', coords: [-6.2093, 106.8489], stationId: 'krl_manggarai' },
+  { name: 'Bandara Soekarno-Hatta', category: 'krl', modeLabel: 'Bandara', color: '#00A499', coords: [-6.12748, 106.65179], stationId: 'ka_bandara_shia' },
+  { name: 'Halte Harmoni', category: 'tj', modeLabel: 'TJ', color: '#0072BC', coords: [-6.1625, 106.8199], stationId: 'tj_harmoni' },
 ];
 
 export default function RouteFinder() {
@@ -182,20 +184,25 @@ export default function RouteFinder() {
                     stationId: dest.stationId,
                   });
                 }}
-                className="text-[11px] py-1 px-2.5 rounded-lg bg-white dark:bg-zinc-800/90 hover:bg-slate-100 dark:hover:bg-zinc-700 border border-slate-200 dark:border-zinc-700/60 text-slate-700 dark:text-zinc-300 hover:text-slate-900 dark:hover:text-white transition flex items-center gap-1.5 font-medium active:scale-95 shadow-sm cursor-pointer"
+                className="text-[11px] py-1 px-2.5 rounded-lg bg-white dark:bg-zinc-800/90 hover:bg-slate-100 dark:hover:bg-zinc-700 border border-slate-200 dark:border-zinc-700/60 text-slate-700 dark:text-zinc-300 hover:text-slate-900 dark:hover:text-white transition flex items-center gap-1.5 font-medium active:scale-95 shadow-xs cursor-pointer"
               >
-                {dest.category === 'poi' ? (
-                  <MapPin className="w-3 h-3 text-amber-500 dark:text-amber-400" />
-                ) : dest.category === 'krl' ? (
-                  <Train className="w-3 h-3 text-sky-400" />
-                ) : dest.category === 'mrt' ? (
-                  <Train className="w-3 h-3 text-blue-400" />
-                ) : dest.category === 'lrt' ? (
-                  <Train className="w-3 h-3 text-amber-400" />
-                ) : (
-                  <Bus className="w-3 h-3 text-rose-400" />
-                )}
+                <span
+                  className="w-2 h-2 rounded-full shrink-0 shadow-xs"
+                  style={{ backgroundColor: dest.color }}
+                />
                 <span>{dest.name}</span>
+                {dest.modeLabel && (
+                  <span
+                    className="text-[9px] font-bold px-1 rounded font-mono uppercase shrink-0"
+                    style={{
+                      backgroundColor: `${dest.color}15`,
+                      color: dest.color,
+                      border: `1px solid ${dest.color}30`,
+                    }}
+                  >
+                    {dest.modeLabel}
+                  </span>
+                )}
               </button>
             ))}
           </div>

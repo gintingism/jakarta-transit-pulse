@@ -1,5 +1,19 @@
 import type { Metadata, Viewport } from 'next';
+import { Plus_Jakarta_Sans, JetBrains_Mono } from 'next/font/google';
 import './globals.css';
+import { ThemeProvider } from '@/components/ThemeProvider';
+
+const plusJakartaSans = Plus_Jakarta_Sans({
+  subsets: ['latin'],
+  display: 'swap',
+  variable: '--font-plus-jakarta-sans',
+});
+
+const jetbrainsMono = JetBrains_Mono({
+  subsets: ['latin'],
+  display: 'swap',
+  variable: '--font-jetbrains-mono',
+});
 
 export const metadata: Metadata = {
   title: 'Jakarta Transit Pulse (a.k.a. AntiBablas) | Navigasi Multimoda & Alarm Anti-Bablas',
@@ -39,19 +53,21 @@ export const viewport: Viewport = {
   themeColor: '#090a0f',
 };
 
-import { ThemeProvider } from '@/components/ThemeProvider';
-
 export default function RootLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
   return (
-    <html lang="id" suppressHydrationWarning className="h-full w-full">
+    <html
+      lang="id"
+      suppressHydrationWarning
+      className={`h-full w-full ${plusJakartaSans.variable} ${jetbrainsMono.variable}`}
+    >
       <head>
         <meta name="mobile-web-app-capable" content="yes" />
       </head>
-      <body className="h-full w-full bg-white dark:bg-[#090a0f] text-slate-900 dark:text-slate-100 antialiased overflow-hidden selection:bg-cyan-500 selection:text-black transition-colors duration-300">
+      <body className="h-full w-full font-sans bg-white dark:bg-[#090a0f] text-slate-900 dark:text-slate-100 antialiased overflow-hidden selection:bg-cyan-500 selection:text-black transition-colors duration-300">
         <ThemeProvider attribute="class" defaultTheme="dark" enableSystem={false}>
           {children}
         </ThemeProvider>

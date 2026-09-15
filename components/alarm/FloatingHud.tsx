@@ -4,6 +4,7 @@ import React from 'react';
 import { useTransitStore } from '@/stores/useTransitStore';
 import { STATION_MAP, TRANSIT_LINES, LineIdentifier } from '@/src/data/transitNetwork';
 import { formatDistance, formatSpeed } from '@/src/lib/transitEngine';
+import { APP_VERSION } from '@/src/data/changelog';
 import {
   Bell,
   Layers,
@@ -36,7 +37,6 @@ export default function FloatingHud() {
   const isLocating = useTransitStore((s) => s.isLocating);
   const setAboutModalOpen = useTransitStore((s) => s.setAboutModalOpen);
   const openTour = useTransitStore((s) => s.openTour);
-  const isChangelogModalOpen = useTransitStore((s) => s.isChangelogModalOpen);
   const setChangelogModalOpen = useTransitStore((s) => s.setChangelogModalOpen);
   const setFeedbackModalOpen = useTransitStore((s) => s.setFeedbackModalOpen);
   const hasUnreadChangelog = useTransitStore((s) => s.hasUnreadChangelog);
@@ -61,7 +61,7 @@ export default function FloatingHud() {
   return (
     <div className="absolute top-3.5 left-3.5 right-3.5 z-20 flex flex-wrap items-center justify-between gap-2.5 pointer-events-none">
       {/* Brand Identity Cockpit Badge */}
-      <div className="pointer-events-auto flex items-center gap-2.5 bg-white/95 dark:bg-zinc-900/90 backdrop-blur-md border border-slate-200/80 dark:border-zinc-800/80 rounded-2xl px-3 py-2 shadow-xl hover:border-sky-500/40 transition">
+      <div className="pointer-events-auto flex items-center gap-2.5 backdrop-blur-md bg-white/85 dark:bg-zinc-900/85 border border-slate-200/60 dark:border-zinc-800/60 shadow-sm rounded-2xl px-3 py-2 hover:border-sky-500/40 transition">
         <div className="relative flex items-center justify-center w-8 h-8 rounded-xl bg-gradient-to-br from-sky-500 via-blue-600 to-indigo-600 shadow-md shadow-sky-500/25 text-white shrink-0">
           <Compass className="w-4 h-4" />
           <span className="absolute -top-0.5 -right-0.5 flex h-2.5 w-2.5">
@@ -70,21 +70,19 @@ export default function FloatingHud() {
           </span>
         </div>
 
-        <div className="flex flex-col">
-          <div className="flex items-center gap-1.5 flex-wrap">
-            <span className="text-xs sm:text-sm font-black tracking-tight text-slate-900 dark:text-white">
-              Jakarta Transit Pulse
-            </span>
-            <span className="text-[9px] font-bold tracking-tight px-1.5 py-0.5 bg-rose-100 dark:bg-rose-950/80 text-rose-700 dark:text-rose-300 rounded border border-rose-200 dark:border-rose-800/60 font-mono">
-              a.k.a. AntiBablas
-            </span>
-            <span className="text-[9px] font-extrabold tracking-wider px-1.5 py-0.5 bg-sky-100 dark:bg-sky-950/80 text-sky-700 dark:text-sky-300 rounded border border-sky-200 dark:border-sky-800/60 font-mono hidden sm:inline-block">
-              JABODETABEK
-            </span>
-          </div>
-          <span className="text-[10px] text-slate-500 dark:text-zinc-400 font-medium hidden sm:inline-block">
-            Radar Navigasi Multimoda & Alarm Anti-Bablas • KRL • TJ • Bandara
+        <div className="flex items-center gap-2">
+          <span className="text-xs sm:text-sm font-black tracking-tight text-slate-900 dark:text-white">
+            Jakarta Transit Pulse
           </span>
+          <button
+            type="button"
+            onClick={() => setChangelogModalOpen(true)}
+            className="text-[9.5px] font-bold tracking-tight px-1.5 py-0.5 bg-sky-100 dark:bg-sky-950/80 text-sky-700 dark:text-sky-300 rounded-md border border-sky-200 dark:border-sky-800/60 font-mono hover:bg-sky-200 dark:hover:bg-sky-900 transition cursor-pointer"
+            title="Lihat Log Pembaruan Versi"
+            aria-label={`Versi ${APP_VERSION}`}
+          >
+            {APP_VERSION}
+          </button>
         </div>
       </div>
 
@@ -95,7 +93,7 @@ export default function FloatingHud() {
           <button
             type="button"
             onClick={handleAlarmPillClick}
-            className="bg-white/95 dark:bg-zinc-900/90 backdrop-blur-md border border-rose-500/70 hover:border-rose-500 rounded-2xl pl-3 pr-3 py-1.5 shadow-xl flex items-center gap-2 transition hover:scale-105 active:scale-95 cursor-pointer"
+            className="backdrop-blur-md bg-white/85 dark:bg-zinc-900/85 border border-rose-500/70 hover:border-rose-500 rounded-2xl pl-3 pr-3 py-1.5 shadow-sm flex items-center gap-2 transition hover:scale-105 active:scale-95 cursor-pointer"
             title="Buka panel pengingat turun"
           >
             <div className="relative flex items-center justify-center">
@@ -117,7 +115,7 @@ export default function FloatingHud() {
               </div>
             </div>
 
-            <div className="pl-2 border-l border-slate-200 dark:border-zinc-800 flex items-center gap-1 text-xs font-mono font-semibold text-sky-600 dark:text-sky-400">
+            <div className="pl-2 border-l border-slate-200 dark:border-zinc-800 flex items-center gap-1 text-xs font-mono font-semibold tabular-nums text-sky-600 dark:text-sky-400">
               {currentDistanceMeters !== null
                 ? formatDistance(currentDistanceMeters)
                 : 'Menghubungkan...'}
@@ -127,8 +125,25 @@ export default function FloatingHud() {
         )}
 
         {/* Network & Corridor Filter Dropdown */}
-        <div className="bg-white/95 dark:bg-zinc-900/90 backdrop-blur-md border border-slate-200/80 dark:border-zinc-800/80 rounded-2xl px-3 py-2 shadow-xl flex items-center gap-2">
-          <Layers className="w-3.5 h-3.5 text-sky-500 dark:text-sky-400 shrink-0" />
+        <div className="backdrop-blur-md bg-white/85 dark:bg-zinc-900/85 border border-slate-200/60 dark:border-zinc-800/60 shadow-sm rounded-2xl px-3 py-2 flex items-center gap-2">
+          <div className="flex items-center gap-1.5 shrink-0">
+            <Layers className="w-3.5 h-3.5 text-sky-500 dark:text-sky-400 shrink-0" />
+            {selectedLineId === 'ALL' ? (
+              <span
+                className="w-2 h-2 rounded-full bg-gradient-to-r from-sky-500 via-rose-500 to-amber-500 shrink-0"
+                title="Semua Koridor (5 Moda)"
+              />
+            ) : (
+              <span
+                className="w-2 h-2 rounded-full shrink-0 shadow-xs transition-colors"
+                style={{
+                  backgroundColor:
+                    TRANSIT_LINES[selectedLineId as LineIdentifier]?.color || '#0ea5e9',
+                }}
+                title={`Koridor: ${TRANSIT_LINES[selectedLineId as LineIdentifier]?.name || selectedLineId}`}
+              />
+            )}
+          </div>
           <select
             value={selectedLineId}
             onChange={(e) =>
@@ -155,7 +170,7 @@ export default function FloatingHud() {
         {/* Real-time Moving Speedometer */}
         {userSpeed !== null && userSpeed >= 1.0 && (
           <div
-            className="bg-white/95 dark:bg-zinc-900/90 backdrop-blur-md border border-sky-300 dark:border-sky-800/80 rounded-2xl px-2.5 py-1.5 shadow-xl flex items-center gap-1.5 text-xs font-mono font-bold text-sky-600 dark:text-sky-400"
+            className="backdrop-blur-md bg-white/85 dark:bg-zinc-900/85 border border-sky-300 dark:border-sky-800/80 rounded-2xl px-2.5 py-1.5 shadow-sm flex items-center gap-1.5 text-xs font-mono font-bold tabular-nums text-sky-600 dark:text-sky-400"
             title="Kecepatan Gerak Real-Time"
           >
             <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
@@ -169,10 +184,10 @@ export default function FloatingHud() {
           type="button"
           onClick={handleLocateMe}
           disabled={isLocating}
-          className={`p-2 sm:p-2.5 rounded-2xl border backdrop-blur-md shadow-xl transition cursor-pointer active:scale-95 flex items-center gap-1.5 ${
+          className={`p-2 sm:p-2.5 rounded-2xl border backdrop-blur-md shadow-sm transition cursor-pointer active:scale-95 flex items-center gap-1.5 ${
             isFollowUser
               ? 'bg-sky-50 dark:bg-sky-950/90 border-sky-500 text-sky-600 dark:text-sky-300 ring-2 ring-sky-400/40'
-              : 'bg-white/95 dark:bg-zinc-900/90 border-slate-200/80 dark:border-zinc-800/80 text-slate-700 dark:text-zinc-300 hover:text-sky-600 dark:hover:text-sky-400'
+              : 'bg-white/85 dark:bg-zinc-900/85 border-slate-200/60 dark:border-zinc-800/60 text-slate-700 dark:text-zinc-300 hover:text-sky-600 dark:hover:text-sky-400'
           }`}
           title={
             isFollowUser
@@ -204,7 +219,7 @@ export default function FloatingHud() {
         <button
           type="button"
           onClick={() => setChangelogModalOpen(true)}
-          className="relative p-2 sm:p-2.5 rounded-2xl bg-white/95 dark:bg-zinc-900/90 border border-slate-200/80 dark:border-zinc-800/80 backdrop-blur-md shadow-xl text-slate-700 dark:text-zinc-300 hover:text-amber-500 dark:hover:text-amber-400 hover:scale-105 active:scale-95 transition cursor-pointer"
+          className="relative p-2 sm:p-2.5 rounded-2xl backdrop-blur-md bg-white/85 dark:bg-zinc-900/85 border border-slate-200/60 dark:border-zinc-800/60 shadow-sm text-slate-700 dark:text-zinc-300 hover:text-amber-500 dark:hover:text-amber-400 hover:scale-105 active:scale-95 transition cursor-pointer"
           title="Apa yang Baru (Log Pembaruan Versi)"
           aria-label="Log Pembaruan Versi"
         >
@@ -221,7 +236,7 @@ export default function FloatingHud() {
         <button
           type="button"
           onClick={() => setFeedbackModalOpen(true)}
-          className="p-2 sm:p-2.5 rounded-2xl bg-white/95 dark:bg-zinc-900/90 border border-slate-200/80 dark:border-zinc-800/80 backdrop-blur-md shadow-xl text-slate-700 dark:text-zinc-300 hover:text-emerald-600 dark:hover:text-emerald-400 hover:scale-105 active:scale-95 transition cursor-pointer"
+          className="p-2 sm:p-2.5 rounded-2xl backdrop-blur-md bg-white/85 dark:bg-zinc-900/85 border border-slate-200/60 dark:border-zinc-800/60 shadow-sm text-slate-700 dark:text-zinc-300 hover:text-emerald-600 dark:hover:text-emerald-400 hover:scale-105 active:scale-95 transition cursor-pointer"
           title="Beri Masukan & Lapor Kendala"
           aria-label="Beri Masukan & Lapor Kendala"
         >
@@ -232,7 +247,7 @@ export default function FloatingHud() {
         <button
           type="button"
           onClick={openTour}
-          className="p-2 sm:p-2.5 rounded-2xl bg-white/95 dark:bg-zinc-900/90 border border-slate-200/80 dark:border-zinc-800/80 backdrop-blur-md shadow-xl text-slate-700 dark:text-zinc-300 hover:text-sky-600 dark:hover:text-sky-400 hover:scale-105 active:scale-95 transition cursor-pointer"
+          className="p-2 sm:p-2.5 rounded-2xl backdrop-blur-md bg-white/85 dark:bg-zinc-900/85 border border-slate-200/60 dark:border-zinc-800/60 shadow-sm text-slate-700 dark:text-zinc-300 hover:text-sky-600 dark:hover:text-sky-400 hover:scale-105 active:scale-95 transition cursor-pointer"
           title="Panduan Penggunaan Aplikasi"
           aria-label="Panduan Penggunaan Aplikasi"
         >
@@ -243,7 +258,7 @@ export default function FloatingHud() {
         <button
           type="button"
           onClick={() => setAboutModalOpen(true)}
-          className="relative p-2 sm:p-2.5 rounded-2xl bg-white/95 dark:bg-zinc-900/90 border border-slate-200/80 dark:border-zinc-800/80 backdrop-blur-md shadow-xl text-slate-700 dark:text-zinc-300 hover:text-sky-600 dark:hover:text-sky-400 hover:scale-105 active:scale-95 transition cursor-pointer"
+          className="relative p-2 sm:p-2.5 rounded-2xl backdrop-blur-md bg-white/85 dark:bg-zinc-900/85 border border-slate-200/60 dark:border-zinc-800/60 shadow-sm text-slate-700 dark:text-zinc-300 hover:text-sky-600 dark:hover:text-sky-400 hover:scale-105 active:scale-95 transition cursor-pointer"
           title="Tentang Pengembang & Aplikasi"
           aria-label="Tentang Pengembang & Aplikasi"
         >
