@@ -68,7 +68,7 @@ export async function verifyTurnstileToken(
   if (typeof token !== 'string' || token.trim().length === 0) {
     return {
       isValid: false,
-      error: 'Mohon selesaikan verifikasi Cloudflare Turnstile "Saya bukan robot" terlebih dahulu.',
+      error: 'Mohon selesaikan verifikasi "Saya bukan robot" terlebih dahulu.',
     };
   }
 
@@ -84,7 +84,7 @@ export async function verifyTurnstileToken(
     if (token === 'invalid-test-token' || token === 'expired-token') {
       return {
         isValid: false,
-        error: 'Verifikasi robot Cloudflare tidak valid atau telah kedaluwarsa.',
+        error: 'Sesi verifikasi "Saya bukan robot" tidak valid atau telah kedaluwarsa.',
       };
     }
     return { isValid: true };
@@ -93,7 +93,7 @@ export async function verifyTurnstileToken(
   if (isTestEnv && effectiveSecret === '2x0000000000000000000000000000000AB') {
     return {
       isValid: false,
-      error: 'Verifikasi robot Cloudflare ditolak (Testing Secret Key Always Blocks).',
+      error: 'Verifikasi keamanan ditolak (Testing Secret Key Always Blocks).',
     };
   }
 
@@ -124,7 +124,7 @@ export async function verifyTurnstileToken(
     if (!res.ok) {
       return {
         isValid: false,
-        error: `Server Cloudflare mengembalikan status HTTP ${res.status}. Silakan coba kembali.`,
+        error: 'Layanan verifikasi keamanan sedang sibuk. Silakan coba sesaat lagi.',
       };
     }
 
@@ -134,11 +134,11 @@ export async function verifyTurnstileToken(
     }
 
     const errorCodes = data['error-codes'] || [];
-    let customError = 'Verifikasi robot Cloudflare tidak valid atau telah kedaluwarsa.';
+    let customError = 'Verifikasi "Saya bukan robot" tidak valid atau telah kedaluwarsa.';
     if (errorCodes.includes('timeout-or-duplicate')) {
-      customError = 'Token verifikasi Cloudflare telah kedaluwarsa atau pernah digunakan.';
+      customError = 'Sesi verifikasi keamanan telah kedaluwarsa. Silakan centang ulang.';
     } else if (errorCodes.includes('invalid-input-secret')) {
-      customError = 'Kunci rahasia (Secret Key) Cloudflare Turnstile di server tidak sah.';
+      customError = 'Konfigurasi verifikasi server bermasalah.';
     }
 
     return {
@@ -148,7 +148,7 @@ export async function verifyTurnstileToken(
   } catch {
     return {
       isValid: false,
-      error: 'Gagal memvalidasi verifikasi Cloudflare karena gangguan koneksi server.',
+      error: 'Gagal memvalidasi verifikasi keamanan karena gangguan koneksi server.',
     };
   } finally {
     clearTimeout(timeoutId);

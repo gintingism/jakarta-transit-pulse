@@ -210,7 +210,7 @@ describe('Cloudflare Turnstile Server Verification', () => {
   it('rejects empty or non-string token', async () => {
     const res1 = await verifyTurnstileToken('');
     expect(res1.isValid).toBe(false);
-    expect(res1.error).toContain('Mohon selesaikan verifikasi Cloudflare Turnstile');
+    expect(res1.error).toContain('Mohon selesaikan verifikasi "Saya bukan robot"');
 
     const res2 = await verifyTurnstileToken(null);
     expect(res2.isValid).toBe(false);

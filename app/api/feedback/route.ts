@@ -76,7 +76,7 @@ export async function POST(request: NextRequest): Promise<Response> {
 
     if (!turnstileResult.isValid) {
       return NextResponse.json(
-        { error: turnstileResult.error || 'Verifikasi Cloudflare Turnstile gagal.' },
+        { error: turnstileResult.error || 'Verifikasi keamanan belum berhasil. Silakan coba kembali.' },
         { status: 400 }
       );
     }

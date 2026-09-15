@@ -407,7 +407,7 @@ export default function FeedbackModal() {
                     Verifikasi Keamanan <span className="text-rose-500">*</span>
                   </span>
                   <span className="text-[10px] text-slate-400 dark:text-zinc-500 font-medium">
-                    Cloudflare Turnstile
+                    Perlindungan Anti-Spam
                   </span>
                 </div>
 
@@ -424,7 +424,7 @@ export default function FeedbackModal() {
                       setBotVerified(false);
                       setBotToken(null);
                       setErrorMessage(
-                        'Verifikasi Cloudflare Turnstile gagal. Silakan periksa koneksi internet Anda.'
+                        'Verifikasi keamanan belum berhasil. Silakan periksa koneksi internet Anda.'
                       );
                     }}
                     onExpire={() => {

@@ -20,7 +20,7 @@ export const CHANGELOG_ENTRIES: ChangelogEntry[] = [
     changes: [
       {
         type: 'feat',
-        text: 'Sistem formulir feedback terintegrasi Discord Webhook dilengkapi verifikasi anti-bot "Saya bukan robot" & honeypot.',
+        text: 'Pusat masukan & pelaporan kendala rute dengan verifikasi keamanan "Saya bukan robot".',
       },
       {
         type: 'feat',
