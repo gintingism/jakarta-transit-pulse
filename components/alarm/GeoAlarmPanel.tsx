@@ -214,6 +214,18 @@ export default function GeoAlarmPanel() {
               </>
             )}
           </button>
+
+          {isAlarmArmed && (
+            <div className="p-2.5 rounded-lg bg-emerald-50/80 dark:bg-emerald-950/50 border border-emerald-200 dark:border-emerald-800/60 flex items-start gap-2 text-[11px] text-emerald-800 dark:text-emerald-300 animate-fadeIn">
+              <ShieldCheck className="w-4 h-4 shrink-0 mt-0.5 text-emerald-500" />
+              <div className="leading-snug">
+                <span className="font-bold">Proteksi Latar Belakang & Layar Siaga Aktif</span>
+                <p className="text-[10px] text-emerald-700 dark:text-emerald-400 mt-0.5">
+                  Layar HP dijaga tetap menyala. Jika layar mati atau dikunci ke saku, alarm dan GPS tetap aktif memantau jarak stasiun.
+                </p>
+              </div>
+            </div>
+          )}
         </div>
       </div>
 

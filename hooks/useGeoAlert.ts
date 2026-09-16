@@ -5,10 +5,11 @@ import { useTransitStore } from '@/stores/useTransitStore';
 import { STATION_MAP } from '@/src/data/transitNetwork';
 import { playDisembarkAlarmChime } from '@/lib/audio';
 import { sendDisembarkNotification, requestNotificationPermission } from '@/lib/notifications';
+import { getBackgroundKeepAliveManager } from '@/src/lib/backgroundKeepAlive';
 
 /**
  * Hook for user location tracking and proximity disembark alarm.
- * Handles geolocation watching, wake lock, distance checks, audio chime, and vibrations.
+ * Handles geolocation watching, wake lock, background audio keep-alive, distance checks, audio chime, and vibrations.
  */
 export function useGeoAlert() {
   const userCoords = useTransitStore((s) => s.userCoords);
@@ -25,6 +26,7 @@ export function useGeoAlert() {
   const isAlarmTriggered = useTransitStore((s) => s.isAlarmTriggered);
   const alarmMuted = useTransitStore((s) => s.alarmMuted);
   const triggerAlarm = useTransitStore((s) => s.triggerAlarm);
+  const isNavigating = useTransitStore((s) => s.isNavigating);
 
   const isSimulatingApproach = useTransitStore((s) => s.isSimulatingApproach);
   const stepApproachSimulation = useTransitStore((s) => s.stepApproachSimulation);
@@ -33,39 +35,84 @@ export function useGeoAlert() {
   const simIntervalRef = useRef<NodeJS.Timeout | null>(null);
   const lastFixTimestampRef = useRef<number>(0);
   const retryTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const wakeLockSentinelRef = useRef<WakeLockSentinel | null>(null);
 
-  // Keep screen awake while tracking
+  // 1. Screen Wake Lock Management (keeps screen awake when alarm is armed or navigating)
   useEffect(() => {
-    let wakeLockSentinel: WakeLockSentinel | null = null;
+    let isMounted = true;
+    const shouldKeepAwake = isAlarmArmed || isNavigating;
 
     const acquireLock = async () => {
-      if (typeof navigator !== 'undefined' && 'wakeLock' in navigator && navigator.wakeLock) {
+      if (!shouldKeepAwake) {
+        if (wakeLockSentinelRef.current) {
+          wakeLockSentinelRef.current.release().catch(() => {});
+          wakeLockSentinelRef.current = null;
+        }
+        return;
+      }
+
+      if (
+        typeof navigator !== 'undefined' &&
+        'wakeLock' in navigator &&
+        navigator.wakeLock &&
+        (!wakeLockSentinelRef.current || wakeLockSentinelRef.current.released)
+      ) {
         try {
-          wakeLockSentinel = await navigator.wakeLock.request('screen');
+          const sentinel = await navigator.wakeLock.request('screen');
+          if (isMounted) {
+            wakeLockSentinelRef.current = sentinel;
+          } else {
+            sentinel.release().catch(() => {});
+          }
         } catch {
           // Wake lock may fail if tab is not active or battery saver is engaged
         }
       }
     };
 
-    acquireLock();
+    void acquireLock();
 
     const onVisibilityChange = () => {
       if (typeof document !== 'undefined' && document.visibilityState === 'visible') {
-        acquireLock();
+        void acquireLock();
       }
     };
 
     document.addEventListener('visibilitychange', onVisibilityChange);
+    window.addEventListener('focus', onVisibilityChange);
+
     return () => {
+      isMounted = false;
       document.removeEventListener('visibilitychange', onVisibilityChange);
-      if (wakeLockSentinel) {
-        wakeLockSentinel.release().catch(() => {});
+      window.removeEventListener('focus', onVisibilityChange);
+      if (wakeLockSentinelRef.current) {
+        wakeLockSentinelRef.current.release().catch(() => {});
+        wakeLockSentinelRef.current = null;
       }
     };
-  }, []);
+  }, [isAlarmArmed, isNavigating]);
 
-  // Geolocation watch with retry fallback
+  // 2. Background Audio Keep-Alive for Geo-Alarm (keeps JS thread & GPS alive while screen is locked/off in pocket)
+  useEffect(() => {
+    const bg = getBackgroundKeepAliveManager();
+    const shouldRun = isAlarmArmed || isNavigating;
+
+    if (shouldRun) {
+      bg.start();
+      const targetStation = alarmTargetStopId ? STATION_MAP[alarmTargetStopId] : null;
+      if (targetStation) {
+        bg.updateLockScreen({
+          instruction: '🚨 Alarm Anti-Bablas Aktif',
+          distanceMeters: currentDistanceMeters ?? 1000,
+          targetName: targetStation.name,
+        });
+      }
+    } else {
+      bg.stop();
+    }
+  }, [isAlarmArmed, isNavigating, alarmTargetStopId, currentDistanceMeters]);
+
+  // 3. Geolocation watch with retry fallback and fast wake-up sync
   useEffect(() => {
     if (isSimulatingApproach) return;
 
@@ -122,6 +169,20 @@ export function useGeoAlert() {
     // Immediate initial fix
     navigator.geolocation.getCurrentPosition(handleSuccess, handleError, geoOptions);
 
+    // Fast wake-up sync: refresh position immediately when phone screen turns on or user returns to tab
+    const handleWakeUp = () => {
+      if (typeof document !== 'undefined' && document.visibilityState === 'visible' && isActive && navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(handleSuccess, handleError, {
+          enableHighAccuracy: true,
+          maximumAge: 0,
+          timeout: 5000,
+        });
+      }
+    };
+
+    document.addEventListener('visibilitychange', handleWakeUp);
+    window.addEventListener('focus', handleWakeUp);
+
     // Heartbeat check in case watchPosition stalls
     const watchdogInterval = setInterval(() => {
       if (!isActive) return;
@@ -133,6 +194,8 @@ export function useGeoAlert() {
 
     return () => {
       isActive = false;
+      document.removeEventListener('visibilitychange', handleWakeUp);
+      window.removeEventListener('focus', handleWakeUp);
       if (watchId !== null) {
         navigator.geolocation.clearWatch(watchId);
       }
@@ -144,7 +207,7 @@ export function useGeoAlert() {
     };
   }, [isSimulatingApproach, setUserLocation, setLocationError]);
 
-  // Approach simulation interval
+  // 4. Approach simulation interval
   useEffect(() => {
     if (!isSimulatingApproach) {
       if (simIntervalRef.current) clearInterval(simIntervalRef.current);
@@ -160,7 +223,7 @@ export function useGeoAlert() {
     };
   }, [isSimulatingApproach, stepApproachSimulation]);
 
-  // Trigger alarm when within threshold distance
+  // 5. Trigger alarm when within threshold distance
   useEffect(() => {
     if (!isAlarmArmed || isAlarmTriggered || currentDistanceMeters === null) return;
 
@@ -168,15 +231,17 @@ export function useGeoAlert() {
       triggerAlarm();
 
       const targetStation = alarmTargetStopId ? STATION_MAP[alarmTargetStopId] : null;
-      const stopName = targetStation ? targetStation.name : 'your destination stop';
+      const stopName = targetStation ? targetStation.name : 'stasiun tujuan Anda';
       sendDisembarkNotification(stopName, currentDistanceMeters);
 
-      if (typeof window !== 'undefined' && 'vibrate' in navigator) {
-        try {
-          navigator.vibrate([400, 200, 400, 200, 800]);
-        } catch {
-          // Ignore
-        }
+      const bg = getBackgroundKeepAliveManager();
+      bg.triggerHaptic([500, 200, 500, 200, 1000]);
+      if (targetStation) {
+        bg.updateLockScreen({
+          instruction: '🚨 WAKTUNYA TURUN SEKARANG!',
+          distanceMeters: currentDistanceMeters,
+          targetName: targetStation.name,
+        });
       }
     }
   }, [
@@ -188,7 +253,7 @@ export function useGeoAlert() {
     triggerAlarm,
   ]);
 
-  // Play repeating alarm chime while active & unmuted
+  // 6. Play repeating alarm chime while active & unmuted
   useEffect(() => {
     if (isAlarmTriggered && !alarmMuted) {
       playDisembarkAlarmChime();

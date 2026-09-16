@@ -1,6 +1,6 @@
 /**
  * Background Keep-Alive & Lock Screen Media Session Manager
- * Keeps GPS tracking and voice navigation active when mobile screen is turned off or locked.
+ * Keeps GPS tracking, distance checks, and voice navigation active when mobile screen is turned off or locked.
  */
 
 export interface MediaSessionDetails {
@@ -10,9 +10,14 @@ export interface MediaSessionDetails {
   lineName?: string;
 }
 
+// 1 second base64-encoded silent 8-bit mono PCM WAV
+const SILENT_WAV_BASE64 =
+  'data:audio/wav;base64,UklGRigAAABXQVZFZm10IBIAAAABAAEARKwAAIhYAQACABAAAABkYXRhAgAAAAEA';
+
 export class BackgroundKeepAliveManager {
   private audioContext: AudioContext | null = null;
   private silentSource: AudioBufferSourceNode | null = null;
+  private audioElement: HTMLAudioElement | null = null;
   private isRunning = false;
 
   constructor(customAudioContext?: AudioContext | null) {
@@ -24,6 +29,7 @@ export class BackgroundKeepAliveManager {
   public start(): void {
     if (this.isRunning) return;
 
+    // 1. Web Audio API buffer keep-alive (primary for desktop/tablets)
     try {
       if (!this.audioContext) {
         const AudioCtx =
@@ -61,11 +67,38 @@ export class BackgroundKeepAliveManager {
         this.silentSource.connect(gainNode);
         gainNode.connect(this.audioContext.destination);
         this.silentSource.start();
-        this.isRunning = true;
       }
     } catch {
       // AudioContext creation might fail if user has not interacted with DOM yet
     }
+
+    // 2. HTML5 Audio Element silent loop (essential for iOS Safari and Android Chrome background execution)
+    try {
+      if (typeof document !== 'undefined' && typeof window !== 'undefined') {
+        if (!this.audioElement && document.body) {
+          const audio = document.createElement('audio');
+          audio.src = SILENT_WAV_BASE64;
+          audio.loop = true;
+          audio.volume = 0.001;
+          audio.setAttribute('playsinline', 'true');
+          audio.setAttribute('aria-hidden', 'true');
+          audio.style.display = 'none';
+          document.body.appendChild(audio);
+          this.audioElement = audio;
+        }
+
+        if (this.audioElement && typeof this.audioElement.play === 'function') {
+          const playPromise = this.audioElement.play();
+          if (playPromise && typeof playPromise.catch === 'function') {
+            playPromise.catch(() => {});
+          }
+        }
+      }
+    } catch {
+      // Non-blocking in headless environments
+    }
+
+    this.isRunning = true;
 
     if (typeof navigator !== 'undefined' && 'mediaSession' in navigator) {
       navigator.mediaSession.playbackState = 'playing';
@@ -90,6 +123,20 @@ export class BackgroundKeepAliveManager {
         // Ignore close errors
       }
       this.audioContext = null;
+    }
+
+    if (this.audioElement) {
+      try {
+        this.audioElement.pause();
+        this.audioElement.removeAttribute('src');
+        this.audioElement.load();
+        if (this.audioElement.parentNode) {
+          this.audioElement.parentNode.removeChild(this.audioElement);
+        }
+      } catch {
+        // Safe cleanup
+      }
+      this.audioElement = null;
     }
 
     this.isRunning = false;
@@ -121,9 +168,9 @@ export class BackgroundKeepAliveManager {
         album: subTitle,
         artwork: [
           {
-            src: '/favicon.ico',
+            src: '/icon.svg',
             sizes: '96x96',
-            type: 'image/x-icon',
+            type: 'image/svg+xml',
           },
         ],
       });
@@ -154,8 +201,8 @@ export class BackgroundKeepAliveManager {
     try {
       const notification = new Notification(title, {
         body,
-        icon: '/favicon.ico',
-        badge: '/favicon.ico',
+        icon: '/icon.svg',
+        badge: '/icon.svg',
         tag: 'transit-pulse-navigation',
         requireInteraction: true,
       });
@@ -174,4 +221,14 @@ export class BackgroundKeepAliveManager {
   public getIsRunning(): boolean {
     return this.isRunning;
   }
+}
+
+// Global shared singleton instance for coordinate keep-alive across hooks and HUD
+let globalKeepAliveManager: BackgroundKeepAliveManager | null = null;
+
+export function getBackgroundKeepAliveManager(): BackgroundKeepAliveManager {
+  if (!globalKeepAliveManager) {
+    globalKeepAliveManager = new BackgroundKeepAliveManager();
+  }
+  return globalKeepAliveManager;
 }

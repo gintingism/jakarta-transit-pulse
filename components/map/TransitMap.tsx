@@ -122,6 +122,26 @@ function MapFollowController() {
     }
   }, [map, userCoords, isFollowUser]);
 
+  // Fast Wake-Up Re-sync: redraw map tiles and snap to fresh position when screen turns back on
+  useEffect(() => {
+    const handleWakeUp = () => {
+      if (typeof document !== 'undefined' && document.visibilityState === 'visible') {
+        map.invalidateSize();
+        const coords = useTransitStore.getState().userCoords;
+        if (useTransitStore.getState().isFollowUser && coords) {
+          map.panTo(coords, { animate: true, duration: 0.6 });
+        }
+      }
+    };
+
+    document.addEventListener('visibilitychange', handleWakeUp);
+    window.addEventListener('focus', handleWakeUp);
+    return () => {
+      document.removeEventListener('visibilitychange', handleWakeUp);
+      window.removeEventListener('focus', handleWakeUp);
+    };
+  }, [map]);
+
   return null;
 }
 

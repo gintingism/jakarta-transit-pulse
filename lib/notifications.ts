@@ -31,10 +31,10 @@ export function sendDisembarkNotification(stationName: string, distanceMeters: n
 
   try {
     const distText = distanceMeters < 1000 ? `${Math.round(distanceMeters)}m` : `${(distanceMeters / 1000).toFixed(1)}km`;
-    const notification = new Notification('🚨 WAKE UP! Approaching Your Stop', {
-      body: `You are ~${distText} from ${stationName}. Prepare to disembark now!`,
-      icon: '/favicon.ico',
-      badge: '/favicon.ico',
+    const notification = new Notification('🚨 Waktunya Turun! Stasiun Sudah Dekat', {
+      body: `Sisa ~${distText} menuju ${stationName}. Siapkan barang bawaan dan bersiap turun sekarang!`,
+      icon: '/icon.svg',
+      badge: '/icon.svg',
       tag: 'get-off-alarm',
       requireInteraction: true,
       silent: false,
