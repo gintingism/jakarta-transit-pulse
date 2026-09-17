@@ -20,7 +20,10 @@ import {
   getVoiceNavigator,
   resetSharedVoiceNavigator,
 } from '@/src/lib/voiceNavigator';
-import { BackgroundKeepAliveManager } from '@/src/lib/backgroundKeepAlive';
+import {
+  BackgroundKeepAliveManager,
+  getBackgroundKeepAliveManager,
+} from '@/src/lib/backgroundKeepAlive';
 import { RoutePlan } from '@/src/lib/transitEngine';
 import { STATIONS } from '@/src/data/transitNetwork';
 import { useTransitStore } from '@/stores/useTransitStore';
@@ -851,6 +854,13 @@ describe('BackgroundKeepAliveManager & Lock Screen Keep-Alive', () => {
     expect(() => bgManager.triggerHaptic()).not.toThrow();
     expect(() => bgManager.sendNotification('Title', 'Body')).not.toThrow();
     expect(() => bgManager.stop()).not.toThrow();
+  });
+
+  it('returns a singleton instance from getBackgroundKeepAliveManager', () => {
+    const instance1 = getBackgroundKeepAliveManager();
+    const instance2 = getBackgroundKeepAliveManager();
+    expect(instance1).toBe(instance2);
+    expect(instance1).toBeInstanceOf(BackgroundKeepAliveManager);
   });
 });
 

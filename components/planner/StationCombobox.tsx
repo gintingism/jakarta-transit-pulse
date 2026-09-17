@@ -118,17 +118,30 @@ export default function StationCombobox({
 
     let matchedStations = STATIONS;
     if (q) {
-      matchedStations = STATIONS.filter(
-        (s) =>
+      const qNorm = q.replace(/[-_]/g, ' ');
+      matchedStations = STATIONS.filter((s) => {
+        const nameNorm = s.name.toLowerCase().replace(/[-_]/g, ' ');
+        return (
           s.name.toLowerCase().includes(q) ||
+          nameNorm.includes(qNorm) ||
           (s.code && s.code.toLowerCase().includes(q)) ||
-          s.lines.some((l) => l.toLowerCase().includes(q)) ||
-          (s.lines.includes('kai-bandara') && 'bandara airport soekarno hatta shia ka bandara basoetta'.includes(q)) ||
+          s.lines.some(
+            (l) =>
+              l.toLowerCase().includes(q) ||
+              l.replace(/[-_]/g, ' ').includes(qNorm)
+          ) ||
+          (s.lines.includes('kai-bandara') &&
+            ('bandara'.includes(q) ||
+              'airport'.includes(q) ||
+              'soekarno hatta'.includes(qNorm) ||
+              'basoetta'.includes(q) ||
+              'shia'.includes(q))) ||
           (s.type === 'krl' && 'krl commuterline kereta kci'.includes(q)) ||
           (s.type === 'tj' && 'transjakarta tj bus busway halte transj'.includes(q)) ||
           (s.type === 'mrt' && 'mrt ratangga mrtj kereta bawah tanah subway'.includes(q)) ||
           (s.type === 'lrt' && 'lrt jabodebek lrtj lrt jakarta kereta ringan'.includes(q))
-      );
+        );
+      });
     }
 
     const stationItems: SearchItem[] = matchedStations.slice(0, 10).map((s) => ({
@@ -172,16 +185,16 @@ export default function StationCombobox({
 
     if (e.key === 'ArrowDown') {
       e.preventDefault();
-      setHighlightedIndex((prev) =>
-        prev < combinedItems.length - 1 ? prev + 1 : 0
-      );
-      scrollHighlightedIntoView(highlightedIndex + 1);
+      const nextIndex =
+        highlightedIndex < combinedItems.length - 1 ? highlightedIndex + 1 : 0;
+      setHighlightedIndex(nextIndex);
+      scrollHighlightedIntoView(nextIndex);
     } else if (e.key === 'ArrowUp') {
       e.preventDefault();
-      setHighlightedIndex((prev) =>
-        prev > 0 ? prev - 1 : combinedItems.length - 1
-      );
-      scrollHighlightedIntoView(highlightedIndex - 1);
+      const nextIndex =
+        highlightedIndex > 0 ? highlightedIndex - 1 : Math.max(0, combinedItems.length - 1);
+      setHighlightedIndex(nextIndex);
+      scrollHighlightedIntoView(nextIndex);
     } else if (e.key === 'Enter') {
       e.preventDefault();
       if (combinedItems[highlightedIndex]) {

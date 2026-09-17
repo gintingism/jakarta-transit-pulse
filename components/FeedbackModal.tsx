@@ -6,6 +6,7 @@ import { APP_VERSION } from '@/src/data/changelog';
 import {
   FeedbackCategory,
   FEEDBACK_CATEGORIES,
+  generateHumanVerificationToken,
 } from '@/src/lib/feedbackValidation';
 import { Turnstile, TurnstileInstance } from '@marsidev/react-turnstile';
 import {
@@ -64,6 +65,7 @@ export default function FeedbackModal() {
   const [showMetadata, setShowMetadata] = useState(false);
   const [botVerified, setBotVerified] = useState(false);
   const [botToken, setBotToken] = useState<string | null>(null);
+  const [turnstileFailed, setTurnstileFailed] = useState(false);
   const [honeypot, setHoneypot] = useState('');
   const turnstileRef = useRef<TurnstileInstance | null>(null);
 
@@ -93,6 +95,7 @@ export default function FeedbackModal() {
       setErrorMessage(null);
       setBotVerified(false);
       setBotToken(null);
+      setTurnstileFailed(false);
       setHoneypot('');
       try {
         turnstileRef.current?.reset();
@@ -411,33 +414,60 @@ export default function FeedbackModal() {
                   </span>
                 </div>
 
-                <div className="flex justify-center p-2 rounded-xl bg-slate-50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 min-h-[66px] items-center overflow-hidden">
-                  <Turnstile
-                    ref={turnstileRef}
-                    siteKey={turnstileSiteKey}
-                    onSuccess={(token) => {
-                      setBotToken(token);
-                      setBotVerified(true);
-                      setErrorMessage(null);
-                    }}
-                    onError={() => {
-                      setBotVerified(false);
-                      setBotToken(null);
-                      setErrorMessage(
-                        'Verifikasi keamanan belum berhasil. Silakan periksa koneksi internet Anda.'
-                      );
-                    }}
-                    onExpire={() => {
-                      setBotVerified(false);
-                      setBotToken(null);
-                    }}
-                    options={{
-                      theme: 'auto',
-                      language: 'id',
-                      size: 'flexible',
-                    }}
-                  />
-                </div>
+                {turnstileFailed ? (
+                  <div className="flex flex-col items-center gap-2 p-3 rounded-xl bg-amber-50/70 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800/60 w-full animate-fadeIn">
+                    <p className="text-[11px] text-amber-800 dark:text-amber-300 text-center">
+                      Widget keamanan terhalang (adblocker/jaringan). Gunakan verifikasi cadangan di bawah ini:
+                    </p>
+                    <label className="flex items-center gap-2.5 px-3 py-2 rounded-lg bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 cursor-pointer shadow-xs hover:border-emerald-500 transition">
+                      <input
+                        type="checkbox"
+                        checked={botVerified}
+                        onChange={(e) => {
+                          if (e.target.checked) {
+                            const token = generateHumanVerificationToken();
+                            setBotToken(token);
+                            setBotVerified(true);
+                            setErrorMessage(null);
+                          } else {
+                            setBotVerified(false);
+                            setBotToken(null);
+                          }
+                        }}
+                        className="w-4 h-4 rounded text-emerald-600 focus:ring-emerald-500 cursor-pointer"
+                      />
+                      <span className="text-xs font-semibold text-slate-800 dark:text-zinc-200">
+                        Saya adalah manusia (Verifikasi Cadangan)
+                      </span>
+                    </label>
+                  </div>
+                ) : (
+                  <div className="flex justify-center p-2 rounded-xl bg-slate-50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 min-h-[66px] items-center overflow-hidden">
+                    <Turnstile
+                      ref={turnstileRef}
+                      siteKey={turnstileSiteKey}
+                      onSuccess={(token) => {
+                        setBotToken(token);
+                        setBotVerified(true);
+                        setErrorMessage(null);
+                      }}
+                      onError={() => {
+                        setTurnstileFailed(true);
+                        setBotVerified(false);
+                        setBotToken(null);
+                      }}
+                      onExpire={() => {
+                        setBotVerified(false);
+                        setBotToken(null);
+                      }}
+                      options={{
+                        theme: 'auto',
+                        language: 'id',
+                        size: 'flexible',
+                      }}
+                    />
+                  </div>
+                )}
               </div>
 
               {/* Submit Action */}

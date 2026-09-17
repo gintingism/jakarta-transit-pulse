@@ -25,7 +25,10 @@ import {
   Bell,
   Navigation as NavigationIcon,
 } from 'lucide-react';
-import { BackgroundKeepAliveManager } from '@/src/lib/backgroundKeepAlive';
+import {
+  BackgroundKeepAliveManager,
+  getBackgroundKeepAliveManager,
+} from '@/src/lib/backgroundKeepAlive';
 import { useTransitStore } from '@/stores/useTransitStore';
 import { playTransitArrivalChime } from '@/lib/audio';
 
@@ -76,7 +79,7 @@ export default function NavigationHUD({
         setIsSpeaking(speaking);
       });
 
-      const bg = new BackgroundKeepAliveManager();
+      const bg = getBackgroundKeepAliveManager();
       bg.start();
       bgKeepAliveRef.current = bg;
     }
@@ -85,7 +88,9 @@ export default function NavigationHUD({
       if (legChangeDebounceTimerRef.current) {
         clearTimeout(legChangeDebounceTimerRef.current);
       }
-      bgKeepAliveRef.current?.stop();
+      if (!useTransitStore.getState().isAlarmArmed) {
+        bgKeepAliveRef.current?.stop();
+      }
       bgKeepAliveRef.current = null;
     };
   }, []);

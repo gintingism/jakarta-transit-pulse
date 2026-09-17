@@ -36,6 +36,7 @@ export function useGeoAlert() {
   const lastFixTimestampRef = useRef<number>(0);
   const retryTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const wakeLockSentinelRef = useRef<WakeLockSentinel | null>(null);
+  const prevIsTriggeredRef = useRef<boolean>(false);
 
   // 1. Screen Wake Lock Management (keeps screen awake when alarm is armed or navigating)
   useEffect(() => {
@@ -102,7 +103,9 @@ export function useGeoAlert() {
       const targetStation = alarmTargetStopId ? STATION_MAP[alarmTargetStopId] : null;
       if (targetStation) {
         bg.updateLockScreen({
-          instruction: '🚨 Alarm Anti-Bablas Aktif',
+          instruction: isAlarmTriggered
+            ? '🚨 WAKTUNYA TURUN SEKARANG!'
+            : '🚨 Alarm Anti-Bablas Aktif',
           distanceMeters: currentDistanceMeters ?? 1000,
           targetName: targetStation.name,
         });
@@ -110,7 +113,7 @@ export function useGeoAlert() {
     } else {
       bg.stop();
     }
-  }, [isAlarmArmed, isNavigating, alarmTargetStopId, currentDistanceMeters]);
+  }, [isAlarmArmed, isNavigating, alarmTargetStopId, currentDistanceMeters, isAlarmTriggered]);
 
   // 3. Geolocation watch with retry fallback and fast wake-up sync
   useEffect(() => {
@@ -225,32 +228,45 @@ export function useGeoAlert() {
 
   // 5. Trigger alarm when within threshold distance
   useEffect(() => {
-    if (!isAlarmArmed || isAlarmTriggered || currentDistanceMeters === null) return;
-
-    if (currentDistanceMeters <= alarmThresholdMeters) {
+    if (
+      isAlarmArmed &&
+      !isAlarmTriggered &&
+      currentDistanceMeters !== null &&
+      currentDistanceMeters <= alarmThresholdMeters
+    ) {
       triggerAlarm();
-
-      const targetStation = alarmTargetStopId ? STATION_MAP[alarmTargetStopId] : null;
-      const stopName = targetStation ? targetStation.name : 'stasiun tujuan Anda';
-      sendDisembarkNotification(stopName, currentDistanceMeters);
-
-      const bg = getBackgroundKeepAliveManager();
-      bg.triggerHaptic([500, 200, 500, 200, 1000]);
-      if (targetStation) {
-        bg.updateLockScreen({
-          instruction: '🚨 WAKTUNYA TURUN SEKARANG!',
-          distanceMeters: currentDistanceMeters,
-          targetName: targetStation.name,
-        });
-      }
     }
   }, [
     isAlarmArmed,
     isAlarmTriggered,
     currentDistanceMeters,
     alarmThresholdMeters,
-    alarmTargetStopId,
     triggerAlarm,
+  ]);
+
+  // 5b. Dispatch notification, haptics, and lockscreen prompt whenever alarm is triggered
+  useEffect(() => {
+    if (isAlarmTriggered && !prevIsTriggeredRef.current) {
+      const targetStation = alarmTargetStopId ? STATION_MAP[alarmTargetStopId] : null;
+      const stopName = targetStation ? targetStation.name : 'stasiun tujuan Anda';
+      sendDisembarkNotification(stopName, currentDistanceMeters ?? alarmThresholdMeters);
+
+      const bg = getBackgroundKeepAliveManager();
+      bg.triggerHaptic([500, 200, 500, 200, 1000]);
+      if (targetStation) {
+        bg.updateLockScreen({
+          instruction: '🚨 WAKTUNYA TURUN SEKARANG!',
+          distanceMeters: currentDistanceMeters ?? 0,
+          targetName: targetStation.name,
+        });
+      }
+    }
+    prevIsTriggeredRef.current = isAlarmTriggered;
+  }, [
+    isAlarmTriggered,
+    alarmTargetStopId,
+    currentDistanceMeters,
+    alarmThresholdMeters,
   ]);
 
   // 6. Play repeating alarm chime while active & unmuted
