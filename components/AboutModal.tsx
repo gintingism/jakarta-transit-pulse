@@ -111,15 +111,17 @@ export default function AboutModal() {
           </button>
 
           <div className="flex items-center gap-3">
-            <div className="relative flex items-center justify-center w-12 h-12 rounded-2xl overflow-hidden bg-white dark:bg-zinc-800 border border-slate-200/80 dark:border-zinc-700/80 shadow-lg shadow-sky-500/15 shrink-0 p-1">
-              <img
-                src="/logo.png"
-                alt="Jakarta Transit Pulse Logo"
-                className="w-full h-full object-contain"
-              />
-              <span className="absolute -top-1 -right-1 flex h-3 w-3">
+            <div className="relative shrink-0 flex items-center justify-center">
+              <div className="w-12 h-12 rounded-2xl overflow-hidden bg-white border border-slate-200/90 dark:border-zinc-700 shadow-lg p-1 flex items-center justify-center">
+                <img
+                  src="/logo.png"
+                  alt="Jakarta Transit Pulse Logo"
+                  className="w-full h-full object-contain"
+                />
+              </div>
+              <span className="absolute -top-1 -right-1 flex h-3 w-3 pointer-events-none z-10">
                 <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
-                <span className="relative inline-flex rounded-full h-3 w-3 bg-emerald-500" />
+                <span className="relative inline-flex rounded-full h-3 w-3 bg-emerald-500 ring-2 ring-white dark:ring-zinc-900" />
               </span>
             </div>
 

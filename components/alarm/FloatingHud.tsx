@@ -61,15 +61,17 @@ export default function FloatingHud() {
     <div className="absolute top-3.5 left-3.5 right-3.5 z-20 flex flex-wrap items-center justify-between gap-2.5 pointer-events-none">
       {/* Brand Identity Cockpit Badge */}
       <div className="pointer-events-auto flex items-center gap-2.5 backdrop-blur-md bg-white/85 dark:bg-zinc-900/85 border border-slate-200/60 dark:border-zinc-800/60 shadow-sm rounded-2xl px-3 py-2 hover:border-sky-500/40 transition">
-        <div className="relative flex items-center justify-center w-8 h-8 rounded-xl overflow-hidden bg-white dark:bg-zinc-800 border border-slate-200/80 dark:border-zinc-700/80 shadow-md shadow-sky-500/15 shrink-0 p-0.5">
-          <img
-            src="/logo.png"
-            alt="Jakarta Transit Pulse Logo"
-            className="w-full h-full object-contain"
-          />
-          <span className="absolute -top-0.5 -right-0.5 flex h-2.5 w-2.5">
+        <div className="relative shrink-0 flex items-center justify-center">
+          <div className="w-8 h-8 rounded-xl overflow-hidden bg-white border border-slate-200/90 dark:border-zinc-700 shadow-sm p-0.5 flex items-center justify-center">
+            <img
+              src="/logo.png"
+              alt="Jakarta Transit Pulse Logo"
+              className="w-full h-full object-contain"
+            />
+          </div>
+          <span className="absolute -top-1 -right-1 flex h-2.5 w-2.5 pointer-events-none z-10">
             <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
-            <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-500" />
+            <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-500 ring-2 ring-white dark:ring-zinc-900" />
           </span>
         </div>
 
@@ -90,7 +92,7 @@ export default function FloatingHud() {
       </div>
 
       {/* Right Control Cluster */}
-      <div className="pointer-events-auto flex items-center gap-2 ml-auto">
+      <div className="pointer-events-auto flex flex-wrap items-center gap-1.5 sm:gap-2 ml-auto justify-end">
         {/* Active Alarm HUD Pill */}
         {isAlarmArmed && targetStation && (
           <button
