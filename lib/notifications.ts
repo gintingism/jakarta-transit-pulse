@@ -33,8 +33,8 @@ export function sendDisembarkNotification(stationName: string, distanceMeters: n
     const distText = distanceMeters < 1000 ? `${Math.round(distanceMeters)}m` : `${(distanceMeters / 1000).toFixed(1)}km`;
     const notification = new Notification('🚨 Waktunya Turun! Stasiun Sudah Dekat', {
       body: `Sisa ~${distText} menuju ${stationName}. Siapkan barang bawaan dan bersiap turun sekarang!`,
-      icon: '/icon.svg',
-      badge: '/icon.svg',
+      icon: '/icon-192.png',
+      badge: '/icon-192.png',
       tag: 'get-off-alarm',
       requireInteraction: true,
       silent: false,

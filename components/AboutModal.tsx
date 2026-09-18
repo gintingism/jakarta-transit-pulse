@@ -4,7 +4,6 @@ import React, { useEffect, useState } from 'react';
 import { useTransitStore } from '@/stores/useTransitStore';
 import {
   X,
-  Compass,
   Linkedin,
   Github,
   ExternalLink,
@@ -112,8 +111,12 @@ export default function AboutModal() {
           </button>
 
           <div className="flex items-center gap-3">
-            <div className="relative flex items-center justify-center w-12 h-12 rounded-2xl bg-gradient-to-br from-sky-500 via-blue-600 to-indigo-600 shadow-lg shadow-sky-500/25 text-white shrink-0">
-              <Compass className="w-6 h-6" />
+            <div className="relative flex items-center justify-center w-12 h-12 rounded-2xl overflow-hidden bg-white dark:bg-zinc-800 border border-slate-200/80 dark:border-zinc-700/80 shadow-lg shadow-sky-500/15 shrink-0 p-1">
+              <img
+                src="/logo.png"
+                alt="Jakarta Transit Pulse Logo"
+                className="w-full h-full object-contain"
+              />
               <span className="absolute -top-1 -right-1 flex h-3 w-3">
                 <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
                 <span className="relative inline-flex rounded-full h-3 w-3 bg-emerald-500" />

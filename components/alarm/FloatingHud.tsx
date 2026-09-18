@@ -9,7 +9,6 @@ import {
   Bell,
   Layers,
   ChevronRight,
-  Compass,
   LocateFixed,
   Loader2,
   Info,
@@ -62,8 +61,12 @@ export default function FloatingHud() {
     <div className="absolute top-3.5 left-3.5 right-3.5 z-20 flex flex-wrap items-center justify-between gap-2.5 pointer-events-none">
       {/* Brand Identity Cockpit Badge */}
       <div className="pointer-events-auto flex items-center gap-2.5 backdrop-blur-md bg-white/85 dark:bg-zinc-900/85 border border-slate-200/60 dark:border-zinc-800/60 shadow-sm rounded-2xl px-3 py-2 hover:border-sky-500/40 transition">
-        <div className="relative flex items-center justify-center w-8 h-8 rounded-xl bg-gradient-to-br from-sky-500 via-blue-600 to-indigo-600 shadow-md shadow-sky-500/25 text-white shrink-0">
-          <Compass className="w-4 h-4" />
+        <div className="relative flex items-center justify-center w-8 h-8 rounded-xl overflow-hidden bg-white dark:bg-zinc-800 border border-slate-200/80 dark:border-zinc-700/80 shadow-md shadow-sky-500/15 shrink-0 p-0.5">
+          <img
+            src="/logo.png"
+            alt="Jakarta Transit Pulse Logo"
+            className="w-full h-full object-contain"
+          />
           <span className="absolute -top-0.5 -right-0.5 flex h-2.5 w-2.5">
             <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
             <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-500" />
