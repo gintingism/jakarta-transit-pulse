@@ -163,13 +163,20 @@ export function useGeoAlert() {
       }
     };
 
+    // Fast initial fix for instant UI rendering (<100ms on cached/cellular/wifi)
+    navigator.geolocation.getCurrentPosition(
+      handleSuccess,
+      () => {},
+      { enableHighAccuracy: false, maximumAge: 300000, timeout: 3000 }
+    );
+
     try {
       watchId = navigator.geolocation.watchPosition(handleSuccess, handleError, geoOptions);
     } catch {
       // Ignore
     }
 
-    // Immediate initial fix
+    // High-accuracy initial fix
     navigator.geolocation.getCurrentPosition(handleSuccess, handleError, geoOptions);
 
     // Fast wake-up sync: refresh position immediately when phone screen turns on or user returns to tab

@@ -233,6 +233,8 @@ export const useTransitStore = create<TransitStore>((set, get) => ({
           coords,
         },
         originStopId: null,
+        mapCenter: coords,
+        mapZoom: 15,
       });
       void get().calculateCurrentRoute();
       void reverseGeocodeLocation(coords).then((name) => {
@@ -259,6 +261,8 @@ export const useTransitStore = create<TransitStore>((set, get) => ({
               coords: newCoords,
             },
             originStopId: null,
+            mapCenter: newCoords,
+            mapZoom: 15,
           });
           void get().calculateCurrentRoute();
           void reverseGeocodeLocation(newCoords).then((name) => {
@@ -428,6 +432,7 @@ export const useTransitStore = create<TransitStore>((set, get) => ({
       return;
     }
     const current = get().userCoords;
+    const isFirstFix = current === null;
     const isCoordsSame =
       current &&
       Math.abs(current[0] - coords[0]) < 0.00001 &&
@@ -438,14 +443,58 @@ export const useTransitStore = create<TransitStore>((set, get) => ({
       return;
     }
 
-    set({
+    const { originStopId, originPlace, routePlan } = get();
+    // Default origin is when user hasn't explicitly picked a specific station and origin is 'Lokasi Saya Saat Ini'
+    const isDefaultOrigin =
+      !originStopId &&
+      (!originPlace ||
+        originPlace.name === 'Lokasi Saya Saat Ini' ||
+        originPlace.name.startsWith('Lokasi Saya'));
+
+    const updates: Partial<TransitStore> = {
       userCoords: coords,
       userAccuracy: accuracy ?? null,
       userHeading: heading ?? null,
       userSpeed: speed ?? null,
       locationError: null,
-    });
+    };
+
+    if (isDefaultOrigin) {
+      updates.originPlace = {
+        name: originPlace?.name || 'Lokasi Saya Saat Ini',
+        coords,
+      };
+    }
+
+    // On initial GPS fix with no active route, center the map directly on device location
+    if (isFirstFix && !routePlan) {
+      updates.mapCenter = coords;
+      updates.mapZoom = 15;
+    }
+
+    set(updates);
     get().updateDistanceToTarget();
+
+    // If destination was already set and origin is default, recalculate route with real coords
+    if (isDefaultOrigin && (get().destinationPlace || get().destinationStopId)) {
+      void get().calculateCurrentRoute();
+    }
+
+    // Reverse geocode on first fix to provide contextual neighborhood name
+    if (isFirstFix && isDefaultOrigin) {
+      void reverseGeocodeLocation(coords).then((name) => {
+        if (name && name !== 'Lokasi Saya Saat Ini') {
+          const currentPlace = get().originPlace;
+          if (
+            currentPlace &&
+            Math.abs(currentPlace.coords[0] - coords[0]) < 0.001 &&
+            Math.abs(currentPlace.coords[1] - coords[1]) < 0.001
+          ) {
+            set({ originPlace: { ...currentPlace, name } });
+          }
+        }
+      });
+    }
   },
 
   setIsFollowUser: (follow) => set({ isFollowUser: follow }),

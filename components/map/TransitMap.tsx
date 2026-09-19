@@ -218,7 +218,9 @@ function MapFloatingControls({ routePlan }: { routePlan?: RoutePlan | null }) {
         maxZoom: 15,
       });
     } else {
-      map.flyTo([-6.2088, 106.8456], 12, { duration: 1.2 });
+      const target = userCoords || [-6.2088, 106.8456];
+      const zoom = userCoords ? 15 : 12;
+      map.flyTo(target, zoom, { duration: 1.2 });
     }
   };
 
@@ -457,6 +459,8 @@ export default function TransitMap(props: TransitMapProps) {
   const storeArmAlarm = useTransitStore((s) => s.armAlarm);
   const isNavigating = useTransitStore((s) => s.isNavigating);
   const navigationLegs = useTransitStore((s) => s.navigationLegs);
+  const storeMapCenter = useTransitStore((s) => s.mapCenter);
+  const storeMapZoom = useTransitStore((s) => s.mapZoom);
 
   const routePlan = props.routePlan !== undefined ? props.routePlan : storeRoutePlan;
   const originId = props.originId !== undefined ? props.originId : storeOriginId;
@@ -501,8 +505,8 @@ export default function TransitMap(props: TransitMapProps) {
   return (
     <div className="relative w-full h-full bg-slate-50 dark:bg-zinc-950">
       <MapContainer
-        center={[-6.2088, 106.8456]}
-        zoom={12}
+        center={storeMapCenter}
+        zoom={storeMapZoom}
         minZoom={10}
         maxZoom={19}
         zoomControl={false}
