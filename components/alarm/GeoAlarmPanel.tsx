@@ -259,13 +259,13 @@ export default function GeoAlarmPanel() {
             </div>
 
             {/* Interactive Track With Dots & Penahan */}
-            <div className="pt-2 pb-1 px-1">
-              <div className="relative w-full py-3 flex flex-col justify-center">
-                {/* Physical Base Track */}
-                <div className="relative w-full h-2 rounded-full bg-slate-200 dark:bg-zinc-800 overflow-visible flex items-center">
+            <div className="pt-2 pb-1">
+              <div className="relative w-full px-3 py-3 flex flex-col justify-center">
+                {/* Physical Base Track (spans inside the 12px padding) */}
+                <div className="relative w-full h-2 rounded-full bg-slate-200 dark:bg-zinc-800 flex items-center">
                   {/* Glowing Active Track Fill */}
                   <div
-                    className="absolute left-0 top-0 h-full rounded-full bg-gradient-to-r from-sky-500 via-blue-500 to-indigo-500 shadow-sm transition-all duration-75"
+                    className="absolute left-0 top-0 h-full rounded-full bg-gradient-to-r from-sky-500 via-blue-500 to-indigo-500 transition-all duration-75"
                     style={{ width: `${sliderProgressPct}%` }}
                   />
 
@@ -276,30 +276,26 @@ export default function GeoAlarmPanel() {
                     const isCurrent = alarmThresholdMeters === stop.value;
 
                     return (
-                      <button
+                      <div
                         key={`dot_${stop.value}`}
-                        type="button"
-                        onClick={() => handleSelectPreset(stop.value)}
                         style={{ left: `${stopPct}%` }}
-                        className="absolute top-1/2 -translate-y-1/2 -translate-x-1/2 z-10 p-1 flex items-center justify-center cursor-pointer group"
-                        title={`Atur jarak ke ${stop.label} (${stop.desc})`}
-                        aria-label={`Pilih ${stop.label}`}
+                        className="absolute top-1/2 -translate-y-1/2 -translate-x-1/2 pointer-events-none z-10 flex items-center justify-center"
                       >
                         <div
-                          className={`rounded-full transition-all duration-200 ${
+                          className={`rounded-full transition-all duration-150 ${
                             isCurrent
-                              ? 'w-3.5 h-3.5 bg-white dark:bg-zinc-950 border-2 border-sky-500 dark:border-sky-400 ring-4 ring-sky-500/25 shadow-md scale-110'
+                              ? 'w-3 h-3 bg-sky-500 dark:bg-sky-400 ring-4 ring-sky-500/30'
                               : isPassed
-                              ? 'w-2 h-2 bg-sky-500 border border-white dark:border-zinc-900 group-hover:scale-125'
-                              : 'w-2 h-2 bg-slate-300 dark:bg-zinc-700 border border-slate-100 dark:border-zinc-900 group-hover:scale-125'
+                              ? 'w-1.5 h-1.5 bg-white dark:bg-zinc-900 opacity-90'
+                              : 'w-1.5 h-1.5 bg-slate-400 dark:bg-zinc-600'
                           }`}
                         />
-                      </button>
+                      </div>
                     );
                   })}
                 </div>
 
-                {/* Range Input Slider Thumb */}
+                {/* Range Input Slider Thumb (spans full width of container) */}
                 <input
                   type="range"
                   min="200"
@@ -307,15 +303,40 @@ export default function GeoAlarmPanel() {
                   step="50"
                   value={alarmThresholdMeters}
                   onChange={handleSliderChange}
-                  className="alarm-range-slider absolute inset-0 w-full h-full cursor-pointer z-20"
+                  className="alarm-range-slider absolute inset-x-0 top-1/2 -translate-y-1/2 w-full cursor-pointer z-20"
                   aria-label="Atur radius jarak alarm"
                 />
               </div>
 
-              {/* Context Label of Current Stop */}
+              {/* Tick Stop Labels under the Track */}
+              <div className="relative w-full px-3 h-5 mt-1">
+                <div className="relative w-full h-full">
+                  {ALARM_STOPS.map((stop) => {
+                    const stopPct = ((stop.value - 200) / 1000) * 100;
+                    const isSelected = alarmThresholdMeters === stop.value;
+                    return (
+                      <button
+                        key={`label_${stop.value}`}
+                        type="button"
+                        onClick={() => handleSelectPreset(stop.value)}
+                        style={{ left: `${stopPct}%` }}
+                        className={`absolute top-0 -translate-x-1/2 text-[9.5px] font-mono tabular-nums transition-all cursor-pointer whitespace-nowrap px-1 py-0.5 rounded ${
+                          isSelected
+                            ? 'text-sky-600 dark:text-sky-400 font-bold bg-sky-50 dark:bg-sky-950/80 ring-1 ring-sky-500/30'
+                            : 'text-slate-400 dark:text-zinc-500 hover:text-slate-700 dark:hover:text-zinc-300'
+                        }`}
+                      >
+                        {stop.label}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* Context Description of Selected Distance */}
               {currentStopPreset && (
-                <div className="text-center text-[10.5px] text-slate-500 dark:text-zinc-400 mt-0.5">
-                  Mode: <span className="font-semibold text-slate-800 dark:text-zinc-200">{currentStopPreset.desc}</span>
+                <div className="text-center text-[10.5px] text-slate-500 dark:text-zinc-400 mt-2">
+                  Karakteristik: <span className="font-semibold text-slate-800 dark:text-zinc-200">{currentStopPreset.desc}</span>
                 </div>
               )}
             </div>
