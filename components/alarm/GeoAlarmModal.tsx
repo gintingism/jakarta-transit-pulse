@@ -94,7 +94,7 @@ export default function GeoAlarmModal(props: GeoAlarmModalProps) {
           <button
             type="button"
             onClick={onDismiss}
-            className="w-full py-3 px-4 rounded-xl font-bold text-sm bg-rose-600 hover:bg-rose-500 text-white shadow-lg transition active:scale-98 flex items-center justify-center gap-2"
+            className="w-full py-3 px-4 rounded-xl font-bold text-sm bg-rose-600 hover:bg-rose-500 text-white shadow-lg transition active:scale-98 flex items-center justify-center gap-2 cursor-pointer"
           >
             <CheckCircle className="w-4 h-4" />
             <span>SAYA SUDAH SIAP / MATIKAN SIRINE</span>
@@ -103,7 +103,7 @@ export default function GeoAlarmModal(props: GeoAlarmModalProps) {
           <button
             type="button"
             onClick={onDisarm}
-            className="w-full py-2 px-4 rounded-xl text-xs font-semibold text-slate-600 dark:text-zinc-400 hover:text-slate-800 dark:hover:text-zinc-200 bg-white dark:bg-zinc-900 hover:bg-slate-100 dark:hover:bg-zinc-800 border border-slate-200 dark:border-zinc-800 transition flex items-center justify-center gap-1.5"
+            className="w-full py-2 px-4 rounded-xl text-xs font-semibold text-slate-600 dark:text-zinc-400 hover:text-slate-800 dark:hover:text-zinc-200 bg-white dark:bg-zinc-900 hover:bg-slate-100 dark:hover:bg-zinc-800 border border-slate-200 dark:border-zinc-800 transition flex items-center justify-center gap-1.5 cursor-pointer"
           >
             <BellOff className="w-3.5 h-3.5" />
             <span>Nonaktifkan Pengingat Sepenuhnya</span>
