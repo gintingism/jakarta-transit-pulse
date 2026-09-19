@@ -291,15 +291,22 @@ export default function FeedbackModal() {
                   >
                     Penjelasan Kendala / Saran <span className="text-rose-500">*</span>
                   </label>
-                  <span
-                    className={`text-[10px] font-mono tabular-nums ${
-                      message.length > 1900
-                        ? 'text-rose-500 font-bold'
-                        : 'text-slate-400 dark:text-zinc-500'
-                    }`}
-                  >
-                    {message.length}/2000
-                  </span>
+                  <div className="flex items-center gap-2">
+                    {message.length > 0 && message.length < 5 && (
+                      <span className="text-[10.5px] text-amber-500 font-semibold animate-pulse">
+                        Min. 5 karakter
+                      </span>
+                    )}
+                    <span
+                      className={`text-[10px] font-mono tabular-nums ${
+                        message.length > 1900
+                          ? 'text-rose-500 font-bold'
+                          : 'text-slate-400 dark:text-zinc-500'
+                      }`}
+                    >
+                      {message.length}/2000
+                    </span>
+                  </div>
                 </div>
                 <textarea
                   id="feedback-message"
@@ -471,33 +478,65 @@ export default function FeedbackModal() {
               </div>
 
               {/* Submit Action */}
-              <div className="pt-2 flex items-center justify-end gap-2 border-t border-slate-200/80 dark:border-zinc-800/80">
-                <button
-                  type="button"
-                  onClick={handleClose}
-                  disabled={isSubmitting}
-                  className="px-4 py-2 rounded-xl text-xs font-semibold text-slate-600 dark:text-zinc-400 hover:text-slate-900 dark:hover:text-white transition cursor-pointer disabled:opacity-50"
-                >
-                  Batal
-                </button>
-
-                <button
-                  type="submit"
-                  disabled={isSubmitting || message.trim().length < 5 || !botVerified}
-                  className="flex items-center gap-1.5 px-4.5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs transition active:scale-95 shadow-md shadow-emerald-600/25 disabled:opacity-50 disabled:pointer-events-none cursor-pointer"
-                >
+              <div className="pt-3 flex flex-col-reverse sm:flex-row items-stretch sm:items-center justify-between gap-3 border-t border-slate-200/80 dark:border-zinc-800/80">
+                {/* Live Validation & Status Indicator */}
+                <div className="flex items-center gap-1.5 text-[11px] min-h-[20px]">
                   {isSubmitting ? (
-                    <>
-                      <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                      <span>Mengirim...</span>
-                    </>
+                    <span className="text-emerald-600 dark:text-emerald-400 font-medium flex items-center gap-1.5">
+                      <Loader2 className="w-3.5 h-3.5 animate-spin shrink-0" />
+                      Sedang mengirim masukan Anda...
+                    </span>
+                  ) : message.trim().length === 0 ? (
+                    <span className="text-slate-400 dark:text-zinc-500">
+                      Tulis pesan Anda (minimal 5 karakter)
+                    </span>
+                  ) : message.trim().length < 5 ? (
+                    <span className="text-amber-600 dark:text-amber-400 font-medium flex items-center gap-1.5">
+                      <AlertCircle className="w-3.5 h-3.5 shrink-0 text-amber-500" />
+                      Kurang {5 - message.trim().length} karakter lagi
+                    </span>
+                  ) : !botVerified ? (
+                    <span className="text-amber-600 dark:text-amber-400 font-medium flex items-center gap-1.5">
+                      <ShieldCheck className="w-3.5 h-3.5 shrink-0 text-amber-500" />
+                      Selesaikan verifikasi keamanan di atas
+                    </span>
                   ) : (
-                    <>
-                      <Send className="w-3.5 h-3.5" />
-                      <span>Kirim Masukan</span>
-                    </>
+                    <span className="text-emerald-600 dark:text-emerald-400 font-medium flex items-center gap-1.5">
+                      <CheckCircle2 className="w-3.5 h-3.5 shrink-0" />
+                      Formulir siap dikirim
+                    </span>
                   )}
-                </button>
+                </div>
+
+                {/* Action Buttons */}
+                <div className="flex items-center justify-end gap-2 shrink-0">
+                  <button
+                    type="button"
+                    onClick={handleClose}
+                    disabled={isSubmitting}
+                    className="px-4 py-2.5 rounded-xl text-xs font-semibold text-slate-600 dark:text-zinc-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-zinc-800/60 transition cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    Batal
+                  </button>
+
+                  <button
+                    type="submit"
+                    disabled={isSubmitting || message.trim().length < 5 || !botVerified}
+                    className="group relative flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-bold text-xs sm:text-sm tracking-wide transition-all duration-200 active:scale-95 shadow-md shadow-emerald-600/25 hover:shadow-lg hover:shadow-emerald-600/30 disabled:from-slate-300 disabled:to-slate-400 dark:disabled:from-zinc-700 dark:disabled:to-zinc-800 disabled:text-slate-500 dark:disabled:text-zinc-400 disabled:opacity-60 disabled:cursor-not-allowed disabled:shadow-none disabled:active:scale-100 cursor-pointer"
+                  >
+                    {isSubmitting ? (
+                      <>
+                        <Loader2 className="w-4 h-4 animate-spin" />
+                        <span>Mengirim...</span>
+                      </>
+                    ) : (
+                      <>
+                        <Send className="w-4 h-4 transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
+                        <span>Kirim Masukan</span>
+                      </>
+                    )}
+                  </button>
+                </div>
               </div>
             </form>
           )}

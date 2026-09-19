@@ -241,7 +241,7 @@ export default function FloatingHud() {
         <button
           type="button"
           onClick={() => setFeedbackModalOpen(true)}
-          className="p-2 sm:p-2.5 rounded-2xl backdrop-blur-md bg-white/85 dark:bg-zinc-900/85 border border-slate-200/60 dark:border-zinc-800/60 shadow-sm text-slate-700 dark:text-zinc-300 hover:text-emerald-600 dark:hover:text-emerald-400 hover:scale-105 active:scale-95 transition cursor-pointer"
+          className="p-2 sm:p-2.5 rounded-2xl backdrop-blur-md bg-white/85 dark:bg-zinc-900/85 border border-slate-200/60 dark:border-zinc-800/60 shadow-sm text-slate-700 dark:text-zinc-300 hover:text-emerald-600 dark:hover:text-emerald-400 hover:border-emerald-500/40 hover:bg-emerald-50/50 dark:hover:bg-emerald-950/20 hover:scale-105 active:scale-95 transition cursor-pointer"
           title="Beri Masukan & Lapor Kendala"
           aria-label="Beri Masukan & Lapor Kendala"
         >
