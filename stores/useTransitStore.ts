@@ -62,6 +62,11 @@ interface TransitStore {
   // Turn-by-Turn Live Navigation
   isNavigating: boolean;
   navigationLegs: RouteLeg[] | null;
+  currentLegIndex: number;
+  setCurrentLegIndex: (index: number) => void;
+  isStationProgressOpen: boolean;
+  setStationProgressOpen: (open: boolean) => void;
+  toggleStationProgress: () => void;
   startNavigation: (plan: RoutePlan) => void;
   stopNavigation: () => void;
 
@@ -145,12 +150,19 @@ export const useTransitStore = create<TransitStore>((set, get) => ({
   // Live Navigation State
   isNavigating: false,
   navigationLegs: null,
+  currentLegIndex: 0,
+  setCurrentLegIndex: (index) => set({ currentLegIndex: index }),
+  isStationProgressOpen: false,
+  setStationProgressOpen: (open) => set({ isStationProgressOpen: open }),
+  toggleStationProgress: () => set((s) => ({ isStationProgressOpen: !s.isStationProgressOpen })),
   startNavigation: (plan: RoutePlan) => {
     const legs = convertRoutePlanToLegs(plan);
     if (!legs || legs.length === 0) return;
     set({
       isNavigating: true,
       navigationLegs: legs,
+      currentLegIndex: 0,
+      isStationProgressOpen: false,
       isDrawerExpanded: false,
       isFollowUser: true,
     });
@@ -159,6 +171,8 @@ export const useTransitStore = create<TransitStore>((set, get) => ({
     set({
       isNavigating: false,
       navigationLegs: null,
+      currentLegIndex: 0,
+      isStationProgressOpen: false,
       isFollowUser: false,
     });
   },

@@ -8,6 +8,7 @@ import GeoAlarmModal from '@/components/alarm/GeoAlarmModal';
 import AboutModal from '@/components/AboutModal';
 import UrlSync from '@/components/UrlSync';
 import NavigationHUD from '@/components/navigation/NavigationHUD';
+import StationProgressSheet from '@/components/navigation/StationProgressSheet';
 import { useGeoAlert } from '@/hooks/useGeoAlert';
 import { useTransitStore } from '@/stores/useTransitStore';
 import { initAudioContext } from '@/lib/audio';
@@ -22,6 +23,8 @@ export default function HomePage() {
   const calculateCurrentRoute = useTransitStore((s) => s.calculateCurrentRoute);
   const isNavigating = useTransitStore((s) => s.isNavigating);
   const navigationLegs = useTransitStore((s) => s.navigationLegs);
+  const currentLegIndex = useTransitStore((s) => s.currentLegIndex);
+  const userCoords = useTransitStore((s) => s.userCoords);
   const stopNavigation = useTransitStore((s) => s.stopNavigation);
   const setUserLocation = useTransitStore((s) => s.setUserLocation);
   const setHasUnreadChangelog = useTransitStore((s) => s.setHasUnreadChangelog);
@@ -58,18 +61,25 @@ export default function HomePage() {
       <UrlSync />
 
       {isNavigating && navigationLegs && navigationLegs.length > 0 ? (
-        <NavigationHUD
-          legs={navigationLegs}
-          onStopNavigation={stopNavigation}
-          onPositionUpdate={(pos) => {
-            setUserLocation(
-              [pos.lat, pos.lng],
-              pos.accuracy ?? null,
-              pos.heading ?? null,
-              pos.speed ?? null
-            );
-          }}
-        />
+        <>
+          <NavigationHUD
+            legs={navigationLegs}
+            onStopNavigation={stopNavigation}
+            onPositionUpdate={(pos) => {
+              setUserLocation(
+                [pos.lat, pos.lng],
+                pos.accuracy ?? null,
+                pos.heading ?? null,
+                pos.speed ?? null
+              );
+            }}
+          />
+          <StationProgressSheet
+            legs={navigationLegs}
+            currentLegIndex={currentLegIndex}
+            userPos={userCoords ? { lat: userCoords[0], lng: userCoords[1] } : null}
+          />
+        </>
       ) : (
         <FloatingHud />
       )}

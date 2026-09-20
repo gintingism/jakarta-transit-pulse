@@ -60,6 +60,9 @@ export default function NavigationHUD({
   const isAlarmArmed = useTransitStore((s) => s.isAlarmArmed);
   const armAlarm = useTransitStore((s) => s.armAlarm);
   const disarmAlarm = useTransitStore((s) => s.disarmAlarm);
+  const setCurrentLegIndex = useTransitStore((s) => s.setCurrentLegIndex);
+  const toggleStationProgress = useTransitStore((s) => s.toggleStationProgress);
+  const isStationProgressOpen = useTransitStore((s) => s.isStationProgressOpen);
 
   const onPositionUpdateRef = useRef(onPositionUpdate);
   onPositionUpdateRef.current = onPositionUpdate;
@@ -97,6 +100,7 @@ export default function NavigationHUD({
 
   const handleLegChange = useCallback((index: number, nextLeg: RouteLeg) => {
     activeLegRef.current = nextLeg;
+    setCurrentLegIndex(index);
     onActiveLegChangeRef.current?.(nextLeg, index);
 
     // Clear previous timer if rapid transitions occur
@@ -170,6 +174,11 @@ export default function NavigationHUD({
       voiceNavRef.current.setMuted(state.isMuted);
     }
   }, [state.isMuted]);
+
+  // Sync tracker leg index to store
+  useEffect(() => {
+    setCurrentLegIndex(state.currentLegIndex);
+  }, [state.currentLegIndex, setCurrentLegIndex]);
 
   // Notify parent of location changes for map tracking (with 0.00001 deg threshold)
   useEffect(() => {
@@ -331,6 +340,16 @@ export default function NavigationHUD({
                 <span>Tujuan: {currentLeg.to?.name || 'Tujuan'}</span>
                 <span>•</span>
                 <span className="tabular-nums">Langkah {state.currentLegIndex + 1}/{state.legs.length}</span>
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    toggleStationProgress();
+                  }}
+                  className="text-cyan-400 hover:text-cyan-300 font-semibold underline underline-offset-2 cursor-pointer"
+                >
+                  • Stasiun
+                </button>
                 {isAlarmArmed && (
                   <span className="text-amber-400 font-medium">
                     • ⏰ Alarm
@@ -519,13 +538,26 @@ export default function NavigationHUD({
             </div>
           </div>
 
-          {/* Bottom Metrics Bar: Progress & Step counter */}
+          {/* Bottom Metrics Bar: Progress, Step counter & Station Progress Button */}
           <div className="mt-3 pt-2.5 border-t border-zinc-800/80 flex items-center justify-between text-[11px] text-zinc-400">
-            <div className="flex items-center gap-1.5 font-medium">
-              <NavigationIcon className="w-3.5 h-3.5 text-cyan-400" />
-              <span className="tabular-nums">
-                Langkah {state.currentLegIndex + 1} dari {state.legs.length}
-              </span>
+            <div className="flex items-center gap-2 font-medium">
+              <div className="flex items-center gap-1.5">
+                <NavigationIcon className="w-3.5 h-3.5 text-cyan-400" />
+                <span className="tabular-nums">
+                  Langkah {state.currentLegIndex + 1} dari {state.legs.length}
+                </span>
+              </div>
+
+              <button
+                type="button"
+                onClick={toggleStationProgress}
+                className="flex items-center gap-1 px-2 py-0.5 rounded-lg bg-cyan-500/15 hover:bg-cyan-500/25 border border-cyan-500/30 text-cyan-300 font-semibold text-[10.5px] transition cursor-pointer"
+                title={isStationProgressOpen ? 'Tutup Daftar Stasiun' : 'Lihat Daftar Stasiun Rute'}
+                aria-label="Toggle station progress timeline"
+              >
+                <Train className="w-3 h-3 text-cyan-400" />
+                <span>{isStationProgressOpen ? 'Tutup Stasiun' : 'Daftar Stasiun'}</span>
+              </button>
             </div>
 
             <div className="font-mono tabular-nums text-zinc-300 flex items-center gap-2">
