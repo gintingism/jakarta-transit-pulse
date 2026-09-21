@@ -55,6 +55,8 @@ export default function GeoAlarmPanel() {
   const startApproachSimulation = useTransitStore((s) => s.startApproachSimulation);
   const stopApproachSimulation = useTransitStore((s) => s.stopApproachSimulation);
   const routePlan = useTransitStore((s) => s.routePlan);
+  const isBatterySaverMode = useTransitStore((s) => s.isBatterySaverMode);
+  const toggleBatterySaverMode = useTransitStore((s) => s.toggleBatterySaverMode);
 
   const [notifState, setNotifState] = useState<string>('default');
   const lastHapticStopRef = useRef<number>(alarmThresholdMeters);
@@ -366,6 +368,58 @@ export default function GeoAlarmPanel() {
                 );
               })}
             </div>
+          </div>
+
+          {/* Mode Hemat Daya Cerdas Toggle Card */}
+          <div className="p-3 rounded-xl bg-slate-50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 flex items-center justify-between gap-3 transition">
+            <div className="flex items-start gap-2.5 min-w-0 flex-1">
+              <div
+                className={`w-8 h-8 rounded-lg flex items-center justify-center shrink-0 transition ${
+                  isBatterySaverMode
+                    ? 'bg-emerald-500/20 text-emerald-500 dark:text-emerald-400 border border-emerald-500/40'
+                    : 'bg-slate-200 dark:bg-zinc-800 text-slate-500 dark:text-zinc-400'
+                }`}
+              >
+                <Zap className="w-4 h-4" />
+              </div>
+              <div className="min-w-0">
+                <div className="flex items-center gap-1.5 flex-wrap">
+                  <span className="text-xs font-bold text-slate-800 dark:text-zinc-100">
+                    Mode Hemat Daya Cerdas
+                  </span>
+                  <span
+                    className={`text-[9px] font-mono font-bold px-1.5 py-0.2 rounded-full border ${
+                      isBatterySaverMode
+                        ? 'bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 border-emerald-300 dark:border-emerald-700'
+                        : 'bg-slate-100 dark:bg-zinc-900 text-slate-500 dark:text-zinc-400 border-slate-300 dark:border-zinc-700'
+                    }`}
+                  >
+                    {isBatterySaverMode ? 'AKTIF' : 'NONAKTIF'}
+                  </span>
+                </div>
+                <p className="text-[10.5px] text-slate-500 dark:text-zinc-400 leading-tight mt-0.5">
+                  Hemat baterai saat jarak &gt;2 km, otomatis presisi tinggi saat mendekati stasiun tujuan.
+                </p>
+              </div>
+            </div>
+
+            <button
+              type="button"
+              role="switch"
+              aria-checked={isBatterySaverMode}
+              onClick={toggleBatterySaverMode}
+              className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2 dark:focus:ring-offset-zinc-900 ${
+                isBatterySaverMode ? 'bg-emerald-500' : 'bg-slate-300 dark:bg-zinc-700'
+              }`}
+              title={isBatterySaverMode ? 'Matikan Mode Hemat Daya Cerdas' : 'Aktifkan Mode Hemat Daya Cerdas'}
+              aria-label="Toggle battery saver mode"
+            >
+              <span
+                className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow-md ring-0 transition duration-200 ease-in-out ${
+                  isBatterySaverMode ? 'translate-x-5' : 'translate-x-0'
+                }`}
+              />
+            </button>
           </div>
 
           {/* Indikator Radar Proximity Real-Time */}

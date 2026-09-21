@@ -1,4 +1,7 @@
 import { RoutePlan, RouteSegment, TransferStep, WalkLeg } from '@/src/lib/transitEngine';
+import { PlatformGuidance, getPlatformGuidance } from '@/src/data/platformGuidanceData';
+
+export type { PlatformGuidance };
 
 export interface StationStop {
   id: string;
@@ -25,6 +28,7 @@ export interface RouteLeg {
   instruction: string;
   lineName?: string;
   lineColor?: string;
+  platformGuidance?: PlatformGuidance;
 }
 
 export type NavigationStatus =
@@ -132,6 +136,12 @@ export function convertRoutePlanToLegs(plan: RoutePlan): RouteLeg[] {
       const fromCoords = seg.fromStation.coords || [-6.2, 106.8];
       const toCoords = seg.toStation.coords || [-6.2, 106.8];
 
+      const platformGuidance = getPlatformGuidance(
+        seg.fromStation.id,
+        seg.lineId,
+        seg.toStation.id
+      );
+
       legs.push({
         id: `leg-transit-${seg.id || sIdx}-${legIndex++}`,
         type: 'TRANSIT',
@@ -161,6 +171,7 @@ export function convertRoutePlanToLegs(plan: RoutePlan): RouteLeg[] {
         instruction:
           seg.instruction ||
           `Naik ${mode} ${seg.lineName || ''} menuju ${seg.toStation.name}`,
+        platformGuidance: platformGuidance || undefined,
       });
 
       // Transfer between segments (if exists)
@@ -169,6 +180,10 @@ export function convertRoutePlanToLegs(plan: RoutePlan): RouteLeg[] {
         if (transfer && transfer.fromStation && transfer.toStation) {
           const tFromCoords = transfer.fromStation.coords || [-6.2, 106.8];
           const tToCoords = transfer.toStation.coords || [-6.2, 106.8];
+          const transferGuidance =
+            transfer.platformGuidance ||
+            getPlatformGuidance(transfer.fromStation.id, undefined, transfer.toStation.id) ||
+            getPlatformGuidance(transfer.toStation.id);
 
           legs.push({
             id: `leg-transfer-${sIdx}-${legIndex++}`,
@@ -192,6 +207,7 @@ export function convertRoutePlanToLegs(plan: RoutePlan): RouteLeg[] {
             instruction:
               transfer.instruction ||
               `Pindah peron / transfer ke ${transfer.toStation.name}`,
+            platformGuidance: transferGuidance || undefined,
           });
         }
       }

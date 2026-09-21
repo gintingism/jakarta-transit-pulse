@@ -31,7 +31,13 @@ import {
   Navigation as NavigationIcon,
   MapPin,
   Flag,
+  Zap,
+  Info,
 } from 'lucide-react';
+import {
+  PlatformGuidance,
+  getPlatformGuidance,
+} from '@/src/data/platformGuidanceData';
 import {
   BackgroundKeepAliveManager,
   getBackgroundKeepAliveManager,
@@ -62,6 +68,8 @@ export default function NavigationHUD({
   const [isHistoryOpen, setIsHistoryOpen] = useState(false);
   const [showAllPassed, setShowAllPassed] = useState(false);
   const [isSpeaking, setIsSpeaking] = useState(false);
+  const [isPlatformModalOpen, setIsPlatformModalOpen] = useState(false);
+  const [selectedGuidance, setSelectedGuidance] = useState<PlatformGuidance | null>(null);
   const voiceNavRef = useRef<VoiceNavigator | null>(null);
   const bgKeepAliveRef = useRef<BackgroundKeepAliveManager | null>(null);
 
@@ -69,6 +77,8 @@ export default function NavigationHUD({
   const alarmTargetStopId = useTransitStore((s) => s.alarmTargetStopId);
   const armAlarm = useTransitStore((s) => s.armAlarm);
   const disarmAlarm = useTransitStore((s) => s.disarmAlarm);
+  const isBatterySaverMode = useTransitStore((s) => s.isBatterySaverMode);
+  const toggleBatterySaverMode = useTransitStore((s) => s.toggleBatterySaverMode);
   const setCurrentLegIndex = useTransitStore((s) => s.setCurrentLegIndex);
   const toggleStationProgress = useTransitStore((s) => s.toggleStationProgress);
   const isStationProgressOpen = useTransitStore((s) => s.isStationProgressOpen);
@@ -403,6 +413,28 @@ export default function NavigationHUD({
               <ChevronDown className="w-3 h-3" />
             </button>
 
+            {/* Battery Saver Button in Minimized Pill */}
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                toggleBatterySaverMode();
+              }}
+              className={`p-1.5 rounded-lg border transition cursor-pointer ${
+                isBatterySaverMode
+                  ? 'bg-emerald-500/20 border-emerald-500/40 text-emerald-400'
+                  : 'bg-zinc-800/80 border-zinc-700 text-zinc-400 hover:text-zinc-200'
+              }`}
+              title={
+                isBatterySaverMode
+                  ? 'Mode Hemat Daya Cerdas: Aktif'
+                  : 'Mode Hemat Daya Cerdas: Nonaktif (Klik untuk aktifkan)'
+              }
+              aria-label="Toggle battery saver mode"
+            >
+              <Zap className="w-3.5 h-3.5" />
+            </button>
+
             {/* Recenter GPS */}
             <button
               type="button"
@@ -520,6 +552,25 @@ export default function NavigationHUD({
                 <Crosshair className="w-3.5 h-3.5" />
               </button>
 
+              {/* Mode Hemat Daya Cerdas Toggle */}
+              <button
+                type="button"
+                onClick={toggleBatterySaverMode}
+                className={`p-1 sm:p-1.5 rounded-lg transition cursor-pointer ${
+                  isBatterySaverMode
+                    ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/40 shadow-xs'
+                    : 'text-zinc-400 hover:text-zinc-200'
+                }`}
+                title={
+                  isBatterySaverMode
+                    ? 'Mode Hemat Daya Cerdas: Aktif (GPS adaptif >2km)'
+                    : 'Mode Hemat Daya Cerdas: Nonaktif (Klik untuk aktifkan)'
+                }
+                aria-label="Toggle battery saver mode"
+              >
+                <Zap className="w-3.5 h-3.5" />
+              </button>
+
               {/* Disembark Alarm Toggle */}
               <button
                 type="button"
@@ -562,6 +613,47 @@ export default function NavigationHUD({
               </button>
             </div>
           </div>
+
+          {/* Platform & Transfer Guidance Pill (if available for this leg) */}
+          {currentLeg.platformGuidance && (
+            <div
+              onClick={() => {
+                setSelectedGuidance(currentLeg.platformGuidance || null);
+                setIsPlatformModalOpen(true);
+              }}
+              role="button"
+              tabIndex={0}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                  e.preventDefault();
+                  setSelectedGuidance(currentLeg.platformGuidance || null);
+                  setIsPlatformModalOpen(true);
+                }
+              }}
+              className="mt-1.5 px-2.5 py-1 rounded-xl bg-sky-950/70 hover:bg-sky-900/70 border border-sky-500/40 text-sky-200 text-[10.5px] flex items-center justify-between gap-1.5 transition cursor-pointer select-none group"
+              title="Lihat Detail Panduan Peron, Jalur, & Gate"
+            >
+              <div className="flex items-center gap-1.5 truncate">
+                <span className="font-extrabold text-sky-300 flex items-center gap-1 shrink-0">
+                  <Train className="w-3 h-3 text-sky-400" />
+                  <span>{currentLeg.platformGuidance.platform}</span>
+                </span>
+                <span className="text-zinc-500">•</span>
+                <span className="text-zinc-300 truncate font-medium">
+                  {currentLeg.platformGuidance.level}
+                </span>
+                <span className="text-zinc-500">•</span>
+                <span className="text-sky-300 truncate">
+                  {currentLeg.platformGuidance.direction}
+                </span>
+              </div>
+
+              <span className="text-[9.5px] text-sky-400 group-hover:text-sky-300 font-bold flex items-center gap-0.5 shrink-0 bg-sky-500/20 px-1.5 py-0.5 rounded border border-sky-500/30">
+                <Info className="w-2.5 h-2.5" />
+                <span>Info Peron</span>
+              </span>
+            </div>
+          )}
 
           {/* Unified Ultra-Compact Station Progress Chevron Pill */}
           <div
@@ -763,6 +855,28 @@ export default function NavigationHUD({
                           Transit: {station.transferToLineName || 'Lin Lain'}
                         </span>
                       )}
+
+                      {(() => {
+                        const guidance = getPlatformGuidance(station.id);
+                        if (!guidance) return null;
+                        return (
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setSelectedGuidance(guidance);
+                              setIsPlatformModalOpen(true);
+                            }}
+                            className="text-[8px] font-semibold px-1.5 py-0.2 rounded bg-sky-950/70 hover:bg-sky-900/80 border border-sky-500/40 text-sky-300 flex items-center gap-1 transition cursor-pointer"
+                            title={`Lihat info ${guidance.platform} & gate`}
+                            aria-label={`Info peron ${station.name}`}
+                          >
+                            <Train className="w-2.5 h-2.5 text-sky-400" />
+                            <span>{guidance.platform}</span>
+                            <Info className="w-2 h-2 text-sky-400/80" />
+                          </button>
+                        );
+                      })()}
                     </div>
 
                     <div className="flex items-center gap-2 text-[9.5px] text-zinc-400 mt-0.5">
@@ -823,6 +937,115 @@ export default function NavigationHUD({
             >
               <span>Tutup Timeline Stasiun</span>
               <ChevronUp className="w-3 h-3 text-cyan-400" />
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* 4. Platform & Transfer Guidance Modal */}
+      {isPlatformModalOpen && selectedGuidance && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/75 backdrop-blur-sm animate-in fade-in duration-150"
+          onClick={() => setIsPlatformModalOpen(false)}
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="platform-modal-title"
+        >
+          <div
+            className="w-full max-w-sm sm:max-w-md bg-zinc-950/95 border border-sky-500/40 rounded-2xl shadow-2xl p-4 sm:p-5 text-white flex flex-col gap-3.5 relative animate-in zoom-in-95 duration-200"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Header */}
+            <div className="flex items-start justify-between gap-3 border-b border-zinc-800/80 pb-3">
+              <div className="flex items-center gap-2.5 min-w-0">
+                <div className="w-9 h-9 rounded-xl bg-sky-950/80 border border-sky-500/40 flex items-center justify-center text-sky-400 shrink-0 shadow-sm">
+                  <Train className="w-5 h-5" />
+                </div>
+                <div className="min-w-0">
+                  <h3 id="platform-modal-title" className="text-sm sm:text-base font-bold text-white truncate">
+                    {selectedGuidance.stationName}
+                  </h3>
+                  <div className="flex items-center gap-1.5 text-xs text-sky-400 font-semibold">
+                    <span>Panduan Peron & Transfer</span>
+                  </div>
+                </div>
+              </div>
+
+              <button
+                type="button"
+                onClick={() => setIsPlatformModalOpen(false)}
+                className="p-1.5 rounded-lg bg-zinc-900 border border-zinc-800 text-zinc-400 hover:text-white hover:bg-zinc-800 transition cursor-pointer"
+                title="Tutup"
+                aria-label="Tutup panduan peron"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            {/* Platform & Level Highlight */}
+            <div className="grid grid-cols-2 gap-2">
+              <div className="p-2.5 rounded-xl bg-sky-950/40 border border-sky-500/30 flex flex-col gap-0.5">
+                <span className="text-[10px] uppercase font-bold text-sky-400/90 tracking-wider">Peron / Jalur</span>
+                <span className="text-xs sm:text-sm font-black text-white">{selectedGuidance.platform}</span>
+              </div>
+              <div className="p-2.5 rounded-xl bg-zinc-900/60 border border-zinc-800 flex flex-col gap-0.5">
+                <span className="text-[10px] uppercase font-bold text-zinc-400 tracking-wider">Posisi / Tingkat</span>
+                <span className="text-xs sm:text-sm font-semibold text-zinc-200">{selectedGuidance.level}</span>
+              </div>
+            </div>
+
+            {/* Direction */}
+            <div className="p-2.5 rounded-xl bg-zinc-900/60 border border-zinc-800 flex items-center gap-2">
+              <div className="w-2 h-2 rounded-full bg-cyan-400 shrink-0" />
+              <div className="text-xs min-w-0 truncate">
+                <span className="text-zinc-400 font-medium">Arah: </span>
+                <span className="font-bold text-cyan-300">{selectedGuidance.direction}</span>
+              </div>
+            </div>
+
+            {/* Transfer Tips */}
+            <div className="p-3 rounded-xl bg-amber-950/20 border border-amber-500/30 flex flex-col gap-1">
+              <div className="flex items-center gap-1.5 text-amber-400 text-xs font-bold">
+                <ArrowRightLeft className="w-3.5 h-3.5 shrink-0" />
+                <span>Tips Transit & Perpindahan</span>
+              </div>
+              <p className="text-xs text-amber-100/90 leading-relaxed">
+                {selectedGuidance.transferTips}
+              </p>
+            </div>
+
+            {/* Gate Info */}
+            {selectedGuidance.gateInfo && (
+              <div className="p-2.5 rounded-xl bg-zinc-900/50 border border-zinc-800 flex items-start gap-2">
+                <MapPin className="w-3.5 h-3.5 text-emerald-400 shrink-0 mt-0.5" />
+                <div className="text-xs">
+                  <span className="text-zinc-400 font-medium">Akses Gate: </span>
+                  <span className="text-zinc-200">{selectedGuidance.gateInfo}</span>
+                </div>
+              </div>
+            )}
+
+            {/* Facilities */}
+            {selectedGuidance.facilities && selectedGuidance.facilities.length > 0 && (
+              <div className="flex flex-wrap gap-1.5 pt-0.5">
+                {selectedGuidance.facilities.map((fac, idx) => (
+                  <span
+                    key={`fac_${idx}`}
+                    className="text-[10px] px-2 py-0.5 rounded-lg bg-zinc-900 border border-zinc-800 text-zinc-300 font-medium"
+                  >
+                    {fac}
+                  </span>
+                ))}
+              </div>
+            )}
+
+            {/* Close Button */}
+            <button
+              type="button"
+              onClick={() => setIsPlatformModalOpen(false)}
+              className="w-full py-2 rounded-xl bg-sky-600 hover:bg-sky-500 text-white font-bold text-xs transition cursor-pointer shadow-lg shadow-sky-600/20 mt-1"
+            >
+              Mengerti
             </button>
           </div>
         </div>

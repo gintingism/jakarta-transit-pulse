@@ -59,6 +59,11 @@ interface TransitStore {
   isSimulatingApproach: boolean;
   simApproachProgress: number;
 
+  // Battery Saver Mode
+  isBatterySaverMode: boolean;
+  toggleBatterySaverMode: () => void;
+  setBatterySaverMode: (enabled: boolean) => void;
+
   // Turn-by-Turn Live Navigation
   isNavigating: boolean;
   navigationLegs: RouteLeg[] | null;
@@ -126,7 +131,37 @@ interface TransitStore {
   setHasUnreadChangelog: (unread: boolean) => void;
 }
 
+const getInitialBatterySaver = (): boolean => {
+  if (typeof window !== 'undefined') {
+    try {
+      return localStorage.getItem('jakarta_transit_battery_saver') === 'true';
+    } catch {
+      return false;
+    }
+  }
+  return false;
+};
+
 export const useTransitStore = create<TransitStore>((set, get) => ({
+  isBatterySaverMode: getInitialBatterySaver(),
+  setBatterySaverMode: (enabled: boolean) => {
+    if (typeof window !== 'undefined') {
+      try {
+        localStorage.setItem('jakarta_transit_battery_saver', String(enabled));
+      } catch {}
+    }
+    set({ isBatterySaverMode: enabled });
+  },
+  toggleBatterySaverMode: () => {
+    const next = !get().isBatterySaverMode;
+    if (typeof window !== 'undefined') {
+      try {
+        localStorage.setItem('jakarta_transit_battery_saver', String(next));
+      } catch {}
+    }
+    set({ isBatterySaverMode: next });
+  },
+
   originStopId: null,
   destinationStopId: null,
   originPlace: {

@@ -27,6 +27,7 @@ export function useGeoAlert() {
   const alarmMuted = useTransitStore((s) => s.alarmMuted);
   const triggerAlarm = useTransitStore((s) => s.triggerAlarm);
   const isNavigating = useTransitStore((s) => s.isNavigating);
+  const isBatterySaverMode = useTransitStore((s) => s.isBatterySaverMode);
 
   const isSimulatingApproach = useTransitStore((s) => s.isSimulatingApproach);
   const stepApproachSimulation = useTransitStore((s) => s.stepApproachSimulation);
@@ -124,10 +125,14 @@ export function useGeoAlert() {
       return;
     }
 
+    // Adaptive GPS battery saver: If battery saver is active and user is still far (> 2000m) from target,
+    // use power-efficient settings; automatically elevate to high-accuracy when approaching (<= 2000m).
+    const isFarFromTarget = isBatterySaverMode && currentDistanceMeters !== null && currentDistanceMeters > 2000;
+
     const geoOptions: PositionOptions = {
-      enableHighAccuracy: true,
-      maximumAge: 0,
-      timeout: 8000,
+      enableHighAccuracy: !isFarFromTarget,
+      maximumAge: isFarFromTarget ? 10000 : 0,
+      timeout: isFarFromTarget ? 15000 : 8000,
     };
 
     let watchId: number | null = null;
@@ -194,13 +199,15 @@ export function useGeoAlert() {
     window.addEventListener('focus', handleWakeUp);
 
     // Heartbeat check in case watchPosition stalls
+    const watchdogFrequency = isFarFromTarget ? 15000 : 3500;
     const watchdogInterval = setInterval(() => {
       if (!isActive) return;
       const elapsedSinceFix = Date.now() - lastFixTimestampRef.current;
-      if (elapsedSinceFix > 5000 && navigator.geolocation) {
+      const maxElapsed = isFarFromTarget ? 20000 : 5000;
+      if (elapsedSinceFix > maxElapsed && navigator.geolocation) {
         navigator.geolocation.getCurrentPosition(handleSuccess, handleError, geoOptions);
       }
-    }, 3500);
+    }, watchdogFrequency);
 
     return () => {
       isActive = false;
@@ -215,7 +222,13 @@ export function useGeoAlert() {
         retryTimeoutRef.current = null;
       }
     };
-  }, [isSimulatingApproach, setUserLocation, setLocationError]);
+  }, [
+    isSimulatingApproach,
+    setUserLocation,
+    setLocationError,
+    isBatterySaverMode,
+    currentDistanceMeters !== null && currentDistanceMeters > 2000,
+  ]);
 
   // 4. Approach simulation interval
   useEffect(() => {

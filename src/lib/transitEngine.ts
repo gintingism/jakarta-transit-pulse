@@ -68,11 +68,20 @@ export interface RouteSegment {
   polylineCoords?: [number, number][];
 }
 
+import {
+  PlatformGuidance,
+  getPlatformGuidance,
+} from '@/src/data/platformGuidanceData';
+
+export type { PlatformGuidance };
+export { getPlatformGuidance };
+
 export interface TransferStep {
   fromStation: Station;
   toStation: Station;
   walkMinutes: number;
   instruction: string;
+  platformGuidance?: PlatformGuidance;
 }
 
 export interface WalkLeg {
@@ -344,6 +353,7 @@ export interface LineTransfer {
   toStationId: string;
   walkMinutes: number;
   instruction: string;
+  platformGuidance?: PlatformGuidance;
 }
 
 /**
@@ -365,11 +375,13 @@ export function getLineTransfers(
   for (const stId of shared) {
     const st = STATION_MAP[stId];
     if (st) {
+      const guidance = getPlatformGuidance(stId, lineBId);
       results.push({
         fromStationId: stId,
         toStationId: stId,
         walkMinutes: 5,
         instruction: `Transit di peron ${st.name}: Pindah dari ${lineA.shortName} ke ${lineB.shortName} (estimasi tunggu ~5 mnt).`,
+        platformGuidance: guidance || undefined,
       });
     }
   }
@@ -387,11 +399,15 @@ export function getLineTransfers(
             r.toStationId === conn.toStationId
         )
       ) {
+        const guidance =
+          getPlatformGuidance(conn.fromStationId, lineAId) ||
+          getPlatformGuidance(conn.toStationId, lineBId);
         results.push({
           fromStationId: conn.fromStationId,
           toStationId: conn.toStationId,
           walkMinutes: conn.walkMinutes,
           instruction: `${conn.description} (${conn.walkMinutes} menit jalan kaki).`,
+          platformGuidance: guidance || undefined,
         });
       }
     }
@@ -526,6 +542,7 @@ export function findTransitRoute(
             toStation: toSt,
             walkMinutes: t.walkMinutes,
             instruction: t.instruction,
+            platformGuidance: t.platformGuidance,
           };
 
           candidates.push(evaluateCandidate([seg1, seg2], [transfer]));
@@ -578,12 +595,14 @@ export function findTransitRoute(
                   toStation: STATION_MAP[t1.toStationId],
                   walkMinutes: t1.walkMinutes,
                   instruction: t1.instruction,
+                  platformGuidance: t1.platformGuidance,
                 };
                 const transfer2: TransferStep = {
                   fromStation: STATION_MAP[t2.fromStationId],
                   toStation: STATION_MAP[t2.toStationId],
                   walkMinutes: t2.walkMinutes,
                   instruction: t2.instruction,
+                  platformGuidance: t2.platformGuidance,
                 };
 
                 candidates.push(
