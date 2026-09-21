@@ -5,9 +5,14 @@ import {
   RouteLeg,
   NavigationState,
   NavigationStatus,
+  NavigationTransitMode,
 } from '@/src/types/navigation';
 import { useNavigationTracker } from '@/src/lib/navigationTracker';
 import { getVoiceNavigator, generateVoiceInstruction, VoiceNavigator } from '@/src/lib/voiceNavigator';
+import {
+  computeStationProgress,
+  StationProgressItem,
+} from '@/src/lib/stationProgress';
 import {
   Footprints,
   Train,
@@ -24,6 +29,8 @@ import {
   BellRing,
   Bell,
   Navigation as NavigationIcon,
+  MapPin,
+  Flag,
 } from 'lucide-react';
 import {
   BackgroundKeepAliveManager,
@@ -53,16 +60,19 @@ export default function NavigationHUD({
 }: NavigationHUDProps) {
   const [isMinimized, setIsMinimized] = useState(false);
   const [isHistoryOpen, setIsHistoryOpen] = useState(false);
+  const [showAllPassed, setShowAllPassed] = useState(false);
   const [isSpeaking, setIsSpeaking] = useState(false);
   const voiceNavRef = useRef<VoiceNavigator | null>(null);
   const bgKeepAliveRef = useRef<BackgroundKeepAliveManager | null>(null);
 
   const isAlarmArmed = useTransitStore((s) => s.isAlarmArmed);
+  const alarmTargetStopId = useTransitStore((s) => s.alarmTargetStopId);
   const armAlarm = useTransitStore((s) => s.armAlarm);
   const disarmAlarm = useTransitStore((s) => s.disarmAlarm);
   const setCurrentLegIndex = useTransitStore((s) => s.setCurrentLegIndex);
   const toggleStationProgress = useTransitStore((s) => s.toggleStationProgress);
   const isStationProgressOpen = useTransitStore((s) => s.isStationProgressOpen);
+  const setMapCenter = useTransitStore((s) => s.setMapCenter);
 
   const onPositionUpdateRef = useRef(onPositionUpdate);
   onPositionUpdateRef.current = onPositionUpdate;
@@ -288,6 +298,41 @@ export default function NavigationHUD({
     if (leg.mode === 'TJ') return <Bus className="w-5 h-5 text-rose-400" />;
     return <Train className="w-5 h-5 text-sky-400" />;
   };
+
+  const stationProgress = useMemo(
+    () =>
+      computeStationProgress({
+        legs,
+        currentLegIndex: state.currentLegIndex,
+        userPos: state.currentLocation
+          ? { lat: state.currentLocation.lat, lng: state.currentLocation.lng }
+          : null,
+      }),
+    [legs, state.currentLegIndex, state.currentLocation]
+  );
+
+  const estimateMinutes = (meters: number | null, mode?: NavigationTransitMode, legType?: string) => {
+    if (meters === null) return null;
+    const speedMpm = mode === 'TJ' ? 416 : legType === 'WALK' ? 83 : 750;
+    const mins = Math.max(1, Math.round(meters / speedMpm));
+    return `~${mins} mnt`;
+  };
+
+  const handleStationSelect = (station: StationProgressItem) => {
+    setMapCenter(station.coords, 16);
+  };
+
+  const handleToggleAlarm = (stationId: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (isAlarmArmed && alarmTargetStopId === stationId) {
+      disarmAlarm();
+    } else {
+      armAlarm(stationId);
+    }
+  };
+
+  const passedStations = stationProgress.items.filter((st) => st.status === 'passed');
+  const shouldCollapsePassed = passedStations.length > 2 && !showAllPassed;
 
   return (
     <div className="fixed top-3 left-3 right-3 sm:left-6 sm:right-auto sm:w-[440px] z-40 flex flex-col gap-2 font-sans select-none animate-in fade-in slide-in-from-top-4 duration-300">
@@ -538,80 +583,248 @@ export default function NavigationHUD({
             </div>
           </div>
 
-          {/* Bottom Metrics Bar: Progress, Step counter & Station Progress Button */}
-          <div className="mt-3 pt-2.5 border-t border-zinc-800/80 flex items-center justify-between text-[11px] text-zinc-400">
-            <div className="flex items-center gap-2 font-medium">
-              <div className="flex items-center gap-1.5">
-                <NavigationIcon className="w-3.5 h-3.5 text-cyan-400" />
-                <span className="tabular-nums">
-                  Langkah {state.currentLegIndex + 1} dari {state.legs.length}
+          {/* Integrated Station Progress Summary Bar */}
+          <div className="mt-2.5 pt-2.5 border-t border-zinc-800/80 space-y-1.5">
+            <div className="flex items-center justify-between text-xs gap-2">
+              <div className="flex items-center gap-1.5 min-w-0">
+                <span className="relative flex h-2.5 w-2.5 shrink-0">
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-cyan-400 opacity-75" />
+                  <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-cyan-400" />
+                </span>
+                <span className="text-[11px] font-bold text-cyan-300 truncate">
+                  {stationProgress.currentStation?.status === 'current' &&
+                  stationProgress.currentStation.distanceToUserMeters !== null &&
+                  stationProgress.currentStation.distanceToUserMeters <= 80
+                    ? `Saat Ini: ${stationProgress.currentStation.name}`
+                    : `Berikutnya: ${stationProgress.currentStation?.name || currentLeg.to?.name || 'Tujuan'}`}
                 </span>
               </div>
 
+              {/* Station List Chevron Toggle Button */}
               <button
                 type="button"
                 onClick={toggleStationProgress}
-                className="flex items-center gap-1 px-2 py-0.5 rounded-lg bg-cyan-500/15 hover:bg-cyan-500/25 border border-cyan-500/30 text-cyan-300 font-semibold text-[10.5px] transition cursor-pointer"
-                title={isStationProgressOpen ? 'Tutup Daftar Stasiun' : 'Lihat Daftar Stasiun Rute'}
+                className="flex items-center gap-1 px-2.5 py-1 rounded-lg bg-cyan-500/15 hover:bg-cyan-500/25 border border-cyan-500/30 text-cyan-300 font-bold text-[10.5px] transition cursor-pointer shrink-0"
+                title={isStationProgressOpen ? 'Tutup Daftar Stasiun' : 'Buka Daftar Stasiun Lengkap'}
                 aria-label="Toggle station progress timeline"
               >
                 <Train className="w-3 h-3 text-cyan-400" />
-                <span>{isStationProgressOpen ? 'Tutup Stasiun' : 'Daftar Stasiun'}</span>
+                <span>Daftar Stasiun ({stationProgress.totalStations})</span>
+                {isStationProgressOpen ? (
+                  <ChevronUp className="w-3.5 h-3.5" />
+                ) : (
+                  <ChevronDown className="w-3.5 h-3.5" />
+                )}
               </button>
             </div>
 
-            <div className="font-mono tabular-nums text-zinc-300 flex items-center gap-2">
-              {isAlarmArmed && (
-                <span className="text-[10px] text-amber-400 font-sans font-semibold px-1.5 py-0.5 rounded bg-amber-400/10 border border-amber-400/20">
-                  ⏰ Alarm Aktif
-                </span>
-              )}
-              {state.status === 'arrived' ? (
-                <span className="text-emerald-400 font-bold">Tiba di Tujuan</span>
-              ) : (
-                <span>Est. {currentLeg.durationMinutes} mnt</span>
-              )}
+            {/* Mini Progress Bar & Stats */}
+            <div className="flex items-center gap-2 text-[10px] text-zinc-400">
+              <div className="flex-1 h-1.5 rounded-full bg-zinc-800 overflow-hidden">
+                <div
+                  className="h-full bg-gradient-to-r from-emerald-500 via-cyan-500 to-blue-500 rounded-full transition-all duration-300"
+                  style={{ width: `${stationProgress.progressPercent}%` }}
+                />
+              </div>
+              <span className="tabular-nums font-mono text-zinc-300 shrink-0">
+                {stationProgress.passedCount}/{stationProgress.totalStations} Stasiun
+              </span>
+              <span className="text-zinc-500">•</span>
+              <span className="tabular-nums text-cyan-400 font-medium shrink-0">
+                {stationProgress.remainingCount} Sisa
+              </span>
             </div>
           </div>
         </div>
       )}
 
-      {/* 3. Completed Steps Accordion */}
-      {!isMinimized && completedLegs.length > 0 && (
-        <div className="bg-[#0b101b]/90 backdrop-blur-md border border-zinc-800/80 rounded-xl overflow-hidden shadow-lg text-xs text-zinc-300">
-          <button
-            type="button"
-            onClick={() => setIsHistoryOpen((prev) => !prev)}
-            className="w-full px-3 py-2 flex items-center justify-between hover:bg-zinc-800/40 transition cursor-pointer"
-          >
-            <div className="flex items-center gap-1.5 font-semibold text-emerald-400">
-              <CheckCircle2 className="w-3.5 h-3.5" />
-              <span>{completedLegs.length} langkah terlewati</span>
+      {/* 3. Collapsible Station Timeline Dropdown */}
+      {!isMinimized && isStationProgressOpen && (
+        <div className="bg-[#0b101b]/95 backdrop-blur-xl border border-cyan-500/30 rounded-2xl shadow-2xl overflow-hidden ring-1 ring-cyan-500/20 max-h-[48vh] flex flex-col text-xs text-white animate-in fade-in slide-in-from-top-2 duration-200">
+          <div className="p-3 pb-2 border-b border-zinc-800/80 flex items-center justify-between bg-zinc-900/40">
+            <div className="flex items-center gap-1.5 font-bold text-white text-xs">
+              <NavigationIcon className="w-3.5 h-3.5 text-cyan-400" />
+              <span>Timeline Stasiun Perjalanan</span>
             </div>
 
-            <div className="flex items-center gap-1 text-[10px] text-zinc-500">
-              <span>{isHistoryOpen ? 'Tutup riwayat' : 'Buka riwayat'}</span>
-              {isHistoryOpen ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
+            <div className="flex items-center gap-2 text-[10.5px] text-zinc-400">
+              <span className="tabular-nums text-emerald-400 font-medium">{stationProgress.passedCount} Lewat</span>
+              <span>•</span>
+              <span className="tabular-nums text-cyan-400 font-medium">{stationProgress.remainingCount} Sisa</span>
+              <button
+                type="button"
+                onClick={toggleStationProgress}
+                className="ml-1 p-1 rounded-lg bg-zinc-800 hover:bg-zinc-700 text-zinc-300 hover:text-white transition cursor-pointer"
+                title="Tutup Daftar Stasiun"
+              >
+                <ChevronUp className="w-3.5 h-3.5 text-cyan-400" />
+              </button>
             </div>
-          </button>
+          </div>
 
-          {isHistoryOpen && (
-            <div className="p-3 border-t border-zinc-800/60 divide-y divide-zinc-800/40 space-y-2 max-h-48 overflow-y-auto">
-              {completedLegs.map((leg, idx) => (
-                <div key={`comp_${leg.id}_${idx}`} className="pt-2 first:pt-0 flex items-start gap-2 text-[11px]">
-                  <span className="text-emerald-500 font-mono text-[10px] mt-0.5">✓</span>
-                  <div className="min-w-0">
-                    <p className="font-medium text-zinc-300 line-through opacity-75 truncate">
-                      {leg.instruction}
-                    </p>
-                    <span className="text-[9.5px] text-zinc-500">
-                      Menuju {leg.to?.name || 'tujuan'} • {formatDistance(leg.distanceMeters || 0)}
-                    </span>
+          <div className="p-3 overflow-y-auto space-y-1 divide-y divide-transparent">
+            {/* Collapsed passed stations button */}
+            {shouldCollapsePassed && (
+              <button
+                type="button"
+                onClick={() => setShowAllPassed(true)}
+                className="w-full py-1.5 px-2.5 mb-1 rounded-xl bg-zinc-900/60 hover:bg-zinc-800/80 border border-zinc-800 flex items-center justify-between text-[10.5px] text-zinc-400 transition cursor-pointer"
+              >
+                <div className="flex items-center gap-1.5 text-emerald-400 font-medium">
+                  <CheckCircle2 className="w-3 h-3 shrink-0" />
+                  <span>{passedStations.length} stasiun sebelumnya telah dilewati</span>
+                </div>
+                <span className="text-[10px] text-cyan-400 underline underline-offset-2">
+                  Tampilkan
+                </span>
+              </button>
+            )}
+
+            {/* Station Items */}
+            {stationProgress.items.map((station, idx) => {
+              const isPassed = station.status === 'passed';
+              const isCurrent = station.status === 'current';
+              const isUpcoming = station.status === 'upcoming';
+              const isAlarmOnThis = isAlarmArmed && alarmTargetStopId === station.id;
+
+              if (shouldCollapsePassed && isPassed) return null;
+
+              return (
+                <div
+                  key={`hud_st_${station.id}_${idx}`}
+                  onClick={() => handleStationSelect(station)}
+                  className={`relative flex items-start gap-2.5 p-2 rounded-xl transition cursor-pointer group ${
+                    isCurrent
+                      ? 'bg-gradient-to-r from-cyan-950/70 via-blue-950/60 to-zinc-900/70 border border-cyan-500/50 shadow-md shadow-cyan-500/10 ring-2 ring-cyan-500/20 my-0.5'
+                      : isPassed
+                      ? 'hover:bg-zinc-900/40 opacity-70'
+                      : 'hover:bg-zinc-900/50'
+                  }`}
+                >
+                  {/* Indicator Column */}
+                  <div className="flex flex-col items-center shrink-0 pt-0.5">
+                    {isPassed ? (
+                      <div className="w-4 h-4 rounded-full bg-emerald-950/80 border border-emerald-500/60 flex items-center justify-center text-emerald-400">
+                        <CheckCircle2 className="w-3 h-3" />
+                      </div>
+                    ) : isCurrent ? (
+                      <div className="relative flex items-center justify-center w-4 h-4">
+                        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-cyan-400 opacity-75" />
+                        <span className="relative inline-flex rounded-full h-3.5 w-3.5 bg-cyan-400 border border-zinc-950 shadow-md shadow-cyan-400/50" />
+                      </div>
+                    ) : (
+                      <div
+                        className="w-3.5 h-3.5 rounded-full border-2 border-zinc-500 bg-zinc-900 group-hover:border-cyan-400 transition"
+                        style={{ borderColor: station.lineColor || undefined }}
+                      />
+                    )}
+                    {idx < stationProgress.items.length - 1 && (
+                      <div
+                        className={`w-0.5 flex-1 min-h-[18px] mt-0.5 ${
+                          isPassed ? 'bg-emerald-500/30' : 'bg-zinc-800'
+                        }`}
+                      />
+                    )}
+                  </div>
+
+                  {/* Station Details */}
+                  <div className="min-w-0 flex-1">
+                    <div className="flex items-center gap-1.5 flex-wrap">
+                      <span
+                        className={`text-xs ${
+                          isCurrent
+                            ? 'font-black text-white'
+                            : isPassed
+                            ? 'font-medium text-zinc-400 line-through'
+                            : 'font-semibold text-zinc-200'
+                        }`}
+                      >
+                        {station.name}
+                      </span>
+
+                      {isCurrent && (
+                        <span className="text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.2 rounded bg-cyan-500/20 border border-cyan-400/40 text-cyan-300">
+                          {station.distanceToUserMeters !== null && station.distanceToUserMeters <= 80
+                            ? 'Di Sini'
+                            : 'Berikutnya'}
+                        </span>
+                      )}
+
+                      {station.isDestination && (
+                        <span className="text-[8.5px] font-bold px-1.5 py-0.2 rounded bg-rose-950/60 border border-rose-500/40 text-rose-300 flex items-center gap-1">
+                          <Flag className="w-2.5 h-2.5 text-rose-400" />
+                          Tujuan
+                        </span>
+                      )}
+
+                      {station.isTransfer && (
+                        <span className="text-[8.5px] font-semibold px-1.5 py-0.2 rounded bg-amber-950/60 border border-amber-500/40 text-amber-300 flex items-center gap-1">
+                          <ArrowRightLeft className="w-2.5 h-2.5 text-amber-400" />
+                          Transit: {station.transferToLineName || 'Lin Lain'}
+                        </span>
+                      )}
+                    </div>
+
+                    <div className="flex items-center gap-2 text-[10px] text-zinc-400 mt-0.5">
+                      {station.lineName && (
+                        <span className="font-mono" style={{ color: station.lineColor || undefined }}>
+                          {station.lineName}
+                        </span>
+                      )}
+                      {station.distanceToUserMeters !== null && (
+                        <>
+                          <span>•</span>
+                          <span className="font-mono tabular-nums text-zinc-300">
+                            {formatDistance(station.distanceToUserMeters)}
+                          </span>
+                          {isCurrent && (
+                            <>
+                              <span>•</span>
+                              <span className="text-cyan-300">
+                                {estimateMinutes(station.distanceToUserMeters, station.mode, station.legType)}
+                              </span>
+                            </>
+                          )}
+                        </>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* 1-Tap Alarm */}
+                  <div className="shrink-0 pt-0.5">
+                    <button
+                      type="button"
+                      onClick={(e) => handleToggleAlarm(station.id, e)}
+                      className={`p-1 rounded-lg border transition cursor-pointer ${
+                        isAlarmOnThis
+                          ? 'bg-amber-500/25 border-amber-400 text-amber-300'
+                          : 'bg-zinc-800/60 border-zinc-700/60 text-zinc-400 hover:text-zinc-200'
+                      }`}
+                      title={isAlarmOnThis ? 'Alarm aktif (Klik untuk matikan)' : `Pasang alarm di ${station.name}`}
+                      aria-label={`Toggle alarm for ${station.name}`}
+                    >
+                      {isAlarmOnThis ? (
+                        <BellRing className="w-3 h-3 animate-bounce" />
+                      ) : (
+                        <Bell className="w-3 h-3" />
+                      )}
+                    </button>
                   </div>
                 </div>
-              ))}
-            </div>
-          )}
+              );
+            })}
+          </div>
+
+          <div className="p-1.5 border-t border-zinc-800/80 text-center bg-[#070b13]">
+            <button
+              type="button"
+              onClick={toggleStationProgress}
+              className="text-[10.5px] text-zinc-400 hover:text-white transition flex items-center justify-center gap-1 w-full py-0.5 cursor-pointer"
+            >
+              <span>Tutup Timeline Stasiun</span>
+              <ChevronUp className="w-3 h-3 text-cyan-400" />
+            </button>
+          </div>
         </div>
       )}
     </div>
