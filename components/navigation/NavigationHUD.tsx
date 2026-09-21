@@ -331,11 +331,12 @@ export default function NavigationHUD({
     }
   };
 
+  const currentStation = stationProgress.currentStation;
   const passedStations = stationProgress.items.filter((st) => st.status === 'passed');
   const shouldCollapsePassed = passedStations.length > 2 && !showAllPassed;
 
   return (
-    <div className="fixed top-3 left-3 right-3 sm:left-6 sm:right-auto sm:w-[440px] z-40 flex flex-col gap-2 font-sans select-none animate-in fade-in slide-in-from-top-4 duration-300">
+    <div className="fixed top-2.5 left-2.5 right-2.5 sm:left-4 sm:right-auto sm:w-[390px] z-40 flex flex-col gap-1.5 font-sans select-none animate-in fade-in slide-in-from-top-3 duration-300">
       {/* 1. Status Banners (Anti-Bablas / Off-Route / GPS Lost) */}
       {state.status === 'approaching_destination' && (
         <div className="bg-gradient-to-r from-amber-600 via-rose-600 to-rose-700 text-white px-3.5 py-2 rounded-xl shadow-lg flex items-center justify-between text-xs font-bold border border-rose-400/40 animate-pulse">
@@ -365,283 +366,282 @@ export default function NavigationHUD({
       {isMinimized ? (
         <div
           onClick={() => setIsMinimized(false)}
-          className="bg-[#0b101b]/95 backdrop-blur-xl border border-cyan-500/40 rounded-2xl shadow-2xl p-3 text-white flex items-center justify-between gap-3 cursor-pointer hover:border-cyan-400 transition select-none"
+          className="bg-[#0b101b]/95 backdrop-blur-xl border border-cyan-500/40 rounded-xl sm:rounded-2xl shadow-2xl px-2.5 py-1.5 text-white flex items-center justify-between gap-2 cursor-pointer hover:border-cyan-400 transition select-none"
         >
-          <div className="flex items-center gap-2.5 min-w-0">
-            <div className="w-9 h-9 rounded-xl bg-cyan-950/80 border border-cyan-500/40 flex items-center justify-center shrink-0">
+          <div className="flex items-center gap-2 min-w-0">
+            <div className="w-7 h-7 rounded-lg bg-cyan-950/80 border border-cyan-500/40 flex items-center justify-center shrink-0">
               {getLegIcon(currentLeg)}
             </div>
 
-            <div className="min-w-0">
-              <div className="flex items-baseline gap-2">
-                <span className="text-base font-black font-mono tabular-nums text-cyan-400 shrink-0">
-                  {formatDistance(state.distanceToNextStopMeters)}
-                </span>
-                <span className="text-xs font-semibold text-zinc-100 truncate">
-                  {currentLeg.instruction}
-                </span>
-              </div>
-              <div className="flex items-center gap-2 text-[10px] text-zinc-400 truncate">
-                <span>Tujuan: {currentLeg.to?.name || 'Tujuan'}</span>
-                <span>•</span>
-                <span className="tabular-nums">Langkah {state.currentLegIndex + 1}/{state.legs.length}</span>
-                <button
-                  type="button"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    toggleStationProgress();
-                  }}
-                  className="text-cyan-400 hover:text-cyan-300 font-semibold underline underline-offset-2 cursor-pointer"
-                >
-                  • Stasiun
-                </button>
-                {isAlarmArmed && (
-                  <span className="text-amber-400 font-medium">
-                    • ⏰ Alarm
-                  </span>
-                )}
-              </div>
+            <div className="min-w-0 flex items-baseline gap-1.5">
+              <span className="text-sm font-black font-mono tabular-nums text-cyan-400 shrink-0">
+                {formatDistance(state.distanceToNextStopMeters)}
+              </span>
+              <span className="text-xs font-semibold text-zinc-100 truncate">
+                {currentLeg.instruction}
+              </span>
             </div>
           </div>
 
-          <div className="flex items-center gap-1.5 shrink-0">
+          <div className="flex items-center gap-1 shrink-0">
+            {/* Quick Station Chevron Pill in Minimized Mode */}
             <button
               type="button"
               onClick={(e) => {
                 e.stopPropagation();
-                replayCurrentInstruction();
+                setIsMinimized(false);
+                if (!isStationProgressOpen) {
+                  toggleStationProgress();
+                }
               }}
-              className="p-2 rounded-xl bg-cyan-500/10 border border-cyan-500/30 text-cyan-400 hover:bg-cyan-500/20 transition cursor-pointer"
-              title="Dengarkan Ulang Panduan Suara"
-              aria-label="Replay voice guidance"
+              className="flex items-center gap-1 px-2 py-1 rounded-lg bg-cyan-500/15 hover:bg-cyan-500/25 border border-cyan-500/30 text-cyan-300 font-bold text-[10px] transition cursor-pointer"
+              title="Buka Daftar Stasiun"
+              aria-label="Open station list"
             >
-              <Volume2 className="w-4 h-4" />
+              <Train className="w-3 h-3 text-cyan-400" />
+              <span className="tabular-nums font-mono">{stationProgress.passedCount}/{stationProgress.totalStations}</span>
+              <ChevronDown className="w-3 h-3" />
             </button>
 
+            {/* Recenter GPS */}
             <button
               type="button"
               onClick={(e) => {
                 e.stopPropagation();
                 toggleCenter();
               }}
-              className={`p-2 rounded-xl border transition cursor-pointer ${
+              className={`p-1.5 rounded-lg border transition cursor-pointer ${
                 state.isCentered
                   ? 'bg-emerald-500/20 border-emerald-500/40 text-emerald-400'
                   : 'bg-zinc-800/80 border-zinc-700 text-zinc-400'
               }`}
-              title="Kunci Kamera"
+              title="Kunci Kamera GPS"
               aria-label="Center GPS"
             >
-              <Crosshair className="w-4 h-4" />
+              <Crosshair className="w-3.5 h-3.5" />
             </button>
 
+            {/* Expand Navigation Card */}
             <button
               type="button"
               onClick={(e) => {
                 e.stopPropagation();
                 setIsMinimized(false);
               }}
-              className="p-2 rounded-xl bg-cyan-500/15 border border-cyan-500/40 text-cyan-400 hover:bg-cyan-500/25 transition cursor-pointer"
+              className="p-1.5 rounded-lg bg-zinc-800/80 border border-zinc-700 text-zinc-300 hover:text-white transition cursor-pointer"
               title="Perbesar Tampilan Navigasi"
               aria-label="Expand navigation HUD"
             >
-              <ChevronDown className="w-4 h-4" />
+              <ChevronDown className="w-3.5 h-3.5 text-cyan-400" />
             </button>
           </div>
         </div>
       ) : (
-        <div className="bg-[#0b101b]/95 backdrop-blur-xl border border-cyan-500/25 rounded-2xl shadow-2xl p-4 text-white overflow-hidden relative">
-          {/* Top bar: Mode indicator, Soundwave, & Controls */}
-          <div className="flex items-center justify-between pb-3 border-b border-zinc-800/80">
-            <div className="flex items-center gap-2">
-              <div className="w-8 h-8 rounded-xl bg-zinc-800/90 border border-zinc-700/80 flex items-center justify-center shrink-0">
+        <div className="bg-[#0b101b]/95 backdrop-blur-xl border border-cyan-500/25 rounded-2xl shadow-2xl p-2.5 sm:p-3 text-white overflow-hidden relative">
+          {/* Main Direction Row (Streamlined & Compact) */}
+          <div className="flex items-center justify-between gap-2">
+            <div className="flex items-center gap-2 min-w-0 flex-1">
+              <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-xl bg-zinc-800/90 border border-zinc-700/80 flex items-center justify-center shrink-0">
                 {getLegIcon(currentLeg)}
               </div>
 
-              <div>
-                <div className="flex items-center gap-1.5">
-                  <span className="text-[11px] font-bold uppercase tracking-wider text-cyan-400 font-mono">
+              <div className="min-w-0 flex-1">
+                <div className="flex items-baseline gap-1.5 min-w-0">
+                  <span className="text-base sm:text-lg font-black font-mono tabular-nums text-cyan-400 tracking-tight shrink-0">
+                    {formatDistance(state.distanceToNextStopMeters)}
+                  </span>
+                  <span className="text-xs sm:text-sm font-bold text-white truncate min-w-0 leading-tight">
+                    {currentLeg.instruction}
+                  </span>
+                </div>
+
+                <div className="flex items-center gap-1.5 text-[10px] text-zinc-400 truncate">
+                  <span className="font-semibold text-cyan-400 font-mono">
                     {currentLeg.type === 'WALK'
                       ? 'Jalan Kaki'
                       : currentLeg.type === 'TRANSFER'
                       ? 'Pindah Peron'
                       : `${currentLeg.mode || 'TRANSIT'} ${currentLeg.lineName || ''}`}
                   </span>
+                  <span>•</span>
+                  <span className="truncate">Ke: {currentLeg.to?.name || 'Tujuan'}</span>
 
-                  {/* Soundwave Pulse Indicator */}
                   {isSpeaking && (
-                    <div className="flex items-center gap-0.5 ml-1" title="Pemandu suara sedang berbicara">
-                      <span className="w-1 h-3 bg-cyan-400 rounded-full animate-bounce [animation-delay:-0.3s]" />
-                      <span className="w-1 h-4 bg-cyan-300 rounded-full animate-bounce [animation-delay:-0.15s]" />
-                      <span className="w-1 h-2.5 bg-cyan-400 rounded-full animate-bounce" />
-                    </div>
+                    <span className="flex items-center gap-0.5 ml-0.5" title="Pemandu suara sedang berbicara">
+                      <span className="w-0.5 h-2 bg-cyan-400 rounded-full animate-bounce [animation-delay:-0.3s]" />
+                      <span className="w-0.5 h-3 bg-cyan-300 rounded-full animate-bounce [animation-delay:-0.15s]" />
+                      <span className="w-0.5 h-1.5 bg-cyan-400 rounded-full animate-bounce" />
+                    </span>
                   )}
-                </div>
-
-                <div className="text-[10px] text-zinc-400 truncate max-w-[150px] sm:max-w-[200px]">
-                  Tujuan: {currentLeg.to?.name || 'Tujuan'}
                 </div>
               </div>
             </div>
 
-            {/* Action Control Buttons */}
-            <div className="flex items-center gap-1">
-              {/* Disembark Alarm Toggle */}
+            {/* Quick Action Control Cluster */}
+            <div className="flex items-center gap-0.5 bg-zinc-900/70 p-0.5 rounded-xl border border-zinc-800/80 shrink-0">
+              {/* Replay Voice Guidance */}
               <button
                 type="button"
-                onClick={toggleAlarm}
-                className={`p-2 rounded-xl text-xs transition border cursor-pointer ${
-                  isAlarmArmed
-                    ? 'bg-amber-500/20 border-amber-500/40 text-amber-300 hover:bg-amber-500/30'
-                    : 'bg-zinc-800/80 border-zinc-700 text-zinc-400 hover:text-zinc-200'
-                }`}
-                title={isAlarmArmed ? 'Alarm Turun Aktif (Klik untuk matikan)' : 'Pasang Alarm Pengingat Turun'}
-                aria-label="Toggle disembark alarm"
+                onClick={replayCurrentInstruction}
+                className="p-1 sm:p-1.5 rounded-lg text-cyan-400 hover:bg-cyan-500/20 transition cursor-pointer"
+                title="Dengarkan Ulang Panduan Suara"
+                aria-label="Replay current step instruction"
               >
-                <Bell className="w-4 h-4" />
+                <Volume2 className="w-3.5 h-3.5" />
               </button>
 
               {/* Mute/Unmute Audio */}
               <button
                 type="button"
                 onClick={handleToggleMute}
-                className={`p-2 rounded-xl text-xs transition border cursor-pointer ${
+                className={`p-1 sm:p-1.5 rounded-lg transition cursor-pointer ${
                   state.isMuted
-                    ? 'bg-zinc-800/80 border-zinc-700 text-zinc-400 hover:text-zinc-200'
-                    : 'bg-cyan-500/15 border-cyan-500/40 text-cyan-400 hover:bg-cyan-500/25'
+                    ? 'text-zinc-500 hover:text-zinc-300'
+                    : 'text-cyan-400 hover:bg-cyan-500/20'
                 }`}
                 title={state.isMuted ? 'Aktifkan Suara Navigasi' : 'Bisukan Suara'}
                 aria-label={state.isMuted ? 'Unmute voice guidance' : 'Mute voice guidance'}
               >
-                {state.isMuted ? <VolumeX className="w-4 h-4" /> : <Volume2 className="w-4 h-4" />}
+                {state.isMuted ? <VolumeX className="w-3.5 h-3.5" /> : <Volume2 className="w-3.5 h-3.5" />}
               </button>
 
-              {/* Recenter GPS / Follow Camera */}
+              {/* Recenter GPS */}
               <button
                 type="button"
                 onClick={toggleCenter}
-                className={`p-2 rounded-xl text-xs transition border cursor-pointer ${
+                className={`p-1 sm:p-1.5 rounded-lg transition cursor-pointer ${
                   state.isCentered
-                    ? 'bg-emerald-500/20 border-emerald-500/40 text-emerald-400 hover:bg-emerald-500/30'
-                    : 'bg-zinc-800/80 border-zinc-700 text-zinc-400 hover:text-zinc-200'
+                    ? 'bg-emerald-500/20 text-emerald-400'
+                    : 'text-zinc-400 hover:text-zinc-200'
                 }`}
                 title={state.isCentered ? 'Kamera Mengikuti Lokasi Anda' : 'Kunci Kamera ke Lokasi GPS'}
                 aria-label="Center GPS"
               >
-                <Crosshair className="w-4 h-4" />
+                <Crosshair className="w-3.5 h-3.5" />
+              </button>
+
+              {/* Disembark Alarm Toggle */}
+              <button
+                type="button"
+                onClick={toggleAlarm}
+                className={`p-1 sm:p-1.5 rounded-lg transition cursor-pointer ${
+                  isAlarmArmed
+                    ? 'bg-amber-500/20 text-amber-300 hover:bg-amber-500/30'
+                    : 'text-zinc-400 hover:text-zinc-200'
+                }`}
+                title={isAlarmArmed ? 'Alarm Turun Aktif' : 'Pasang Alarm Pengingat Turun'}
+                aria-label="Toggle disembark alarm"
+              >
+                {isAlarmArmed ? (
+                  <BellRing className="w-3.5 h-3.5 animate-bounce text-amber-400" />
+                ) : (
+                  <Bell className="w-3.5 h-3.5" />
+                )}
               </button>
 
               {/* Minimize Card */}
               <button
                 type="button"
                 onClick={() => setIsMinimized(true)}
-                className="p-2 rounded-xl text-xs bg-zinc-800/80 border border-zinc-700 text-zinc-300 hover:text-white hover:bg-zinc-700 transition cursor-pointer"
+                className="p-1 sm:p-1.5 rounded-lg text-zinc-400 hover:text-white hover:bg-zinc-800 transition cursor-pointer"
                 title="Ciutkan Tampilan (Minimize)"
                 aria-label="Minimize navigation card"
               >
-                <ChevronUp className="w-4 h-4 text-cyan-400" />
+                <ChevronUp className="w-3.5 h-3.5" />
               </button>
 
               {/* Stop Navigation */}
               <button
                 type="button"
                 onClick={handleStopNavigation}
-                className="p-2 rounded-xl text-xs bg-rose-600/20 border border-rose-500/40 text-rose-400 hover:bg-rose-600/30 transition cursor-pointer"
+                className="p-1 sm:p-1.5 rounded-lg text-rose-400 hover:bg-rose-600/20 hover:text-rose-300 transition cursor-pointer"
                 title="Akhiri Navigasi"
                 aria-label="Stop navigation"
               >
-                <X className="w-4 h-4" />
+                <X className="w-3.5 h-3.5" />
               </button>
             </div>
           </div>
 
-          {/* Hero Active Instruction */}
-          <div className="pt-3 pb-1 space-y-1">
-            <div className="flex items-start justify-between gap-2">
-              <p className="text-sm sm:text-base font-black text-white leading-snug tracking-tight">
-                {currentLeg.instruction}
-              </p>
-              <button
-                type="button"
-                onClick={replayCurrentInstruction}
-                className="p-1.5 rounded-lg bg-cyan-500/10 hover:bg-cyan-500/25 border border-cyan-500/30 text-cyan-400 hover:text-cyan-300 transition shrink-0 cursor-pointer"
-                title="Dengarkan Ulang Panduan Suara Langkah Ini"
-                aria-label="Replay current step instruction"
-              >
-                <Volume2 className="w-4 h-4" />
-              </button>
+          {/* Unified Ultra-Compact Station Progress Chevron Pill */}
+          <div
+            onClick={toggleStationProgress}
+            role="button"
+            tabIndex={0}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault();
+                toggleStationProgress();
+              }
+            }}
+            className="mt-2 pt-1.5 border-t border-zinc-800/80 flex items-center justify-between gap-2 px-2.5 py-1.5 rounded-xl bg-zinc-900/60 hover:bg-zinc-800/80 border border-zinc-800/80 hover:border-cyan-500/40 transition cursor-pointer group relative overflow-hidden select-none"
+            title={isStationProgressOpen ? 'Tutup Daftar Stasiun' : 'Buka Timeline Daftar Stasiun'}
+            aria-label={isStationProgressOpen ? 'Tutup daftar stasiun' : 'Buka daftar stasiun'}
+            aria-expanded={isStationProgressOpen}
+          >
+            {/* Embedded Micro Progress Line at the bottom of the pill */}
+            <div className="absolute bottom-0 left-0 right-0 h-[2px] bg-zinc-800/80">
+              <div
+                className="h-full bg-gradient-to-r from-emerald-500 via-cyan-500 to-blue-500 transition-all duration-300"
+                style={{ width: `${stationProgress.progressPercent}%` }}
+              />
             </div>
 
-            <div className="flex items-baseline gap-3 pt-1">
-              <div className="text-2xl font-black text-cyan-400 font-mono tabular-nums tracking-tight">
-                {formatDistance(state.distanceToNextStopMeters)}
-              </div>
-
-              <div className="text-xs text-zinc-400 font-medium">
-                Sisa ke stasiun/tujuan berikutnya
-              </div>
-            </div>
-          </div>
-
-          {/* Integrated Station Progress Summary Bar */}
-          <div className="mt-2.5 pt-2.5 border-t border-zinc-800/80 space-y-1.5">
-            <div className="flex items-center justify-between text-xs gap-2">
-              <div className="flex items-center gap-1.5 min-w-0">
-                <span className="relative flex h-2.5 w-2.5 shrink-0">
-                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-cyan-400 opacity-75" />
-                  <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-cyan-400" />
+            {/* Left: Active/Next Station Name & Distance */}
+            <div className="flex items-center gap-1.5 min-w-0">
+              <span className="relative flex h-2 w-2 shrink-0">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-cyan-400 opacity-75" />
+                <span className="relative inline-flex rounded-full h-2 w-2 bg-cyan-400" />
+              </span>
+              <div className="flex items-baseline gap-1.5 min-w-0 text-[11px] truncate">
+                <span className="font-bold text-cyan-300 truncate">
+                  {currentStation?.status === 'current' &&
+                  currentStation.distanceToUserMeters !== null &&
+                  currentStation.distanceToUserMeters <= 80
+                    ? `Di Sini: ${currentStation.name}`
+                    : `Berikutnya: ${currentStation?.name || currentLeg.to?.name || 'Tujuan'}`}
                 </span>
-                <span className="text-[11px] font-bold text-cyan-300 truncate">
-                  {stationProgress.currentStation?.status === 'current' &&
-                  stationProgress.currentStation.distanceToUserMeters !== null &&
-                  stationProgress.currentStation.distanceToUserMeters <= 80
-                    ? `Saat Ini: ${stationProgress.currentStation.name}`
-                    : `Berikutnya: ${stationProgress.currentStation?.name || currentLeg.to?.name || 'Tujuan'}`}
-                </span>
-              </div>
-
-              {/* Station List Chevron Toggle Button */}
-              <button
-                type="button"
-                onClick={toggleStationProgress}
-                className="flex items-center gap-1 px-2.5 py-1 rounded-lg bg-cyan-500/15 hover:bg-cyan-500/25 border border-cyan-500/30 text-cyan-300 font-bold text-[10.5px] transition cursor-pointer shrink-0"
-                title={isStationProgressOpen ? 'Tutup Daftar Stasiun' : 'Buka Daftar Stasiun Lengkap'}
-                aria-label="Toggle station progress timeline"
-              >
-                <Train className="w-3 h-3 text-cyan-400" />
-                <span>Daftar Stasiun ({stationProgress.totalStations})</span>
-                {isStationProgressOpen ? (
-                  <ChevronUp className="w-3.5 h-3.5" />
-                ) : (
-                  <ChevronDown className="w-3.5 h-3.5" />
+                {currentStation && currentStation.distanceToUserMeters !== null && (
+                  <span className="text-[10px] text-zinc-400 font-mono tabular-nums shrink-0">
+                    • {formatDistance(currentStation.distanceToUserMeters)}
+                    {estimateMinutes(
+                      currentStation.distanceToUserMeters,
+                      currentStation.mode,
+                      currentStation.legType
+                    )
+                      ? ` (${estimateMinutes(
+                          currentStation.distanceToUserMeters,
+                          currentStation.mode,
+                          currentStation.legType
+                        )})`
+                      : ''}
+                  </span>
                 )}
-              </button>
+              </div>
             </div>
 
-            {/* Mini Progress Bar & Stats */}
-            <div className="flex items-center gap-2 text-[10px] text-zinc-400">
-              <div className="flex-1 h-1.5 rounded-full bg-zinc-800 overflow-hidden">
-                <div
-                  className="h-full bg-gradient-to-r from-emerald-500 via-cyan-500 to-blue-500 rounded-full transition-all duration-300"
-                  style={{ width: `${stationProgress.progressPercent}%` }}
+            {/* Right: The Chevron Pill */}
+            <div className="flex items-center gap-1 shrink-0">
+              <div className="flex items-center gap-1 px-2 py-0.5 rounded-lg bg-cyan-500/15 group-hover:bg-cyan-500/25 border border-cyan-500/30 text-cyan-300 font-bold text-[10px] transition">
+                <Train className="w-3 h-3 text-cyan-400" />
+                <span className="tabular-nums font-mono">
+                  {stationProgress.passedCount}/{stationProgress.totalStations}
+                </span>
+                <ChevronDown
+                  className={`w-3 h-3 text-cyan-400 transition-transform duration-200 ${
+                    isStationProgressOpen ? 'rotate-180' : ''
+                  }`}
                 />
               </div>
-              <span className="tabular-nums font-mono text-zinc-300 shrink-0">
-                {stationProgress.passedCount}/{stationProgress.totalStations} Stasiun
-              </span>
-              <span className="text-zinc-500">•</span>
-              <span className="tabular-nums text-cyan-400 font-medium shrink-0">
-                {stationProgress.remainingCount} Sisa
-              </span>
             </div>
           </div>
         </div>
       )}
 
-      {/* 3. Collapsible Station Timeline Dropdown */}
+      {/* 3. Collapsible Station Timeline Dropdown (Compact & Map-Friendly) */}
       {!isMinimized && isStationProgressOpen && (
-        <div className="bg-[#0b101b]/95 backdrop-blur-xl border border-cyan-500/30 rounded-2xl shadow-2xl overflow-hidden ring-1 ring-cyan-500/20 max-h-[48vh] flex flex-col text-xs text-white animate-in fade-in slide-in-from-top-2 duration-200">
-          <div className="p-3 pb-2 border-b border-zinc-800/80 flex items-center justify-between bg-zinc-900/40">
+        <div className="bg-[#0b101b]/95 backdrop-blur-xl border border-cyan-500/30 rounded-2xl shadow-2xl overflow-hidden ring-1 ring-cyan-500/20 max-h-[38vh] flex flex-col text-xs text-white animate-in fade-in slide-in-from-top-2 duration-200">
+          <div className="p-2.5 pb-2 border-b border-zinc-800/80 flex items-center justify-between bg-zinc-900/40">
             <div className="flex items-center gap-1.5 font-bold text-white text-xs">
               <NavigationIcon className="w-3.5 h-3.5 text-cyan-400" />
               <span>Timeline Stasiun Perjalanan</span>
@@ -656,19 +656,20 @@ export default function NavigationHUD({
                 onClick={toggleStationProgress}
                 className="ml-1 p-1 rounded-lg bg-zinc-800 hover:bg-zinc-700 text-zinc-300 hover:text-white transition cursor-pointer"
                 title="Tutup Daftar Stasiun"
+                aria-label="Close station list"
               >
                 <ChevronUp className="w-3.5 h-3.5 text-cyan-400" />
               </button>
             </div>
           </div>
 
-          <div className="p-3 overflow-y-auto space-y-1 divide-y divide-transparent">
+          <div className="p-2 overflow-y-auto space-y-1 divide-y divide-transparent">
             {/* Collapsed passed stations button */}
             {shouldCollapsePassed && (
               <button
                 type="button"
                 onClick={() => setShowAllPassed(true)}
-                className="w-full py-1.5 px-2.5 mb-1 rounded-xl bg-zinc-900/60 hover:bg-zinc-800/80 border border-zinc-800 flex items-center justify-between text-[10.5px] text-zinc-400 transition cursor-pointer"
+                className="w-full py-1 px-2 mb-1 rounded-xl bg-zinc-900/60 hover:bg-zinc-800/80 border border-zinc-800 flex items-center justify-between text-[10.5px] text-zinc-400 transition cursor-pointer"
               >
                 <div className="flex items-center gap-1.5 text-emerald-400 font-medium">
                   <CheckCircle2 className="w-3 h-3 shrink-0" />
@@ -684,7 +685,6 @@ export default function NavigationHUD({
             {stationProgress.items.map((station, idx) => {
               const isPassed = station.status === 'passed';
               const isCurrent = station.status === 'current';
-              const isUpcoming = station.status === 'upcoming';
               const isAlarmOnThis = isAlarmArmed && alarmTargetStopId === station.id;
 
               if (shouldCollapsePassed && isPassed) return null;
@@ -693,9 +693,9 @@ export default function NavigationHUD({
                 <div
                   key={`hud_st_${station.id}_${idx}`}
                   onClick={() => handleStationSelect(station)}
-                  className={`relative flex items-start gap-2.5 p-2 rounded-xl transition cursor-pointer group ${
+                  className={`relative flex items-start gap-2 p-1.5 rounded-xl transition cursor-pointer group ${
                     isCurrent
-                      ? 'bg-gradient-to-r from-cyan-950/70 via-blue-950/60 to-zinc-900/70 border border-cyan-500/50 shadow-md shadow-cyan-500/10 ring-2 ring-cyan-500/20 my-0.5'
+                      ? 'bg-gradient-to-r from-cyan-950/70 via-blue-950/60 to-zinc-900/70 border border-cyan-500/50 shadow-md shadow-cyan-500/10 ring-1 ring-cyan-500/30'
                       : isPassed
                       ? 'hover:bg-zinc-900/40 opacity-70'
                       : 'hover:bg-zinc-900/50'
@@ -704,23 +704,23 @@ export default function NavigationHUD({
                   {/* Indicator Column */}
                   <div className="flex flex-col items-center shrink-0 pt-0.5">
                     {isPassed ? (
-                      <div className="w-4 h-4 rounded-full bg-emerald-950/80 border border-emerald-500/60 flex items-center justify-center text-emerald-400">
-                        <CheckCircle2 className="w-3 h-3" />
+                      <div className="w-3.5 h-3.5 rounded-full bg-emerald-950/80 border border-emerald-500/60 flex items-center justify-center text-emerald-400">
+                        <CheckCircle2 className="w-2.5 h-2.5" />
                       </div>
                     ) : isCurrent ? (
-                      <div className="relative flex items-center justify-center w-4 h-4">
+                      <div className="relative flex items-center justify-center w-3.5 h-3.5">
                         <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-cyan-400 opacity-75" />
-                        <span className="relative inline-flex rounded-full h-3.5 w-3.5 bg-cyan-400 border border-zinc-950 shadow-md shadow-cyan-400/50" />
+                        <span className="relative inline-flex rounded-full h-3 w-3 bg-cyan-400 border border-zinc-950 shadow-md shadow-cyan-400/50" />
                       </div>
                     ) : (
                       <div
-                        className="w-3.5 h-3.5 rounded-full border-2 border-zinc-500 bg-zinc-900 group-hover:border-cyan-400 transition"
+                        className="w-3 h-3 rounded-full border-2 border-zinc-500 bg-zinc-900 group-hover:border-cyan-400 transition"
                         style={{ borderColor: station.lineColor || undefined }}
                       />
                     )}
                     {idx < stationProgress.items.length - 1 && (
                       <div
-                        className={`w-0.5 flex-1 min-h-[18px] mt-0.5 ${
+                        className={`w-0.5 flex-1 min-h-[14px] mt-0.5 ${
                           isPassed ? 'bg-emerald-500/30' : 'bg-zinc-800'
                         }`}
                       />
@@ -731,7 +731,7 @@ export default function NavigationHUD({
                   <div className="min-w-0 flex-1">
                     <div className="flex items-center gap-1.5 flex-wrap">
                       <span
-                        className={`text-xs ${
+                        className={`text-[11.5px] ${
                           isCurrent
                             ? 'font-black text-white'
                             : isPassed
@@ -743,7 +743,7 @@ export default function NavigationHUD({
                       </span>
 
                       {isCurrent && (
-                        <span className="text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.2 rounded bg-cyan-500/20 border border-cyan-400/40 text-cyan-300">
+                        <span className="text-[8.5px] font-bold uppercase tracking-wider px-1.5 py-0.2 rounded bg-cyan-500/20 border border-cyan-400/40 text-cyan-300">
                           {station.distanceToUserMeters !== null && station.distanceToUserMeters <= 80
                             ? 'Di Sini'
                             : 'Berikutnya'}
@@ -751,21 +751,21 @@ export default function NavigationHUD({
                       )}
 
                       {station.isDestination && (
-                        <span className="text-[8.5px] font-bold px-1.5 py-0.2 rounded bg-rose-950/60 border border-rose-500/40 text-rose-300 flex items-center gap-1">
+                        <span className="text-[8px] font-bold px-1.5 py-0.2 rounded bg-rose-950/60 border border-rose-500/40 text-rose-300 flex items-center gap-1">
                           <Flag className="w-2.5 h-2.5 text-rose-400" />
                           Tujuan
                         </span>
                       )}
 
                       {station.isTransfer && (
-                        <span className="text-[8.5px] font-semibold px-1.5 py-0.2 rounded bg-amber-950/60 border border-amber-500/40 text-amber-300 flex items-center gap-1">
+                        <span className="text-[8px] font-semibold px-1.5 py-0.2 rounded bg-amber-950/60 border border-amber-500/40 text-amber-300 flex items-center gap-1">
                           <ArrowRightLeft className="w-2.5 h-2.5 text-amber-400" />
                           Transit: {station.transferToLineName || 'Lin Lain'}
                         </span>
                       )}
                     </div>
 
-                    <div className="flex items-center gap-2 text-[10px] text-zinc-400 mt-0.5">
+                    <div className="flex items-center gap-2 text-[9.5px] text-zinc-400 mt-0.5">
                       {station.lineName && (
                         <span className="font-mono" style={{ color: station.lineColor || undefined }}>
                           {station.lineName}
@@ -815,11 +815,11 @@ export default function NavigationHUD({
             })}
           </div>
 
-          <div className="p-1.5 border-t border-zinc-800/80 text-center bg-[#070b13]">
+          <div className="p-1 border-t border-zinc-800/80 text-center bg-[#070b13]">
             <button
               type="button"
               onClick={toggleStationProgress}
-              className="text-[10.5px] text-zinc-400 hover:text-white transition flex items-center justify-center gap-1 w-full py-0.5 cursor-pointer"
+              className="text-[10px] text-zinc-400 hover:text-white transition flex items-center justify-center gap-1 w-full py-0.5 cursor-pointer"
             >
               <span>Tutup Timeline Stasiun</span>
               <ChevronUp className="w-3 h-3 text-cyan-400" />
