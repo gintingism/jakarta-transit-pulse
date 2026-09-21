@@ -31,7 +31,8 @@ import {
   Navigation as NavigationIcon,
   MapPin,
   Flag,
-  Zap,
+  Battery,
+  BatteryCharging,
   Info,
 } from 'lucide-react';
 import {
@@ -70,6 +71,8 @@ export default function NavigationHUD({
   const [isSpeaking, setIsSpeaking] = useState(false);
   const [isPlatformModalOpen, setIsPlatformModalOpen] = useState(false);
   const [selectedGuidance, setSelectedGuidance] = useState<PlatformGuidance | null>(null);
+  const [batteryToast, setBatteryToast] = useState<string | null>(null);
+  const batteryToastTimerRef = useRef<NodeJS.Timeout | null>(null);
   const voiceNavRef = useRef<VoiceNavigator | null>(null);
   const bgKeepAliveRef = useRef<BackgroundKeepAliveManager | null>(null);
 
@@ -110,6 +113,9 @@ export default function NavigationHUD({
     return () => {
       if (legChangeDebounceTimerRef.current) {
         clearTimeout(legChangeDebounceTimerRef.current);
+      }
+      if (batteryToastTimerRef.current) {
+        clearTimeout(batteryToastTimerRef.current);
       }
       if (!useTransitStore.getState().isAlarmArmed) {
         bgKeepAliveRef.current?.stop();
@@ -269,6 +275,26 @@ export default function NavigationHUD({
     }
   }, [toggleMute, state.isMuted]);
 
+  const handleToggleBatterySaver = useCallback(
+    (e?: React.MouseEvent) => {
+      if (e) e.stopPropagation();
+      const nextState = !isBatterySaverMode;
+      toggleBatterySaverMode();
+      if (batteryToastTimerRef.current) {
+        clearTimeout(batteryToastTimerRef.current);
+      }
+      setBatteryToast(
+        nextState
+          ? 'Mode Hemat Daya Aktif: Polling hemat saat >2 km'
+          : 'Mode Hemat Daya Nonaktif: Pelacakan presisi penuh'
+      );
+      batteryToastTimerRef.current = setTimeout(() => {
+        setBatteryToast(null);
+      }, 2500);
+    },
+    [isBatterySaverMode, toggleBatterySaverMode]
+  );
+
   const replayCurrentInstruction = useCallback(() => {
     if (!voiceNavRef.current || !currentLeg) return;
     voiceNavRef.current.setMuted(false);
@@ -347,6 +373,25 @@ export default function NavigationHUD({
 
   return (
     <div className="fixed top-2.5 left-2.5 right-2.5 sm:left-4 sm:right-auto sm:w-[390px] z-40 flex flex-col gap-1.5 font-sans select-none animate-in fade-in slide-in-from-top-3 duration-300">
+      {/* 0. Battery Saver Feedback Toast */}
+      {batteryToast && (
+        <div className="bg-zinc-900/95 backdrop-blur-md text-white px-3 py-1.5 rounded-xl shadow-xl flex items-center justify-between gap-2 text-xs font-semibold border border-emerald-500/40 animate-in fade-in slide-in-from-top-1 duration-200">
+          <div className="flex items-center gap-2 min-w-0">
+            <BatteryCharging className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
+            <span className="text-zinc-200 text-[11px] sm:text-xs truncate">{batteryToast}</span>
+          </div>
+          <button
+            type="button"
+            onClick={() => setBatteryToast(null)}
+            className="text-zinc-400 hover:text-white p-0.5 rounded cursor-pointer shrink-0"
+            title="Tutup notifikasi"
+            aria-label="Close notification"
+          >
+            <X className="w-3 h-3" />
+          </button>
+        </div>
+      )}
+
       {/* 1. Status Banners (Anti-Bablas / Off-Route / GPS Lost) */}
       {state.status === 'approaching_destination' && (
         <div className="bg-gradient-to-r from-amber-600 via-rose-600 to-rose-700 text-white px-3.5 py-2 rounded-xl shadow-lg flex items-center justify-between text-xs font-bold border border-rose-400/40 animate-pulse">
@@ -416,10 +461,7 @@ export default function NavigationHUD({
             {/* Battery Saver Button in Minimized Pill */}
             <button
               type="button"
-              onClick={(e) => {
-                e.stopPropagation();
-                toggleBatterySaverMode();
-              }}
+              onClick={handleToggleBatterySaver}
               className={`p-1.5 rounded-lg border transition cursor-pointer ${
                 isBatterySaverMode
                   ? 'bg-emerald-500/20 border-emerald-500/40 text-emerald-400'
@@ -427,12 +469,16 @@ export default function NavigationHUD({
               }`}
               title={
                 isBatterySaverMode
-                  ? 'Mode Hemat Daya Cerdas: Aktif'
-                  : 'Mode Hemat Daya Cerdas: Nonaktif (Klik untuk aktifkan)'
+                  ? 'Mode Hemat Daya: Aktif (GPS adaptif >2km)'
+                  : 'Mode Hemat Daya: Nonaktif (Klik untuk aktifkan)'
               }
               aria-label="Toggle battery saver mode"
             >
-              <Zap className="w-3.5 h-3.5" />
+              {isBatterySaverMode ? (
+                <BatteryCharging className="w-3.5 h-3.5" />
+              ) : (
+                <Battery className="w-3.5 h-3.5" />
+              )}
             </button>
 
             {/* Recenter GPS */}
@@ -565,20 +611,24 @@ export default function NavigationHUD({
               {/* Mode Hemat Daya Cerdas Toggle */}
               <button
                 type="button"
-                onClick={toggleBatterySaverMode}
+                onClick={handleToggleBatterySaver}
                 className={`p-1 sm:p-1.5 rounded-lg transition cursor-pointer ${
                   isBatterySaverMode
                     ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/40 shadow-xs'
-                    : 'text-zinc-400 hover:text-zinc-200'
+                    : 'text-zinc-400 hover:text-zinc-200 hover:bg-zinc-800/80'
                 }`}
                 title={
                   isBatterySaverMode
-                    ? 'Mode Hemat Daya Cerdas: Aktif (GPS adaptif >2km)'
-                    : 'Mode Hemat Daya Cerdas: Nonaktif (Klik untuk aktifkan)'
+                    ? 'Mode Hemat Daya: Aktif (GPS adaptif >2km)'
+                    : 'Mode Hemat Daya: Nonaktif (Klik untuk aktifkan)'
                 }
                 aria-label="Toggle battery saver mode"
               >
-                <Zap className="w-3.5 h-3.5" />
+                {isBatterySaverMode ? (
+                  <BatteryCharging className="w-3.5 h-3.5" />
+                ) : (
+                  <Battery className="w-3.5 h-3.5" />
+                )}
               </button>
 
               {/* Disembark Alarm Toggle */}

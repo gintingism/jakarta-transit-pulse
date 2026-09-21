@@ -22,6 +22,8 @@ import {
   MapPin,
   CheckCircle2,
   Zap,
+  Battery,
+  BatteryCharging,
 } from 'lucide-react';
 
 interface AlarmStopPreset {
@@ -380,7 +382,11 @@ export default function GeoAlarmPanel() {
                     : 'bg-slate-200 dark:bg-zinc-800 text-slate-500 dark:text-zinc-400'
                 }`}
               >
-                <Zap className="w-4 h-4" />
+                {isBatterySaverMode ? (
+                  <BatteryCharging className="w-4 h-4" />
+                ) : (
+                  <Battery className="w-4 h-4" />
+                )}
               </div>
               <div className="min-w-0">
                 <div className="flex items-center gap-1.5 flex-wrap">
