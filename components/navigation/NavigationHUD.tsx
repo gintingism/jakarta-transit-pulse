@@ -477,12 +477,25 @@ export default function NavigationHUD({
                 {getLegIcon(currentLeg)}
               </div>
 
-              <div className="min-w-0 flex-1">
+              <div
+                onClick={replayCurrentInstruction}
+                role="button"
+                tabIndex={0}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    replayCurrentInstruction();
+                  }
+                }}
+                className="min-w-0 flex-1 cursor-pointer group/inst transition select-none"
+                title="Klik untuk mendengarkan ulang panduan suara"
+                aria-label={`Instruksi: ${currentLeg.instruction}. Klik untuk dengarkan ulang.`}
+              >
                 <div className="flex items-baseline gap-1.5 min-w-0">
                   <span className="text-base sm:text-lg font-black font-mono tabular-nums text-cyan-400 tracking-tight shrink-0">
                     {formatDistance(state.distanceToNextStopMeters)}
                   </span>
-                  <span className="text-xs sm:text-sm font-bold text-white truncate min-w-0 leading-tight">
+                  <span className="text-xs sm:text-sm font-bold text-white group-hover/inst:text-cyan-200 transition truncate min-w-0 leading-tight">
                     {currentLeg.instruction}
                   </span>
                 </div>
@@ -511,30 +524,27 @@ export default function NavigationHUD({
 
             {/* Quick Action Control Cluster */}
             <div className="flex items-center gap-0.5 bg-zinc-900/70 p-0.5 rounded-xl border border-zinc-800/80 shrink-0">
-              {/* Replay Voice Guidance */}
-              <button
-                type="button"
-                onClick={replayCurrentInstruction}
-                className="p-1 sm:p-1.5 rounded-lg text-cyan-400 hover:bg-cyan-500/20 transition cursor-pointer"
-                title="Dengarkan Ulang Panduan Suara"
-                aria-label="Replay current step instruction"
-              >
-                <Volume2 className="w-3.5 h-3.5" />
-              </button>
-
-              {/* Mute/Unmute Audio */}
+              {/* Single Smart Voice Guidance Toggle (Mute / Unmute) */}
               <button
                 type="button"
                 onClick={handleToggleMute}
                 className={`p-1 sm:p-1.5 rounded-lg transition cursor-pointer ${
                   state.isMuted
-                    ? 'text-zinc-500 hover:text-zinc-300'
-                    : 'text-cyan-400 hover:bg-cyan-500/20'
+                    ? 'text-zinc-500 hover:text-zinc-300 hover:bg-zinc-800/80'
+                    : 'text-cyan-400 hover:bg-cyan-500/20 bg-cyan-500/10'
                 }`}
-                title={state.isMuted ? 'Aktifkan Suara Navigasi' : 'Bisukan Suara'}
-                aria-label={state.isMuted ? 'Unmute voice guidance' : 'Mute voice guidance'}
+                title={
+                  state.isMuted
+                    ? 'Panduan Suara: Dibisukan (Klik untuk aktifkan)'
+                    : 'Panduan Suara: Aktif (Klik untuk bisukan)'
+                }
+                aria-label={state.isMuted ? 'Aktifkan suara navigasi' : 'Bisukan suara navigasi'}
               >
-                {state.isMuted ? <VolumeX className="w-3.5 h-3.5" /> : <Volume2 className="w-3.5 h-3.5" />}
+                {state.isMuted ? (
+                  <VolumeX className="w-3.5 h-3.5" />
+                ) : (
+                  <Volume2 className="w-3.5 h-3.5" />
+                )}
               </button>
 
               {/* Recenter GPS */}
