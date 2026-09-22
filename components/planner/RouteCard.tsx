@@ -24,7 +24,9 @@ import {
   Leaf,
   Focus,
   Navigation,
+  Star,
 } from 'lucide-react';
+import { findMatchingSavedRoute } from '@/src/lib/savedPlacesService';
 
 interface RouteCardProps {
   route: RoutePlan;
@@ -69,6 +71,27 @@ export default function RouteCard({
   const transferMeters = (route.transfers || []).reduce((acc, t) => acc + (t.walkMinutes * 75), 0);
   const totalWalkMeters = firstMileMeters + lastMileMeters + transferMeters;
   const impact = calculateTripImpact(route.totalDistanceKm, route.totalFareIdr, totalWalkMeters);
+
+  const savedRoutes = useTransitStore((s) => s.savedRoutes);
+  const saveCurrentRouteAsFavorite = useTransitStore((s) => s.saveCurrentRouteAsFavorite);
+  const removeSavedRoute = useTransitStore((s) => s.removeSavedRoute);
+  const [savedFeedback, setSavedFeedback] = useState(false);
+
+  const existingSavedRoute = findMatchingSavedRoute(
+    savedRoutes,
+    originPlace || (originStopId ? { name: route.origin.name, coords: route.origin.coords, stationId: originStopId } : null),
+    destinationPlace || (destinationStopId ? { name: route.destination.name, coords: route.destination.coords, stationId: destinationStopId } : null)
+  );
+
+  const handleToggleFavorite = () => {
+    if (existingSavedRoute) {
+      removeSavedRoute(existingSavedRoute.id);
+    } else {
+      saveCurrentRouteAsFavorite();
+      setSavedFeedback(true);
+      setTimeout(() => setSavedFeedback(false), 2000);
+    }
+  };
 
   const handleShare = async () => {
     if (typeof window === 'undefined') return;
@@ -132,7 +155,29 @@ export default function RouteCard({
             </span>
           </div>
 
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1.5 sm:gap-2">
+            {/* Bookmark / Favorite Route Button */}
+            <button
+              type="button"
+              onClick={handleToggleFavorite}
+              className={`flex items-center gap-1 text-[11px] font-semibold px-2.5 py-1 rounded-lg border transition cursor-pointer active:scale-95 ${
+                existingSavedRoute || savedFeedback
+                  ? 'bg-amber-50 dark:bg-amber-950/60 text-amber-800 dark:text-amber-300 border-amber-300 dark:border-amber-700/80 shadow-xs'
+                  : 'text-slate-700 dark:text-zinc-300 hover:text-amber-600 dark:hover:text-amber-400 bg-slate-100 dark:bg-zinc-800 hover:bg-slate-200 dark:hover:bg-zinc-700 border-slate-200 dark:border-zinc-700'
+              }`}
+              title={existingSavedRoute ? 'Hapus rute dari favorit' : 'Simpan rute ini ke favorit'}
+              aria-label="Simpan Rute"
+            >
+              <Star
+                className={`w-3.5 h-3.5 ${
+                  existingSavedRoute || savedFeedback
+                    ? 'text-amber-500 fill-amber-500'
+                    : 'text-slate-500 dark:text-zinc-400'
+                }`}
+              />
+              <span>{existingSavedRoute || savedFeedback ? 'Favorit' : 'Simpan'}</span>
+            </button>
+
             {/* Share Route Button */}
             <button
               type="button"

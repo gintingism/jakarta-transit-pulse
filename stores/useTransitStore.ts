@@ -15,6 +15,19 @@ import {
 } from '@/src/lib/transitEngine';
 import { reverseGeocodeLocation } from '@/src/lib/poiService';
 import { RouteLeg, convertRoutePlanToLegs } from '@/src/types/navigation';
+import {
+  SavedPlace,
+  SavedRoute,
+  SavedPlaceType,
+  loadSavedPlacesFromStorage,
+  savePlacesToStorage,
+  loadSavedRoutesFromStorage,
+  saveRoutesToStorage,
+  upsertSavedPlace,
+  removeSavedPlaceById,
+  addSavedRoute,
+  removeSavedRouteById,
+} from '@/src/lib/savedPlacesService';
 
 export type TabType = 'planner' | 'alarm';
 export type RoutePreference = 'FASTEST' | 'CHEAPEST' | 'FEWEST_TRANSFERS';
@@ -33,6 +46,21 @@ interface TransitStore {
   isDrawerExpanded: boolean;
   activeSegmentId: string | null;
   setActiveSegmentId: (id: string | null) => void;
+
+  // Saved Places & Commuter Shortcuts
+  savedPlaces: SavedPlace[];
+  savedRoutes: SavedRoute[];
+  isSetPlaceModalOpen: boolean;
+  editingPlaceType: SavedPlaceType | null;
+  setSavedPlace: (place: SavedPlace) => void;
+  removeSavedPlace: (id: string) => void;
+  saveCurrentRouteAsFavorite: (customName?: string) => void;
+  removeSavedRoute: (id: string) => void;
+  applySavedRoute: (route: SavedRoute) => void;
+  applySavedPlaceAsDestination: (place: SavedPlace) => void;
+  applySavedPlaceAsOrigin: (place: SavedPlace) => void;
+  openSetPlaceModal: (type: SavedPlaceType) => void;
+  closeSetPlaceModal: () => void;
 
   // Map state
   mapCenter: [number, number];
@@ -182,6 +210,12 @@ export const useTransitStore = create<TransitStore>((set, get) => ({
   isFeedbackModalOpen: false,
   hasUnreadChangelog: false,
 
+  // Saved Places & Commuter Shortcuts State
+  savedPlaces: loadSavedPlacesFromStorage(),
+  savedRoutes: loadSavedRoutesFromStorage(),
+  isSetPlaceModalOpen: false,
+  editingPlaceType: null,
+
   // Live Navigation State
   isNavigating: false,
   navigationLegs: null,
@@ -271,6 +305,99 @@ export const useTransitStore = create<TransitStore>((set, get) => ({
       set({ alarmTargetStopId: place.stationId });
     }
     void get().calculateCurrentRoute();
+  },
+
+  setSavedPlace: (place: SavedPlace) => {
+    const updated = upsertSavedPlace(get().savedPlaces, place);
+    savePlacesToStorage(updated);
+    set({ savedPlaces: updated });
+  },
+
+  removeSavedPlace: (id: string) => {
+    const updated = removeSavedPlaceById(get().savedPlaces, id);
+    savePlacesToStorage(updated);
+    set({ savedPlaces: updated });
+  },
+
+  saveCurrentRouteAsFavorite: (customName?: string) => {
+    const state = get();
+    const origin = state.originPlace || (state.originStopId ? {
+      name: STATION_MAP[state.originStopId]?.name || 'Titik Awal',
+      coords: STATION_MAP[state.originStopId]?.coords || [-6.2, 106.8],
+      stationId: state.originStopId,
+    } : null);
+
+    const destination = state.destinationPlace || (state.destinationStopId ? {
+      name: STATION_MAP[state.destinationStopId]?.name || 'Tujuan',
+      coords: STATION_MAP[state.destinationStopId]?.coords || [-6.2, 106.8],
+      stationId: state.destinationStopId,
+    } : null);
+
+    if (!origin || !destination) return;
+
+    const defaultName = `${origin.name} ke ${destination.name}`;
+    const newRoute: SavedRoute = {
+      id: `route_${Date.now()}`,
+      name: customName && customName.trim().length > 0 ? customName.trim() : defaultName,
+      origin,
+      destination,
+      preference: state.routePreference,
+      createdAt: Date.now(),
+    };
+
+    const updated = addSavedRoute(get().savedRoutes, newRoute);
+    saveRoutesToStorage(updated);
+    set({ savedRoutes: updated });
+  },
+
+  removeSavedRoute: (id: string) => {
+    const updated = removeSavedRouteById(get().savedRoutes, id);
+    saveRoutesToStorage(updated);
+    set({ savedRoutes: updated });
+  },
+
+  applySavedRoute: (route: SavedRoute) => {
+    if (route.preference) {
+      set({ routePreference: route.preference });
+    }
+    set({
+      originStopId: route.origin.stationId || null,
+      originPlace: route.origin,
+      destinationStopId: route.destination.stationId || null,
+      destinationPlace: route.destination,
+      activeTab: 'planner',
+    });
+    void get().calculateCurrentRoute();
+  },
+
+  applySavedPlaceAsDestination: (place: SavedPlace) => {
+    const currentOrigin = get().originPlace || get().originStopId;
+    if (!currentOrigin) {
+      get().useCurrentLocationAsOrigin();
+    }
+    set({
+      destinationStopId: place.target.stationId || null,
+      destinationPlace: place.target,
+      activeTab: 'planner',
+    });
+    void get().calculateCurrentRoute();
+  },
+
+  applySavedPlaceAsOrigin: (place: SavedPlace) => {
+    set({
+      originStopId: place.target.stationId || null,
+      originPlace: place.target,
+      activeTab: 'planner',
+    });
+    void get().calculateCurrentRoute();
+  },
+
+  openSetPlaceModal: (type: SavedPlaceType) => {
+    set({ isSetPlaceModalOpen: true, editingPlaceType: type });
+  },
+
+  closeSetPlaceModal: () => {
+    set({ isSetPlaceModalOpen: false, editingPlaceType: null });
   },
 
   useCurrentLocationAsOrigin: () => {

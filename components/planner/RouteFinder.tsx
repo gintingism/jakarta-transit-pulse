@@ -4,6 +4,8 @@ import React from 'react';
 import { useTransitStore } from '@/stores/useTransitStore';
 import StationCombobox from './StationCombobox';
 import RouteCard from './RouteCard';
+import QuickShortcuts from './QuickShortcuts';
+import SetPlaceModal from './SetPlaceModal';
 import {
   ArrowUpDown,
   RotateCcw,
@@ -87,6 +89,9 @@ export default function RouteFinder() {
             </button>
           )}
         </div>
+
+        {/* Commuter Quick Shortcuts (Rumah, Kantor, Rute Favorit) */}
+        <QuickShortcuts />
 
         {/* Dynamic Searchable Autocomplete Inputs */}
         <div className="space-y-2 relative">
@@ -236,6 +241,9 @@ export default function RouteFinder() {
           </div>
         )}
       </div>
+
+      {/* Set Place Modal */}
+      <SetPlaceModal />
     </div>
   );
 }
