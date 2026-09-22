@@ -102,6 +102,18 @@ export class BackgroundKeepAliveManager {
 
     if (typeof navigator !== 'undefined' && 'mediaSession' in navigator) {
       navigator.mediaSession.playbackState = 'playing';
+      try {
+        navigator.mediaSession.setActionHandler('play', () => {
+          if (this.audioElement) {
+            void this.audioElement.play();
+          }
+        });
+        navigator.mediaSession.setActionHandler('pause', () => {
+          // Keep audio session registered to prevent mobile OS from killing background process
+        });
+      } catch {
+        // Safe fallback
+      }
     }
   }
 
@@ -143,6 +155,12 @@ export class BackgroundKeepAliveManager {
 
     if (typeof navigator !== 'undefined' && 'mediaSession' in navigator) {
       navigator.mediaSession.playbackState = 'none';
+      try {
+        navigator.mediaSession.setActionHandler('play', null);
+        navigator.mediaSession.setActionHandler('pause', null);
+      } catch {
+        // Safe cleanup
+      }
     }
   }
 

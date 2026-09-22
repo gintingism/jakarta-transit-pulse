@@ -405,6 +405,7 @@ export function useNavigationTracker(
   const wakeLockRef = useRef<{ release: () => Promise<void> } | null>(null);
   const watchIdRef = useRef<number | null>(null);
   const lastProcessedPosRef = useRef<{ lat: number; lng: number } | null>(null);
+  const lastFixTimestampRef = useRef<number>(Date.now());
 
   // Keep latest callbacks and legs in refs to avoid re-subscribing the GPS watcher
   const onLegChangeRef = useRef(onLegChange);
@@ -497,6 +498,7 @@ export function useNavigationTracker(
     }
 
     const handleSuccess = (position: GeolocationPosition) => {
+      lastFixTimestampRef.current = Date.now();
       const userPos: NavigationPosition = {
         lat: position.coords.latitude,
         lng: position.coords.longitude,
@@ -667,7 +669,48 @@ export function useNavigationTracker(
       geoOptions
     );
 
+    // Fast wake-up sync: immediately request fresh position and resurrect watchPosition if stalled
+    const handleWakeUp = () => {
+      if (
+        typeof document !== 'undefined' &&
+        document.visibilityState === 'visible' &&
+        'geolocation' in navigator
+      ) {
+        navigator.geolocation.getCurrentPosition(handleSuccess, handleError, {
+          enableHighAccuracy: true,
+          maximumAge: 0,
+          timeout: 6000,
+        });
+
+        const elapsedSinceFix = Date.now() - lastFixTimestampRef.current;
+        if (elapsedSinceFix > 5000 && watchIdRef.current !== null) {
+          try {
+            navigator.geolocation.clearWatch(watchIdRef.current);
+          } catch {}
+          watchIdRef.current = navigator.geolocation.watchPosition(
+            handleSuccess,
+            handleError,
+            geoOptions
+          );
+        }
+      }
+    };
+
+    document.addEventListener('visibilitychange', handleWakeUp);
+    window.addEventListener('focus', handleWakeUp);
+
+    // Watchdog heartbeat: if no GPS fix received for > 6s while navigating, ping GPS hardware
+    const watchdogInterval = setInterval(() => {
+      const elapsedSinceFix = Date.now() - lastFixTimestampRef.current;
+      if (elapsedSinceFix > 6000 && 'geolocation' in navigator) {
+        navigator.geolocation.getCurrentPosition(handleSuccess, () => {}, geoOptions);
+      }
+    }, 4000);
+
     return () => {
+      document.removeEventListener('visibilitychange', handleWakeUp);
+      window.removeEventListener('focus', handleWakeUp);
+      clearInterval(watchdogInterval);
       if (watchIdRef.current !== null && 'geolocation' in navigator) {
         navigator.geolocation.clearWatch(watchIdRef.current);
         watchIdRef.current = null;
