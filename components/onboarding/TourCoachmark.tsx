@@ -19,7 +19,7 @@ const TOUR_STEPS: TourStep[] = [
     targetId: 'tour-route-input',
     title: 'Cari Rute Perjalanan',
     description:
-      'Masukkan stasiun atau tempat asal & tujuan di sini. Bisa ketik nama halte, stasiun KRL, MRT, LRT, atau titik landmark. Klik "Lokasi Saya" untuk pakai GPS otomatis.',
+      'Masukkan stasiun atau tempat asal & tujuan di sini. Bisa ketik nama halte, stasiun KRL, MRT, LRT, atau titik landmark. Klik "Lokasi Saya" untuk mendeteksi posisi keberangkatan Anda secara otomatis.',
     icon: <Navigation className="w-5 h-5 text-sky-400" />,
     placement: 'right',
   },

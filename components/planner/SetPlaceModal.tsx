@@ -11,7 +11,7 @@ import {
   Briefcase,
   MapPin,
   X,
-  Crosshair,
+  LocateFixed,
   Sparkles,
   Trash2,
   Check,
@@ -89,7 +89,7 @@ export default function SetPlaceModal() {
   const handleUseCurrentLocation = () => {
     if (userCoords) {
       handleSave({
-        name: `${meta.label} (Lokasi GPS)`,
+        name: `${meta.label} (Lokasi Saat Ini)`,
         coords: userCoords,
       });
       return;
@@ -99,7 +99,7 @@ export default function SetPlaceModal() {
       navigator.geolocation.getCurrentPosition(
         (pos) => {
           handleSave({
-            name: `${meta.label} (Lokasi GPS)`,
+            name: `${meta.label} (Lokasi Saat Ini)`,
             coords: [pos.coords.latitude, pos.coords.longitude],
           });
         },
@@ -203,8 +203,8 @@ export default function SetPlaceModal() {
           className="w-full p-2.5 rounded-xl bg-sky-950/40 hover:bg-sky-900/40 border border-sky-500/30 hover:border-sky-500/50 text-sky-200 text-xs font-semibold flex items-center justify-between gap-2 transition cursor-pointer group"
         >
           <div className="flex items-center gap-2 min-w-0">
-            <Crosshair className="w-4 h-4 text-sky-400 shrink-0 group-hover:scale-110 transition" />
-            <span className="truncate">Gunakan Posisi GPS Saya Saat Ini</span>
+            <LocateFixed className="w-4 h-4 text-sky-400 shrink-0 group-hover:scale-110 transition" />
+            <span className="truncate font-bold">Gunakan Lokasi Saat Ini</span>
           </div>
           <span className="text-[10px] text-sky-400 font-mono font-bold bg-sky-500/20 px-1.5 py-0.5 rounded shrink-0">
             1-Tap

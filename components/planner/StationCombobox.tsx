@@ -13,7 +13,7 @@ import {
   Bus,
   Landmark,
   Loader2,
-  Navigation,
+  LocateFixed,
   Plane,
 } from 'lucide-react';
 
@@ -298,12 +298,12 @@ export default function StationCombobox({
               setIsOpen(false);
               setQuery('');
             }}
-            className="text-[10px] font-medium text-emerald-700 dark:text-emerald-300 hover:text-emerald-800 dark:hover:text-emerald-200 bg-emerald-50 hover:bg-emerald-100 dark:bg-emerald-950/80 dark:hover:bg-emerald-900/80 border border-emerald-200 dark:border-emerald-800/60 px-2 py-0.5 rounded flex items-center gap-1 transition shrink-0 mr-1.5"
-            title="Gunakan Lokasi GPS Saya"
+            className="text-[10.5px] font-semibold text-emerald-700 dark:text-emerald-300 hover:text-emerald-800 dark:hover:text-emerald-200 bg-emerald-50 hover:bg-emerald-100 dark:bg-emerald-950/80 dark:hover:bg-emerald-900/80 border border-emerald-200 dark:border-emerald-800/60 px-2 py-0.5 rounded-md flex items-center gap-1.5 transition shrink-0 mr-1.5 cursor-pointer active:scale-95 shadow-xs"
+            title="Gunakan Lokasi Saya Saat Ini"
+            aria-label="Gunakan Lokasi Saya"
           >
-            <Navigation className="w-2.5 h-2.5 transform -rotate-45" />
-            <span className="hidden sm:inline">Lokasi Saya</span>
-            <span className="sm:hidden">GPS</span>
+            <LocateFixed className="w-3 h-3 text-emerald-600 dark:text-emerald-400 shrink-0" />
+            <span>Lokasi Saya</span>
           </button>
         )}
 
@@ -332,11 +332,15 @@ export default function StationCombobox({
                 }}
                 className="px-3.5 py-2.5 flex items-center gap-2.5 cursor-pointer bg-emerald-50/80 hover:bg-emerald-100/80 dark:bg-emerald-950/40 dark:hover:bg-emerald-900/60 border-b border-emerald-100 dark:border-emerald-900/50 text-emerald-700 dark:text-emerald-300 text-xs font-semibold transition"
               >
-                <Navigation className="w-4 h-4 text-emerald-600 dark:text-emerald-400 shrink-0 transform -rotate-45" />
+                <div className="w-7 h-7 rounded-lg bg-emerald-500/15 border border-emerald-500/30 flex items-center justify-center shrink-0">
+                  <LocateFixed className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
+                </div>
                 <div className="min-w-0">
-                  <span className="block truncate">Gunakan Lokasi Saya Saat Ini</span>
+                  <span className="block truncate font-bold text-slate-800 dark:text-zinc-100">
+                    Gunakan Lokasi Saat Ini
+                  </span>
                   <span className="text-[10px] text-slate-500 dark:text-zinc-400 font-normal">
-                    Otomatis deteksi GPS posisi Anda
+                    Otomatis mendeteksi posisi Anda saat ini
                   </span>
                 </div>
               </li>
