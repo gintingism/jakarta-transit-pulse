@@ -141,7 +141,7 @@ export default function SetPlaceModal() {
       aria-labelledby="set-place-title"
     >
       <div
-        className="w-full max-w-sm sm:max-w-md bg-zinc-950/95 border border-zinc-800 rounded-2xl shadow-2xl p-4 sm:p-5 text-white flex flex-col gap-4 relative animate-in zoom-in-95 duration-200 select-none"
+        className="w-full max-w-sm sm:max-w-md bg-zinc-950/95 border border-zinc-800 rounded-2xl shadow-2xl p-4 sm:p-5 text-white flex flex-col gap-4 relative animate-in zoom-in-95 duration-200 select-none max-h-[90vh] overflow-y-auto"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}

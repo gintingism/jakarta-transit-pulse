@@ -162,15 +162,19 @@ export default function StationCombobox({
     setHighlightedIndex(0);
   }, [combinedItems]);
 
-  // Handle outside click
+  // Handle outside click & touch
   useEffect(() => {
-    function handleClickOutside(e: MouseEvent) {
+    function handleClickOutside(e: MouseEvent | TouchEvent) {
       if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
         setIsOpen(false);
       }
     }
     document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
+    document.addEventListener('touchstart', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+      document.removeEventListener('touchstart', handleClickOutside);
+    };
   }, []);
 
   // Keyboard navigation
@@ -246,10 +250,12 @@ export default function StationCombobox({
 
   return (
     <div ref={containerRef} className="relative w-full">
-      <label className="text-[11px] font-medium text-slate-600 dark:text-zinc-400 flex items-center gap-1.5 mb-1">
-        <span className={`w-2 h-2 rounded-full ${dotColor} inline-block`} />
-        {label}
-      </label>
+      {label && (
+        <label className="text-[11px] font-medium text-slate-600 dark:text-zinc-400 flex items-center gap-1.5 mb-1">
+          <span className={`w-2 h-2 rounded-full ${dotColor} inline-block`} />
+          {label}
+        </label>
+      )}
 
       <div
         onClick={() => {
@@ -296,7 +302,8 @@ export default function StationCombobox({
             title="Gunakan Lokasi GPS Saya"
           >
             <Navigation className="w-2.5 h-2.5 transform -rotate-45" />
-            <span>Lokasi Saya</span>
+            <span className="hidden sm:inline">Lokasi Saya</span>
+            <span className="sm:hidden">GPS</span>
           </button>
         )}
 

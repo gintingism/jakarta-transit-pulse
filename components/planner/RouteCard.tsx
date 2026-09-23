@@ -144,7 +144,7 @@ export default function RouteCard({
     <div className="bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-xl p-4 shadow-xl text-slate-900 dark:text-zinc-100 space-y-3.5">
       {/* Metric Header - Two Tier Spacious Layout */}
       <div className="border-b border-slate-200 dark:border-zinc-800/90 pb-3 space-y-2">
-        <div className="flex items-center justify-between">
+        <div className="flex flex-wrap items-center justify-between gap-2">
           <div className="flex items-baseline gap-2">
             <div className="flex items-center gap-1.5 text-slate-900 dark:text-zinc-100 font-bold text-base tabular-nums">
               <Clock className="w-4 h-4 text-sky-500" />
@@ -155,7 +155,7 @@ export default function RouteCard({
             </span>
           </div>
 
-          <div className="flex items-center gap-1.5 sm:gap-2">
+          <div className="flex items-center gap-1.5 sm:gap-2 flex-wrap">
             {/* Bookmark / Favorite Route Button */}
             <button
               type="button"

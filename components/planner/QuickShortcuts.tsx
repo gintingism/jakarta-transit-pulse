@@ -56,14 +56,15 @@ export default function QuickShortcuts() {
               title={`Arahkan rute ke ${homePlace.target.name}`}
             >
               <Home className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400 shrink-0" />
-              <span className="truncate max-w-[110px] sm:max-w-[130px]">
+              <span className="font-bold text-emerald-700 dark:text-emerald-400 text-[11px] shrink-0">Rumah:</span>
+              <span className="truncate max-w-[95px] sm:max-w-[130px]">
                 {homePlace.target.name}
               </span>
             </button>
             <button
               type="button"
               onClick={() => openSetPlaceModal('home')}
-              className="p-1.5 text-emerald-600 dark:text-emerald-400 hover:text-emerald-800 dark:hover:text-emerald-200 hover:bg-emerald-100/70 dark:hover:bg-emerald-900/50 border-l border-emerald-200/80 dark:border-emerald-800/60 transition cursor-pointer"
+              className="min-w-[32px] min-h-[32px] flex items-center justify-center p-1.5 text-emerald-600 dark:text-emerald-400 hover:text-emerald-800 dark:hover:text-emerald-200 hover:bg-emerald-100/70 dark:hover:bg-emerald-900/50 border-l border-emerald-200/80 dark:border-emerald-800/60 transition cursor-pointer"
               title="Ubah lokasi rumah"
               aria-label="Ubah lokasi rumah"
             >
@@ -91,14 +92,15 @@ export default function QuickShortcuts() {
               title={`Arahkan rute ke ${workPlace.target.name}`}
             >
               <Briefcase className="w-3.5 h-3.5 text-sky-600 dark:text-sky-400 shrink-0" />
-              <span className="truncate max-w-[110px] sm:max-w-[130px]">
+              <span className="font-bold text-sky-700 dark:text-sky-400 text-[11px] shrink-0">Kantor:</span>
+              <span className="truncate max-w-[95px] sm:max-w-[130px]">
                 {workPlace.target.name}
               </span>
             </button>
             <button
               type="button"
               onClick={() => openSetPlaceModal('work')}
-              className="p-1.5 text-sky-600 dark:text-sky-400 hover:text-sky-800 dark:hover:text-sky-200 hover:bg-sky-100/70 dark:hover:bg-sky-900/50 border-l border-sky-200/80 dark:border-sky-800/60 transition cursor-pointer"
+              className="min-w-[32px] min-h-[32px] flex items-center justify-center p-1.5 text-sky-600 dark:text-sky-400 hover:text-sky-800 dark:hover:text-sky-200 hover:bg-sky-100/70 dark:hover:bg-sky-900/50 border-l border-sky-200/80 dark:border-sky-800/60 transition cursor-pointer"
               title="Ubah lokasi kantor"
               aria-label="Ubah lokasi kantor"
             >

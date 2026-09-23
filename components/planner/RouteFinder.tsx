@@ -166,52 +166,54 @@ export default function RouteFinder() {
           </button>
         </div>
 
-        {/* Quick 1-Tap Destinations */}
-        <div className="mt-3 pt-3 border-t border-slate-200 dark:border-zinc-800/80">
-          <div className="flex items-center justify-between mb-2">
-            <div className="text-[11px] text-slate-700 dark:text-zinc-300 font-medium flex items-center gap-1.5">
-              <Sparkles className="w-3.5 h-3.5 text-amber-500 dark:text-amber-400" />
-              <span>Mau ke Mana? (Pilih Cepat 1-Tap):</span>
+        {/* Quick 1-Tap Destinations (Shown only when destination is not yet chosen to save vertical space on mobile) */}
+        {!destinationStopId && !destinationPlace && !routePlan && (
+          <div className="mt-3 pt-3 border-t border-slate-200 dark:border-zinc-800/80 animate-in fade-in duration-150">
+            <div className="flex items-center justify-between mb-2">
+              <div className="text-[11px] text-slate-700 dark:text-zinc-300 font-medium flex items-center gap-1.5">
+                <Sparkles className="w-3.5 h-3.5 text-amber-500 dark:text-amber-400" />
+                <span>Mau ke Mana? (Pilih Cepat 1-Tap):</span>
+              </div>
+            </div>
+            <div className="flex flex-wrap gap-1.5">
+              {QUICK_DESTINATIONS.map((dest) => (
+                <button
+                  key={`quick_dest_${dest.name}`}
+                  type="button"
+                  onClick={() => {
+                    if (!originPlace && !originStopId) {
+                      useCurrentLocationAsOrigin();
+                    }
+                    setDestinationPlace({
+                      name: dest.name,
+                      coords: dest.coords,
+                      stationId: dest.stationId,
+                    });
+                  }}
+                  className="text-[11px] py-1 px-2.5 rounded-lg bg-white dark:bg-zinc-800/90 hover:bg-slate-100 dark:hover:bg-zinc-700 border border-slate-200 dark:border-zinc-700/60 text-slate-700 dark:text-zinc-300 hover:text-slate-900 dark:hover:text-white transition flex items-center gap-1.5 font-medium active:scale-95 shadow-xs cursor-pointer"
+                >
+                  <span
+                    className="w-2 h-2 rounded-full shrink-0 shadow-xs"
+                    style={{ backgroundColor: dest.color }}
+                  />
+                  <span>{dest.name}</span>
+                  {dest.modeLabel && (
+                    <span
+                      className="text-[9px] font-bold px-1 rounded font-mono uppercase shrink-0"
+                      style={{
+                        backgroundColor: `${dest.color}15`,
+                        color: dest.color,
+                        border: `1px solid ${dest.color}30`,
+                      }}
+                    >
+                      {dest.modeLabel}
+                    </span>
+                  )}
+                </button>
+              ))}
             </div>
           </div>
-          <div className="flex flex-wrap gap-1.5">
-            {QUICK_DESTINATIONS.map((dest) => (
-              <button
-                key={`quick_dest_${dest.name}`}
-                type="button"
-                onClick={() => {
-                  if (!originPlace && !originStopId) {
-                    useCurrentLocationAsOrigin();
-                  }
-                  setDestinationPlace({
-                    name: dest.name,
-                    coords: dest.coords,
-                    stationId: dest.stationId,
-                  });
-                }}
-                className="text-[11px] py-1 px-2.5 rounded-lg bg-white dark:bg-zinc-800/90 hover:bg-slate-100 dark:hover:bg-zinc-700 border border-slate-200 dark:border-zinc-700/60 text-slate-700 dark:text-zinc-300 hover:text-slate-900 dark:hover:text-white transition flex items-center gap-1.5 font-medium active:scale-95 shadow-xs cursor-pointer"
-              >
-                <span
-                  className="w-2 h-2 rounded-full shrink-0 shadow-xs"
-                  style={{ backgroundColor: dest.color }}
-                />
-                <span>{dest.name}</span>
-                {dest.modeLabel && (
-                  <span
-                    className="text-[9px] font-bold px-1 rounded font-mono uppercase shrink-0"
-                    style={{
-                      backgroundColor: `${dest.color}15`,
-                      color: dest.color,
-                      border: `1px solid ${dest.color}30`,
-                    }}
-                  >
-                    {dest.modeLabel}
-                  </span>
-                )}
-              </button>
-            ))}
-          </div>
-        </div>
+        )}
       </div>
 
       {/* Computed Route Card Result */}
