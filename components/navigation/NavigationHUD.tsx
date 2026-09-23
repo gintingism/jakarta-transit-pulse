@@ -45,6 +45,7 @@ import {
 } from '@/src/lib/backgroundKeepAlive';
 import { useTransitStore } from '@/stores/useTransitStore';
 import { playTransitArrivalChime } from '@/lib/audio';
+import { formatSpeed } from '@/src/lib/transitEngine';
 
 export interface NavigationHUDProps {
   legs: RouteLeg[];
@@ -86,6 +87,7 @@ export default function NavigationHUD({
   const toggleStationProgress = useTransitStore((s) => s.toggleStationProgress);
   const isStationProgressOpen = useTransitStore((s) => s.isStationProgressOpen);
   const setMapCenter = useTransitStore((s) => s.setMapCenter);
+  const userSpeed = useTransitStore((s) => s.userSpeed);
 
   const onPositionUpdateRef = useRef(onPositionUpdate);
   onPositionUpdateRef.current = onPositionUpdate;
@@ -372,7 +374,8 @@ export default function NavigationHUD({
   const shouldCollapsePassed = passedStations.length > 2 && !showAllPassed;
 
   return (
-    <div className="fixed top-2.5 left-2.5 right-2.5 sm:left-4 sm:right-auto sm:w-[390px] z-40 flex flex-col gap-1.5 font-sans select-none animate-in fade-in slide-in-from-top-3 duration-300">
+    <>
+      <div className="fixed top-2.5 left-2.5 right-2.5 sm:left-4 sm:right-auto sm:w-[390px] z-40 flex flex-col gap-1.5 font-sans select-none animate-in fade-in slide-in-from-top-3 duration-300">
       {/* 0. Battery Saver Feedback Toast */}
       {batteryToast && (
         <div className="bg-zinc-900/95 backdrop-blur-md text-white px-3 py-1.5 rounded-xl shadow-xl flex items-center justify-between gap-2 text-xs font-semibold border border-emerald-500/40 animate-in fade-in slide-in-from-top-1 duration-200">
@@ -435,6 +438,12 @@ export default function NavigationHUD({
               <span className="text-xs font-semibold text-zinc-100 truncate">
                 {currentLeg.instruction}
               </span>
+              {userSpeed !== null && userSpeed >= 1.0 && (
+                <span className="text-[10px] font-bold font-mono tabular-nums text-emerald-400 shrink-0 flex items-center gap-1 bg-emerald-500/15 border border-emerald-500/30 px-1.5 py-0.5 rounded-md">
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                  {formatSpeed(userSpeed)}
+                </span>
+              )}
             </div>
           </div>
 
@@ -556,6 +565,16 @@ export default function NavigationHUD({
                   </span>
                   <span>•</span>
                   <span className="truncate">Ke: {currentLeg.to?.name || 'Tujuan'}</span>
+
+                  {userSpeed !== null && userSpeed >= 1.0 && (
+                    <>
+                      <span>•</span>
+                      <span className="inline-flex items-center gap-1 font-mono font-bold text-emerald-400 tabular-nums shrink-0">
+                        <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                        {formatSpeed(userSpeed)}
+                      </span>
+                    </>
+                  )}
 
                   {isSpeaking && (
                     <span className="flex items-center gap-0.5 ml-0.5" title="Pemandu suara sedang berbicara">
@@ -1111,5 +1130,26 @@ export default function NavigationHUD({
         </div>
       )}
     </div>
+
+    {/* Floating Real-time Speedometer (Google Maps Navigation Cockpit) */}
+    {userSpeed !== null && userSpeed >= 1.0 && (
+      <div className="fixed bottom-6 left-4 z-30 pointer-events-none animate-in fade-in zoom-in-95 duration-200">
+        <div className="backdrop-blur-xl bg-[#0b101b]/90 border border-cyan-500/40 rounded-2xl px-3 py-1.5 shadow-2xl flex items-center gap-2 text-white">
+          <div className="relative flex items-center justify-center">
+            <span className="w-2 h-2 rounded-full bg-emerald-400 animate-ping absolute" />
+            <span className="w-2 h-2 rounded-full bg-emerald-500 relative" />
+          </div>
+          <div className="flex flex-col">
+            <span className="text-[8.5px] uppercase font-bold text-zinc-400 tracking-wider">
+              Kecepatan GPS
+            </span>
+            <span className="text-xs sm:text-sm font-black font-mono tabular-nums text-cyan-300 leading-tight">
+              {formatSpeed(userSpeed)}
+            </span>
+          </div>
+        </div>
+      </div>
+    )}
+  </>
   );
 }
