@@ -82,7 +82,7 @@ export default function RouteFinder() {
             <button
               type="button"
               onClick={clearRoute}
-              className="text-[11px] text-slate-600 dark:text-zinc-400 hover:text-slate-800 dark:text-zinc-200 transition flex items-center gap-1"
+              className="text-[11px] text-slate-600 dark:text-zinc-400 hover:text-slate-800 dark:text-zinc-200 transition-transform duration-150 ease-out active:scale-[0.95] focus-visible:ring-2 focus-visible:ring-sky-500 focus-visible:outline-none flex items-center gap-1 cursor-pointer"
             >
               <RotateCcw className="w-3 h-3" />
               Reset
@@ -111,7 +111,7 @@ export default function RouteFinder() {
             <button
               type="button"
               onClick={swapStops}
-              className="p-1.5 rounded-full bg-slate-100 dark:bg-zinc-800 hover:bg-zinc-700 text-slate-700 dark:text-zinc-300 border border-slate-300 dark:border-zinc-700 shadow-sm transition hover:scale-105 active:rotate-180"
+              className="p-1.5 rounded-full bg-slate-100 dark:bg-zinc-800 hover:bg-zinc-700 text-slate-700 dark:text-zinc-300 border border-slate-300 dark:border-zinc-700 shadow-sm transition-transform duration-150 ease-out hover:scale-105 active:rotate-180 active:scale-95 focus-visible:ring-2 focus-visible:ring-sky-500 focus-visible:outline-none cursor-pointer"
               title="Tukar Asal dan Tujuan"
             >
               <ArrowUpDown className="w-3.5 h-3.5" />
@@ -134,7 +134,7 @@ export default function RouteFinder() {
           <button
             type="button"
             onClick={() => setRoutePreference('FASTEST')}
-            className={`flex-1 py-1.5 px-2 text-[10px] font-semibold rounded-md transition cursor-pointer ${
+            className={`flex-1 py-1.5 px-2 text-[10px] font-semibold rounded-md transition-transform duration-150 ease-out active:scale-[0.97] focus-visible:ring-2 focus-visible:ring-sky-400 focus-visible:outline-none cursor-pointer ${
               routePreference === 'FASTEST'
                 ? 'bg-white dark:bg-zinc-800 text-sky-700 dark:text-sky-300 shadow-sm'
                 : 'text-slate-600 dark:text-zinc-400 hover:text-slate-900 dark:hover:text-zinc-200'
@@ -145,7 +145,7 @@ export default function RouteFinder() {
           <button
             type="button"
             onClick={() => setRoutePreference('CHEAPEST')}
-            className={`flex-1 py-1.5 px-2 text-[10px] font-semibold rounded-md transition cursor-pointer ${
+            className={`flex-1 py-1.5 px-2 text-[10px] font-semibold rounded-md transition-transform duration-150 ease-out active:scale-[0.97] focus-visible:ring-2 focus-visible:ring-emerald-400 focus-visible:outline-none cursor-pointer ${
               routePreference === 'CHEAPEST'
                 ? 'bg-white dark:bg-zinc-800 text-emerald-700 dark:text-emerald-300 shadow-sm'
                 : 'text-slate-600 dark:text-zinc-400 hover:text-slate-900 dark:hover:text-zinc-200'
@@ -156,7 +156,7 @@ export default function RouteFinder() {
           <button
             type="button"
             onClick={() => setRoutePreference('FEWEST_TRANSFERS')}
-            className={`flex-1 py-1.5 px-2 text-[10px] font-semibold rounded-md transition cursor-pointer ${
+            className={`flex-1 py-1.5 px-2 text-[10px] font-semibold rounded-md transition-transform duration-150 ease-out active:scale-[0.97] focus-visible:ring-2 focus-visible:ring-amber-400 focus-visible:outline-none cursor-pointer ${
               routePreference === 'FEWEST_TRANSFERS'
                 ? 'bg-white dark:bg-zinc-800 text-amber-700 dark:text-amber-300 shadow-sm'
                 : 'text-slate-600 dark:text-zinc-400 hover:text-slate-900 dark:hover:text-zinc-200'
@@ -190,7 +190,7 @@ export default function RouteFinder() {
                       stationId: dest.stationId,
                     });
                   }}
-                  className="text-[11px] py-1 px-2.5 rounded-lg bg-white dark:bg-zinc-800/90 hover:bg-slate-100 dark:hover:bg-zinc-700 border border-slate-200 dark:border-zinc-700/60 text-slate-700 dark:text-zinc-300 hover:text-slate-900 dark:hover:text-white transition flex items-center gap-1.5 font-medium active:scale-95 shadow-xs cursor-pointer"
+                  className="text-[11px] py-1 px-2.5 rounded-lg bg-white dark:bg-zinc-800/90 hover:bg-slate-100 dark:hover:bg-zinc-700 border border-slate-200 dark:border-zinc-700/60 text-slate-700 dark:text-zinc-300 hover:text-slate-900 dark:hover:text-white transition-transform duration-150 ease-out active:scale-[0.97] focus-visible:ring-2 focus-visible:ring-sky-500 focus-visible:outline-none flex items-center gap-1.5 font-medium shadow-xs cursor-pointer"
                 >
                   <span
                     className="w-2 h-2 rounded-full shrink-0 shadow-xs"

@@ -35,7 +35,7 @@ const TOUR_STEPS: TourStep[] = [
     targetId: 'tour-alarm-tab',
     title: 'Geo-Alarm Anti-Bablas',
     description:
-      'Buka tab Alarm untuk mengaktifkan geo-alarm. Set stasiun tujuan dan radius (misal 400m) — alarm akan berbunyi kencang saat kamu mendekati stasiun, bahkan saat layar HP mati.',
+      'Buka tab Alarm untuk mengaktifkan geo-alarm. Set stasiun tujuan dan radius (misal 400m). Alarm akan berbunyi kencang saat kamu mendekati stasiun, bahkan saat layar HP mati.',
     icon: <Bell className="w-5 h-5 text-rose-400" />,
     placement: 'top',
   },
@@ -43,7 +43,7 @@ const TOUR_STEPS: TourStep[] = [
     targetId: 'tour-recenter-btn',
     title: 'Ikuti Posisi GPS Live',
     description:
-      'Tekan tombol ini untuk mengaktifkan mode "Live Ikuti" — peta akan bergerak otomatis mengikuti posisi GPS kamu secara real-time, mirip Google Maps saat navigasi.',
+      'Tekan tombol ini untuk mengaktifkan mode "Live Ikuti": peta akan bergerak otomatis mengikuti posisi GPS kamu secara real-time, mirip Google Maps saat navigasi.',
     icon: <LocateFixed className="w-5 h-5 text-sky-400" />,
     placement: 'bottom',
   },
@@ -243,6 +243,18 @@ export default function TourCoachmark() {
     }
   }, [isAlarmTriggered, visible, completeTour]);
 
+  // Keyboard navigation & accessibility (Anti-Slop R-32: Modal escape dismiss)
+  useEffect(() => {
+    if (!visible) return;
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        completeTour();
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [visible, completeTour]);
+
   // Track target position
   useEffect(() => {
     if (stepIndex === null || !visible) return;
@@ -352,7 +364,7 @@ export default function TourCoachmark() {
             <button
               type="button"
               onClick={handleSkip}
-              className="text-zinc-500 hover:text-zinc-300 transition shrink-0 mt-0.5 cursor-pointer"
+              className="text-zinc-500 hover:text-zinc-300 transition-transform duration-150 ease-out active:scale-[0.95] focus-visible:ring-2 focus-visible:ring-sky-500 focus-visible:outline-none shrink-0 mt-0.5 cursor-pointer rounded p-0.5"
               aria-label="Lewati panduan"
             >
               <X className="w-4 h-4" />
@@ -389,7 +401,7 @@ export default function TourCoachmark() {
                 <button
                   type="button"
                   onClick={handleSkip}
-                  className="text-[11px] text-zinc-500 hover:text-zinc-300 transition cursor-pointer"
+                  className="text-[11px] text-zinc-500 hover:text-zinc-300 transition-transform duration-150 ease-out active:scale-[0.96] focus-visible:ring-2 focus-visible:ring-zinc-400 focus-visible:outline-none cursor-pointer rounded px-1.5 py-0.5"
                 >
                   Lewati
                 </button>
@@ -397,7 +409,7 @@ export default function TourCoachmark() {
               <button
                 type="button"
                 onClick={handleNext}
-                className={`flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-lg transition cursor-pointer active:scale-95 ${
+                className={`flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-lg transition-transform duration-150 ease-out cursor-pointer active:scale-[0.97] focus-visible:ring-2 focus-visible:ring-sky-400 focus-visible:outline-none ${
                   isLast
                     ? 'bg-emerald-500 hover:bg-emerald-400 text-white'
                     : 'bg-sky-500 hover:bg-sky-400 text-white'

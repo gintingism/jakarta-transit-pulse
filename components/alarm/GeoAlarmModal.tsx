@@ -39,6 +39,18 @@ export default function GeoAlarmModal(props: GeoAlarmModalProps) {
   const onDismiss = props.onDismiss || storeDismiss;
   const onDisarm = props.onDisarm || storeDisarm;
 
+  // Keyboard navigation & accessibility (Anti-Slop R-32: Modal escape dismiss)
+  React.useEffect(() => {
+    if (!isOpen) return;
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        onDismiss();
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [isOpen, onDismiss]);
+
   if (!isOpen || !targetStation) {
     return null;
   }
@@ -47,7 +59,12 @@ export default function GeoAlarmModal(props: GeoAlarmModalProps) {
     distanceMeters !== null ? formatDistance(distanceMeters) : `< ${thresholdMeters} m`;
 
   return (
-    <div className="fixed inset-0 z-[10001] flex items-center justify-center p-4 bg-black/85 backdrop-blur-md animate-fade-in">
+    <div
+      className="fixed inset-0 z-[10001] flex items-center justify-center p-4 bg-black/85 backdrop-blur-md animate-fade-in"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="geo-alarm-title"
+    >
       <div className="relative w-full max-w-sm bg-slate-50 dark:bg-zinc-950 border-2 border-rose-500/80 rounded-2xl p-6 shadow-[0_0_50px_rgba(244,63,94,0.3)] text-center text-slate-900 dark:text-zinc-100 animate-scale-up">
         {/* Pulsing Warning Badge */}
         <div className="flex justify-center mb-4">
@@ -60,7 +77,7 @@ export default function GeoAlarmModal(props: GeoAlarmModalProps) {
         </div>
 
         {/* Title */}
-        <h2 className="text-xl font-extrabold text-slate-900 dark:text-zinc-50 tracking-tight uppercase">
+        <h2 id="geo-alarm-title" className="text-xl font-extrabold text-slate-900 dark:text-zinc-50 tracking-tight uppercase">
           Waktunya Turun!
         </h2>
 
@@ -94,7 +111,7 @@ export default function GeoAlarmModal(props: GeoAlarmModalProps) {
           <button
             type="button"
             onClick={onDismiss}
-            className="w-full py-3 px-4 rounded-xl font-bold text-sm bg-rose-600 hover:bg-rose-500 text-white shadow-lg transition active:scale-98 flex items-center justify-center gap-2 cursor-pointer"
+            className="w-full py-3 px-4 rounded-xl font-bold text-sm bg-rose-600 hover:bg-rose-500 text-white shadow-lg shadow-rose-600/20 transition-all duration-150 ease-out active:scale-[0.98] focus-visible:ring-2 focus-visible:ring-rose-400 focus-visible:outline-none flex items-center justify-center gap-2 cursor-pointer"
           >
             <CheckCircle className="w-4 h-4" />
             <span>SAYA SUDAH SIAP / MATIKAN SIRINE</span>
@@ -103,7 +120,7 @@ export default function GeoAlarmModal(props: GeoAlarmModalProps) {
           <button
             type="button"
             onClick={onDisarm}
-            className="w-full py-2 px-4 rounded-xl text-xs font-semibold text-slate-600 dark:text-zinc-400 hover:text-slate-800 dark:hover:text-zinc-200 bg-white dark:bg-zinc-900 hover:bg-slate-100 dark:hover:bg-zinc-800 border border-slate-200 dark:border-zinc-800 transition flex items-center justify-center gap-1.5 cursor-pointer"
+            className="w-full py-2 px-4 rounded-xl text-xs font-semibold text-slate-600 dark:text-zinc-400 hover:text-slate-800 dark:hover:text-zinc-200 bg-white dark:bg-zinc-900 hover:bg-slate-100 dark:hover:bg-zinc-800 border border-slate-200 dark:border-zinc-800 transition-all duration-150 ease-out active:scale-[0.98] focus-visible:ring-2 focus-visible:ring-zinc-400 focus-visible:outline-none flex items-center justify-center gap-1.5 cursor-pointer"
           >
             <BellOff className="w-3.5 h-3.5" />
             <span>Nonaktifkan Pengingat Sepenuhnya</span>

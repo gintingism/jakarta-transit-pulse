@@ -298,7 +298,7 @@ export default function StationCombobox({
               setIsOpen(false);
               setQuery('');
             }}
-            className="text-[10.5px] font-semibold text-emerald-700 dark:text-emerald-300 hover:text-emerald-800 dark:hover:text-emerald-200 bg-emerald-50 hover:bg-emerald-100 dark:bg-emerald-950/80 dark:hover:bg-emerald-900/80 border border-emerald-200 dark:border-emerald-800/60 px-2 py-0.5 rounded-md flex items-center gap-1.5 transition shrink-0 mr-1.5 cursor-pointer active:scale-95 shadow-xs"
+            className="text-[10.5px] font-semibold text-emerald-700 dark:text-emerald-300 hover:text-emerald-800 dark:hover:text-emerald-200 bg-emerald-50 hover:bg-emerald-100 dark:bg-emerald-950/80 dark:hover:bg-emerald-900/80 border border-emerald-200 dark:border-emerald-800/60 px-2 py-0.5 rounded-md flex items-center gap-1.5 transition-transform duration-150 ease-out active:scale-[0.97] focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:outline-none shrink-0 mr-1.5 cursor-pointer shadow-xs"
             title="Gunakan Lokasi Saya Saat Ini"
             aria-label="Gunakan Lokasi Saya"
           >
@@ -311,7 +311,7 @@ export default function StationCombobox({
           <button
             type="button"
             onClick={handleClear}
-            className="text-slate-500 dark:text-zinc-500 hover:text-slate-700 dark:text-zinc-300 p-0.5 rounded transition shrink-0"
+            className="text-slate-500 dark:text-zinc-500 hover:text-slate-700 dark:text-zinc-300 p-0.5 rounded transition-transform duration-150 ease-out active:scale-[0.95] focus-visible:ring-2 focus-visible:ring-sky-500 focus-visible:outline-none shrink-0 cursor-pointer"
             title="Hapus pilihan"
           >
             <X className="w-3.5 h-3.5" />

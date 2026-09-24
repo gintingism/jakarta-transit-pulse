@@ -242,7 +242,7 @@ function MapFloatingControls({ routePlan }: { routePlan?: RoutePlan | null }) {
         <button
           type="button"
           onClick={handleZoomIn}
-          className="p-2.5 text-slate-700 dark:text-zinc-300 hover:text-sky-600 dark:hover:text-sky-400 hover:bg-slate-100/80 dark:hover:bg-zinc-800/80 transition cursor-pointer active:scale-95"
+          className="p-2.5 text-slate-700 dark:text-zinc-300 hover:text-sky-600 dark:hover:text-sky-400 hover:bg-slate-100/80 dark:hover:bg-zinc-800/80 transition-transform duration-150 ease-out cursor-pointer active:scale-[0.96] focus-visible:ring-2 focus-visible:ring-sky-500 focus-visible:outline-none"
           title="Perbesar Peta (+)"
           aria-label="Perbesar Peta"
         >
@@ -251,7 +251,7 @@ function MapFloatingControls({ routePlan }: { routePlan?: RoutePlan | null }) {
         <button
           type="button"
           onClick={handleZoomOut}
-          className="p-2.5 text-slate-700 dark:text-zinc-300 hover:text-sky-600 dark:hover:text-sky-400 hover:bg-slate-100/80 dark:hover:bg-zinc-800/80 transition cursor-pointer active:scale-95"
+          className="p-2.5 text-slate-700 dark:text-zinc-300 hover:text-sky-600 dark:hover:text-sky-400 hover:bg-slate-100/80 dark:hover:bg-zinc-800/80 transition-transform duration-150 ease-out cursor-pointer active:scale-[0.96] focus-visible:ring-2 focus-visible:ring-sky-500 focus-visible:outline-none"
           title="Perkecil Peta (-)"
           aria-label="Perkecil Peta"
         >
@@ -264,7 +264,7 @@ function MapFloatingControls({ routePlan }: { routePlan?: RoutePlan | null }) {
         <button
           type="button"
           onClick={handleFitJourney}
-          className="p-2.5 text-slate-700 dark:text-zinc-300 hover:text-sky-600 dark:hover:text-sky-400 hover:bg-slate-100/80 dark:hover:bg-zinc-800/80 transition cursor-pointer active:scale-95"
+          className="p-2.5 text-slate-700 dark:text-zinc-300 hover:text-sky-600 dark:hover:text-sky-400 hover:bg-slate-100/80 dark:hover:bg-zinc-800/80 transition-transform duration-150 ease-out cursor-pointer active:scale-[0.96] focus-visible:ring-2 focus-visible:ring-sky-500 focus-visible:outline-none"
           title="Fokus Seluruh Rute / Reset Tampilan"
           aria-label="Fokus Seluruh Rute"
         >
@@ -274,7 +274,7 @@ function MapFloatingControls({ routePlan }: { routePlan?: RoutePlan | null }) {
           type="button"
           onClick={handleLocateUser}
           disabled={isLocating}
-          className={`p-2.5 transition cursor-pointer active:scale-95 disabled:opacity-50 ${
+          className={`p-2.5 transition-transform duration-150 ease-out cursor-pointer active:scale-[0.96] focus-visible:ring-2 focus-visible:ring-sky-500 focus-visible:outline-none disabled:opacity-50 ${
             isFollowUser
               ? 'bg-sky-500 text-white hover:bg-sky-600'
               : 'text-slate-700 dark:text-zinc-300 hover:text-sky-600 dark:hover:text-sky-400 hover:bg-slate-100/80 dark:hover:bg-zinc-800/80'
@@ -294,7 +294,7 @@ function MapFloatingControls({ routePlan }: { routePlan?: RoutePlan | null }) {
           <button
             type="button"
             onClick={() => setActiveSegmentId(null)}
-            className="p-2.5 bg-sky-500 hover:bg-sky-600 text-white transition cursor-pointer active:scale-95 flex items-center justify-center"
+            className="p-2.5 bg-sky-500 hover:bg-sky-600 text-white transition-transform duration-150 ease-out cursor-pointer active:scale-[0.96] focus-visible:ring-2 focus-visible:ring-sky-500 focus-visible:outline-none flex items-center justify-center"
             title="Reset Sorotan Segmen"
             aria-label="Reset Sorotan Segmen"
           >
@@ -803,14 +803,14 @@ export default function TransitMap(props: TransitMapProps) {
                       <button
                         type="button"
                         onClick={() => onSelectStation(station.id, 'origin')}
-                        className="flex-1 py-1 px-2 text-[11px] font-medium bg-slate-100 dark:bg-zinc-800 hover:bg-slate-200 dark:hover:bg-zinc-700 text-slate-800 dark:text-zinc-200 rounded border border-slate-300 dark:border-zinc-700 transition"
+                        className="flex-1 py-1 px-2 text-[11px] font-medium bg-slate-100 dark:bg-zinc-800 hover:bg-slate-200 dark:hover:bg-zinc-700 text-slate-800 dark:text-zinc-200 rounded border border-slate-300 dark:border-zinc-700 transition-transform duration-150 ease-out active:scale-[0.96] focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:outline-none cursor-pointer"
                       >
                         Set Asal
                       </button>
                       <button
                         type="button"
                         onClick={() => onSelectStation(station.id, 'dest')}
-                        className="flex-1 py-1 px-2 text-[11px] font-medium bg-sky-50 dark:bg-sky-950 hover:bg-sky-100 dark:hover:bg-sky-900 text-sky-700 dark:text-sky-200 rounded border border-sky-200 dark:border-sky-800 transition"
+                        className="flex-1 py-1 px-2 text-[11px] font-medium bg-sky-50 dark:bg-sky-950 hover:bg-sky-100 dark:hover:bg-sky-900 text-sky-700 dark:text-sky-200 rounded border border-sky-200 dark:border-sky-800 transition-transform duration-150 ease-out active:scale-[0.96] focus-visible:ring-2 focus-visible:ring-sky-500 focus-visible:outline-none cursor-pointer"
                       >
                         Set Tujuan
                       </button>
@@ -821,7 +821,7 @@ export default function TransitMap(props: TransitMapProps) {
                     <button
                       type="button"
                       onClick={() => onSetAlarm(station.id)}
-                      className="w-full mt-2 py-1 px-2 text-[11px] font-semibold bg-rose-50 dark:bg-rose-950/70 hover:bg-rose-100 dark:hover:bg-rose-900 text-rose-700 dark:text-rose-200 rounded border border-rose-200 dark:border-rose-800/60 transition flex items-center justify-center gap-1"
+                      className="w-full mt-2 py-1 px-2 text-[11px] font-semibold bg-rose-50 dark:bg-rose-950/70 hover:bg-rose-100 dark:hover:bg-rose-900 text-rose-700 dark:text-rose-200 rounded border border-rose-200 dark:border-rose-800/60 transition-transform duration-150 ease-out active:scale-[0.96] focus-visible:ring-2 focus-visible:ring-rose-500 focus-visible:outline-none flex items-center justify-center gap-1 cursor-pointer"
                     >
                       <span>🔔</span> Pasang Alarm Turun
                     </button>

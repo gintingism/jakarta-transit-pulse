@@ -160,7 +160,7 @@ export default function RouteCard({
             <button
               type="button"
               onClick={handleToggleFavorite}
-              className={`flex items-center gap-1 text-[11px] font-semibold px-2.5 py-1 rounded-lg border transition cursor-pointer active:scale-95 ${
+              className={`flex items-center gap-1 text-[11px] font-semibold px-2.5 py-1 rounded-lg border transition-transform duration-150 ease-out cursor-pointer active:scale-[0.97] focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:outline-none ${
                 existingSavedRoute || savedFeedback
                   ? 'bg-amber-50 dark:bg-amber-950/60 text-amber-800 dark:text-amber-300 border-amber-300 dark:border-amber-700/80 shadow-xs'
                   : 'text-slate-700 dark:text-zinc-300 hover:text-amber-600 dark:hover:text-amber-400 bg-slate-100 dark:bg-zinc-800 hover:bg-slate-200 dark:hover:bg-zinc-700 border-slate-200 dark:border-zinc-700'
@@ -182,7 +182,7 @@ export default function RouteCard({
             <button
               type="button"
               onClick={handleShare}
-              className="flex items-center gap-1 text-[11px] font-semibold text-slate-700 dark:text-zinc-300 hover:text-sky-600 dark:hover:text-sky-400 bg-slate-100 dark:bg-zinc-800 hover:bg-slate-200 dark:hover:bg-zinc-700 px-2.5 py-1 rounded-lg border border-slate-200 dark:border-zinc-700 transition cursor-pointer active:scale-95"
+              className="flex items-center gap-1 text-[11px] font-semibold text-slate-700 dark:text-zinc-300 hover:text-sky-600 dark:hover:text-sky-400 bg-slate-100 dark:bg-zinc-800 hover:bg-slate-200 dark:hover:bg-zinc-700 px-2.5 py-1 rounded-lg border border-slate-200 dark:border-zinc-700 transition-transform duration-150 ease-out cursor-pointer active:scale-[0.97] focus-visible:ring-2 focus-visible:ring-sky-500 focus-visible:outline-none"
               title="Salin tautan rute ini"
               aria-label="Bagikan Rute"
             >
@@ -523,7 +523,7 @@ export default function RouteCard({
         <button
           type="button"
           onClick={() => setShowStopsList(!showStopsList)}
-          className="text-xs text-slate-600 dark:text-zinc-400 hover:text-slate-800 dark:hover:text-zinc-200 flex items-center gap-1 transition cursor-pointer"
+          className="text-xs text-slate-600 dark:text-zinc-400 hover:text-slate-800 dark:hover:text-zinc-200 flex items-center gap-1 transition-transform duration-150 ease-out active:scale-[0.98] focus-visible:ring-2 focus-visible:ring-sky-500 focus-visible:outline-none cursor-pointer"
         >
           <span>Daftar Semua ({route.allStops.length} Stasiun/Halte)</span>
           {showStopsList ? (
@@ -558,7 +558,7 @@ export default function RouteCard({
               }
               startNavigation(route);
             }}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold bg-cyan-600 hover:bg-cyan-500 text-white transition shadow-sm hover:shadow-cyan-500/25 active:scale-95 cursor-pointer"
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold bg-cyan-600 hover:bg-cyan-500 text-white transition-transform duration-150 ease-out shadow-sm hover:shadow-cyan-500/25 active:scale-[0.97] focus-visible:ring-2 focus-visible:ring-cyan-400 focus-visible:outline-none cursor-pointer"
             title="Mulai Panduan Navigasi Turn-by-Turn GPS & Suara"
           >
             <Navigation className="w-3.5 h-3.5 fill-current" />
@@ -569,10 +569,10 @@ export default function RouteCard({
             <button
               type="button"
               onClick={() => onSetAlarm(route.destination.id)}
-              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition shadow-sm cursor-pointer ${
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-transform duration-150 ease-out shadow-sm cursor-pointer active:scale-[0.97] focus-visible:ring-2 focus-visible:ring-rose-400 focus-visible:outline-none ${
                 isAlarmArmed
                   ? 'bg-emerald-600 hover:bg-emerald-500 text-white'
-                  : 'bg-rose-600 hover:bg-rose-500 text-white active:scale-95'
+                  : 'bg-rose-600 hover:bg-rose-500 text-white'
               }`}
             >
               {isAlarmArmed ? (

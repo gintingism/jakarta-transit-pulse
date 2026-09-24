@@ -126,6 +126,17 @@ export default function NavigationHUD({
     };
   }, []);
 
+  // Keyboard accessibility: Close platform guidance modal on Escape key press
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape' && isPlatformModalOpen) {
+        setIsPlatformModalOpen(false);
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [isPlatformModalOpen]);
+
   const handleLegChange = useCallback((index: number, nextLeg: RouteLeg) => {
     activeLegRef.current = nextLeg;
     setCurrentLegIndex(index);
@@ -458,7 +469,7 @@ export default function NavigationHUD({
                   toggleStationProgress();
                 }
               }}
-              className="flex items-center gap-1 px-2 py-1 rounded-lg bg-cyan-500/15 hover:bg-cyan-500/25 border border-cyan-500/30 text-cyan-300 font-bold text-[10px] transition cursor-pointer"
+              className="flex items-center gap-1 px-2 py-1 rounded-lg bg-cyan-500/15 hover:bg-cyan-500/25 border border-cyan-500/30 text-cyan-300 font-bold text-[10px] transition-transform duration-150 ease-out active:scale-[0.96] focus-visible:ring-2 focus-visible:ring-cyan-500 focus-visible:outline-none cursor-pointer"
               title="Buka Daftar Stasiun"
               aria-label="Open station list"
             >
@@ -471,7 +482,7 @@ export default function NavigationHUD({
             <button
               type="button"
               onClick={handleToggleBatterySaver}
-              className={`p-1.5 rounded-lg border transition cursor-pointer ${
+              className={`p-1.5 rounded-lg border transition-transform duration-150 ease-out active:scale-[0.96] focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:outline-none cursor-pointer ${
                 isBatterySaverMode
                   ? 'bg-emerald-500/20 border-emerald-500/40 text-emerald-400'
                   : 'bg-zinc-800/80 border-zinc-700 text-zinc-400 hover:text-zinc-200'
@@ -497,7 +508,7 @@ export default function NavigationHUD({
                 e.stopPropagation();
                 toggleCenter();
               }}
-              className={`p-1.5 rounded-lg border transition cursor-pointer ${
+              className={`p-1.5 rounded-lg border transition-transform duration-150 ease-out active:scale-[0.96] focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:outline-none cursor-pointer ${
                 state.isCentered
                   ? 'bg-emerald-500/20 border-emerald-500/40 text-emerald-400'
                   : 'bg-zinc-800/80 border-zinc-700 text-zinc-400'
@@ -515,7 +526,7 @@ export default function NavigationHUD({
                 e.stopPropagation();
                 setIsMinimized(false);
               }}
-              className="p-1.5 rounded-lg bg-zinc-800/80 border border-zinc-700 text-zinc-300 hover:text-white transition cursor-pointer"
+              className="p-1.5 rounded-lg bg-zinc-800/80 border border-zinc-700 text-zinc-300 hover:text-white transition-transform duration-150 ease-out active:scale-[0.96] focus-visible:ring-2 focus-visible:ring-cyan-500 focus-visible:outline-none cursor-pointer"
               title="Perbesar Tampilan Navigasi"
               aria-label="Expand navigation HUD"
             >
@@ -593,7 +604,7 @@ export default function NavigationHUD({
               <button
                 type="button"
                 onClick={handleToggleMute}
-                className={`p-1 sm:p-1.5 rounded-lg transition cursor-pointer ${
+                className={`p-1 sm:p-1.5 rounded-lg transition-transform duration-150 ease-out active:scale-[0.96] focus-visible:ring-2 focus-visible:ring-cyan-500 focus-visible:outline-none cursor-pointer ${
                   state.isMuted
                     ? 'text-zinc-500 hover:text-zinc-300 hover:bg-zinc-800/80'
                     : 'text-cyan-400 hover:bg-cyan-500/20 bg-cyan-500/10'
@@ -616,7 +627,7 @@ export default function NavigationHUD({
               <button
                 type="button"
                 onClick={toggleCenter}
-                className={`p-1 sm:p-1.5 rounded-lg transition cursor-pointer ${
+                className={`p-1 sm:p-1.5 rounded-lg transition-transform duration-150 ease-out active:scale-[0.96] focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:outline-none cursor-pointer ${
                   state.isCentered
                     ? 'bg-emerald-500/20 text-emerald-400'
                     : 'text-zinc-400 hover:text-zinc-200'
@@ -631,7 +642,7 @@ export default function NavigationHUD({
               <button
                 type="button"
                 onClick={handleToggleBatterySaver}
-                className={`p-1 sm:p-1.5 rounded-lg transition cursor-pointer ${
+                className={`p-1 sm:p-1.5 rounded-lg transition-transform duration-150 ease-out active:scale-[0.96] focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:outline-none cursor-pointer ${
                   isBatterySaverMode
                     ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/40 shadow-xs'
                     : 'text-zinc-400 hover:text-zinc-200 hover:bg-zinc-800/80'
@@ -654,7 +665,7 @@ export default function NavigationHUD({
               <button
                 type="button"
                 onClick={toggleAlarm}
-                className={`p-1 sm:p-1.5 rounded-lg transition cursor-pointer ${
+                className={`p-1 sm:p-1.5 rounded-lg transition-transform duration-150 ease-out active:scale-[0.96] focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:outline-none cursor-pointer ${
                   isAlarmArmed
                     ? 'bg-amber-500/20 text-amber-300 hover:bg-amber-500/30'
                     : 'text-zinc-400 hover:text-zinc-200'
@@ -673,7 +684,7 @@ export default function NavigationHUD({
               <button
                 type="button"
                 onClick={() => setIsMinimized(true)}
-                className="p-1 sm:p-1.5 rounded-lg text-zinc-400 hover:text-white hover:bg-zinc-800 transition cursor-pointer"
+                className="p-1 sm:p-1.5 rounded-lg text-zinc-400 hover:text-white hover:bg-zinc-800 transition-transform duration-150 ease-out active:scale-[0.96] focus-visible:ring-2 focus-visible:ring-zinc-400 focus-visible:outline-none cursor-pointer"
                 title="Ciutkan Tampilan (Minimize)"
                 aria-label="Minimize navigation card"
               >
@@ -684,7 +695,7 @@ export default function NavigationHUD({
               <button
                 type="button"
                 onClick={handleStopNavigation}
-                className="p-1 sm:p-1.5 rounded-lg text-rose-400 hover:bg-rose-600/20 hover:text-rose-300 transition cursor-pointer"
+                className="p-1 sm:p-1.5 rounded-lg text-rose-400 hover:bg-rose-600/20 hover:text-rose-300 transition-transform duration-150 ease-out active:scale-[0.96] focus-visible:ring-2 focus-visible:ring-rose-500 focus-visible:outline-none cursor-pointer"
                 title="Akhiri Navigasi"
                 aria-label="Stop navigation"
               >
@@ -709,7 +720,7 @@ export default function NavigationHUD({
                   setIsPlatformModalOpen(true);
                 }
               }}
-              className="mt-1.5 px-2.5 py-1 rounded-xl bg-sky-950/70 hover:bg-sky-900/70 border border-sky-500/40 text-sky-200 text-[10.5px] flex items-center justify-between gap-1.5 transition cursor-pointer select-none group"
+              className="mt-1.5 px-2.5 py-1 rounded-xl bg-sky-950/70 hover:bg-sky-900/70 border border-sky-500/40 text-sky-200 text-[10.5px] flex items-center justify-between gap-1.5 transition-transform duration-150 ease-out active:scale-[0.98] focus-visible:ring-2 focus-visible:ring-sky-500 focus-visible:outline-none cursor-pointer select-none group"
               title="Lihat Detail Panduan Peron, Jalur, & Gate"
             >
               <div className="flex items-center gap-1.5 truncate">
@@ -745,7 +756,7 @@ export default function NavigationHUD({
                 toggleStationProgress();
               }
             }}
-            className="mt-2 pt-1.5 border-t border-zinc-800/80 flex items-center justify-between gap-2 px-2.5 py-1.5 rounded-xl bg-zinc-900/60 hover:bg-zinc-800/80 border border-zinc-800/80 hover:border-cyan-500/40 transition cursor-pointer group relative overflow-hidden select-none"
+            className="mt-2 pt-1.5 border-t border-zinc-800/80 flex items-center justify-between gap-2 px-2.5 py-1.5 rounded-xl bg-zinc-900/60 hover:bg-zinc-800/80 border border-zinc-800/80 hover:border-cyan-500/40 transition-transform duration-150 ease-out active:scale-[0.98] focus-visible:ring-2 focus-visible:ring-cyan-500 focus-visible:outline-none cursor-pointer group relative overflow-hidden select-none"
             title={isStationProgressOpen ? 'Tutup Daftar Stasiun' : 'Buka Timeline Daftar Stasiun'}
             aria-label={isStationProgressOpen ? 'Tutup daftar stasiun' : 'Buka daftar stasiun'}
             aria-expanded={isStationProgressOpen}
@@ -1122,7 +1133,7 @@ export default function NavigationHUD({
             <button
               type="button"
               onClick={() => setIsPlatformModalOpen(false)}
-              className="w-full py-2 rounded-xl bg-sky-600 hover:bg-sky-500 text-white font-bold text-xs transition cursor-pointer shadow-lg shadow-sky-600/20 mt-1"
+              className="w-full py-2 rounded-xl bg-sky-600 hover:bg-sky-500 text-white font-bold text-xs transition-all duration-150 ease-out active:scale-[0.98] focus-visible:ring-2 focus-visible:ring-sky-400 focus-visible:outline-none cursor-pointer shadow-lg shadow-sky-600/20 mt-1"
             >
               Mengerti
             </button>

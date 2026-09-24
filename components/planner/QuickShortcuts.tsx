@@ -52,7 +52,7 @@ export default function QuickShortcuts() {
             <button
               type="button"
               onClick={() => applySavedPlaceAsDestination(homePlace)}
-              className="flex items-center gap-1.5 px-2.5 py-1.5 text-left text-emerald-800 dark:text-emerald-300 hover:bg-emerald-100/50 dark:hover:bg-emerald-900/30 transition text-xs font-semibold cursor-pointer active:scale-98"
+              className="flex items-center gap-1.5 px-2.5 py-1.5 text-left text-emerald-800 dark:text-emerald-300 hover:bg-emerald-100/50 dark:hover:bg-emerald-900/30 transition-transform duration-150 ease-out text-xs font-semibold cursor-pointer active:scale-[0.97] focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:outline-none"
               title={`Arahkan rute ke ${homePlace.target.name}`}
             >
               <Home className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400 shrink-0" />
@@ -64,7 +64,7 @@ export default function QuickShortcuts() {
             <button
               type="button"
               onClick={() => openSetPlaceModal('home')}
-              className="min-w-[32px] min-h-[32px] flex items-center justify-center p-1.5 text-emerald-600 dark:text-emerald-400 hover:text-emerald-800 dark:hover:text-emerald-200 hover:bg-emerald-100/70 dark:hover:bg-emerald-900/50 border-l border-emerald-200/80 dark:border-emerald-800/60 transition cursor-pointer"
+              className="min-w-[32px] min-h-[32px] flex items-center justify-center p-1.5 text-emerald-600 dark:text-emerald-400 hover:text-emerald-800 dark:hover:text-emerald-200 hover:bg-emerald-100/70 dark:hover:bg-emerald-900/50 border-l border-emerald-200/80 dark:border-emerald-800/60 transition-transform duration-150 ease-out active:scale-[0.95] focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:outline-none cursor-pointer"
               title="Ubah lokasi rumah"
               aria-label="Ubah lokasi rumah"
             >
@@ -75,7 +75,7 @@ export default function QuickShortcuts() {
           <button
             type="button"
             onClick={() => openSetPlaceModal('home')}
-            className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-slate-50 dark:bg-zinc-900 hover:bg-slate-100 dark:hover:bg-zinc-800 border border-dashed border-slate-300 dark:border-zinc-700 text-slate-700 dark:text-zinc-300 hover:text-slate-900 dark:hover:text-white transition text-xs font-medium cursor-pointer shadow-xs active:scale-98"
+            className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-slate-50 dark:bg-zinc-900 hover:bg-slate-100 dark:hover:bg-zinc-800 border border-dashed border-slate-300 dark:border-zinc-700 text-slate-700 dark:text-zinc-300 hover:text-slate-900 dark:hover:text-white transition-transform duration-150 ease-out text-xs font-medium cursor-pointer shadow-xs active:scale-[0.97] focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:outline-none"
           >
             <Home className="w-3.5 h-3.5 text-emerald-500 shrink-0" />
             <span>+ Set Rumah</span>
@@ -88,7 +88,7 @@ export default function QuickShortcuts() {
             <button
               type="button"
               onClick={() => applySavedPlaceAsDestination(workPlace)}
-              className="flex items-center gap-1.5 px-2.5 py-1.5 text-left text-sky-800 dark:text-sky-300 hover:bg-sky-100/50 dark:hover:bg-sky-900/30 transition text-xs font-semibold cursor-pointer active:scale-98"
+              className="flex items-center gap-1.5 px-2.5 py-1.5 text-left text-sky-800 dark:text-sky-300 hover:bg-sky-100/50 dark:hover:bg-sky-900/30 transition-transform duration-150 ease-out text-xs font-semibold cursor-pointer active:scale-[0.97] focus-visible:ring-2 focus-visible:ring-sky-500 focus-visible:outline-none"
               title={`Arahkan rute ke ${workPlace.target.name}`}
             >
               <Briefcase className="w-3.5 h-3.5 text-sky-600 dark:text-sky-400 shrink-0" />
@@ -100,7 +100,7 @@ export default function QuickShortcuts() {
             <button
               type="button"
               onClick={() => openSetPlaceModal('work')}
-              className="min-w-[32px] min-h-[32px] flex items-center justify-center p-1.5 text-sky-600 dark:text-sky-400 hover:text-sky-800 dark:hover:text-sky-200 hover:bg-sky-100/70 dark:hover:bg-sky-900/50 border-l border-sky-200/80 dark:border-sky-800/60 transition cursor-pointer"
+              className="min-w-[32px] min-h-[32px] flex items-center justify-center p-1.5 text-sky-600 dark:text-sky-400 hover:text-sky-800 dark:hover:text-sky-200 hover:bg-sky-100/70 dark:hover:bg-sky-900/50 border-l border-sky-200/80 dark:border-sky-800/60 transition-transform duration-150 ease-out active:scale-[0.95] focus-visible:ring-2 focus-visible:ring-sky-500 focus-visible:outline-none cursor-pointer"
               title="Ubah lokasi kantor"
               aria-label="Ubah lokasi kantor"
             >
@@ -111,7 +111,7 @@ export default function QuickShortcuts() {
           <button
             type="button"
             onClick={() => openSetPlaceModal('work')}
-            className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-slate-50 dark:bg-zinc-900 hover:bg-slate-100 dark:hover:bg-zinc-800 border border-dashed border-slate-300 dark:border-zinc-700 text-slate-700 dark:text-zinc-300 hover:text-slate-900 dark:hover:text-white transition text-xs font-medium cursor-pointer shadow-xs active:scale-98"
+            className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-slate-50 dark:bg-zinc-900 hover:bg-slate-100 dark:hover:bg-zinc-800 border border-dashed border-slate-300 dark:border-zinc-700 text-slate-700 dark:text-zinc-300 hover:text-slate-900 dark:hover:text-white transition-transform duration-150 ease-out text-xs font-medium cursor-pointer shadow-xs active:scale-[0.97] focus-visible:ring-2 focus-visible:ring-sky-500 focus-visible:outline-none"
           >
             <Briefcase className="w-3.5 h-3.5 text-sky-500 shrink-0" />
             <span>+ Set Kantor</span>
@@ -123,7 +123,7 @@ export default function QuickShortcuts() {
           <button
             type="button"
             onClick={() => setIsRoutesExpanded((prev) => !prev)}
-            className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border transition text-xs font-semibold cursor-pointer shadow-xs active:scale-98 ml-auto ${
+            className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border transition-transform duration-150 ease-out text-xs font-semibold cursor-pointer shadow-xs active:scale-[0.97] focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:outline-none ml-auto ${
               isRoutesExpanded
                 ? 'bg-amber-100 dark:bg-amber-950/60 border-amber-300 dark:border-amber-700 text-amber-900 dark:text-amber-300'
                 : 'bg-amber-50/80 dark:bg-zinc-900 hover:bg-amber-100/60 dark:hover:bg-zinc-800 border-amber-200/80 dark:border-zinc-700 text-amber-800 dark:text-amber-400'
@@ -187,7 +187,7 @@ export default function QuickShortcuts() {
                     <button
                       type="button"
                       onClick={() => handleApplyRoute(r.id)}
-                      className={`px-2.5 py-1 rounded-md text-xs font-semibold transition cursor-pointer flex items-center gap-1 ${
+                      className={`px-2.5 py-1 rounded-md text-xs font-semibold transition-transform duration-150 ease-out active:scale-[0.96] focus-visible:ring-2 focus-visible:ring-sky-400 focus-visible:outline-none cursor-pointer flex items-center gap-1 ${
                         isApplied
                           ? 'bg-emerald-500 text-white'
                           : 'bg-sky-500 hover:bg-sky-600 active:bg-sky-700 text-white shadow-xs'
@@ -207,7 +207,7 @@ export default function QuickShortcuts() {
                     <button
                       type="button"
                       onClick={() => removeSavedRoute(r.id)}
-                      className="p-1 rounded-md text-slate-400 dark:text-zinc-500 hover:text-red-500 dark:hover:text-red-400 hover:bg-slate-100 dark:hover:bg-zinc-800 transition cursor-pointer"
+                      className="p-1 rounded-md text-slate-400 dark:text-zinc-500 hover:text-red-500 dark:hover:text-red-400 hover:bg-slate-100 dark:hover:bg-zinc-800 transition-transform duration-150 ease-out active:scale-[0.95] focus-visible:ring-2 focus-visible:ring-rose-500 focus-visible:outline-none cursor-pointer"
                       title="Hapus dari favorit"
                       aria-label={`Hapus rute ${r.name}`}
                     >

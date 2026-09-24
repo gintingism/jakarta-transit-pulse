@@ -82,7 +82,7 @@ export default function FloatingHud() {
           <button
             type="button"
             onClick={() => setChangelogModalOpen(true)}
-            className="relative text-[9px] sm:text-[9.5px] font-bold tracking-tight px-1.5 py-0.5 bg-sky-100 dark:bg-sky-950/80 text-sky-700 dark:text-sky-300 rounded-md border border-sky-200 dark:border-sky-800/60 font-mono hover:bg-sky-200 dark:hover:bg-sky-900 transition cursor-pointer shrink-0"
+            className="relative text-[9px] sm:text-[9.5px] font-bold tracking-tight px-1.5 py-0.5 bg-sky-100 dark:bg-sky-950/80 text-sky-700 dark:text-sky-300 rounded-md border border-sky-200 dark:border-sky-800/60 font-mono hover:bg-sky-200 dark:hover:bg-sky-900 transition-transform duration-150 ease-out active:scale-[0.96] focus-visible:ring-2 focus-visible:ring-sky-500 focus-visible:outline-none cursor-pointer shrink-0"
             title="Lihat Log Pembaruan Versi"
             aria-label={`Versi ${APP_VERSION}`}
           >
@@ -104,7 +104,7 @@ export default function FloatingHud() {
           <button
             type="button"
             onClick={handleAlarmPillClick}
-            className="backdrop-blur-md bg-white/85 dark:bg-zinc-900/85 border border-rose-500/70 hover:border-rose-500 rounded-2xl pl-3 pr-3 py-1.5 shadow-sm flex items-center gap-2 transition hover:scale-105 active:scale-95 cursor-pointer"
+            className="backdrop-blur-md bg-white/85 dark:bg-zinc-900/85 border border-rose-500/70 hover:border-rose-500 rounded-2xl pl-3 pr-3 py-1.5 shadow-sm flex items-center gap-2 transition-transform duration-150 ease-out hover:scale-[1.02] active:scale-[0.97] focus-visible:ring-2 focus-visible:ring-rose-500 focus-visible:outline-none cursor-pointer"
             title="Buka panel pengingat turun"
           >
             <div className="relative flex items-center justify-center">
@@ -160,7 +160,7 @@ export default function FloatingHud() {
             onChange={(e) =>
               setSelectedLine(e.target.value as LineIdentifier | 'ALL')
             }
-            className="bg-transparent text-slate-800 dark:text-zinc-200 text-xs font-semibold focus:outline-none cursor-pointer max-w-[110px] sm:max-w-[175px] truncate"
+            className="bg-transparent text-slate-800 dark:text-zinc-200 text-xs font-semibold focus:outline-none focus-visible:ring-1 focus-visible:ring-sky-500 rounded cursor-pointer max-w-[110px] sm:max-w-[175px] truncate"
             aria-label="Pilih koridor transit"
           >
             <option value="ALL" className="bg-white dark:bg-zinc-900 text-slate-900 dark:text-white">
@@ -195,7 +195,7 @@ export default function FloatingHud() {
           type="button"
           onClick={handleLocateMe}
           disabled={isLocating}
-          className={`p-2 sm:p-2.5 rounded-2xl border backdrop-blur-md shadow-sm transition cursor-pointer active:scale-95 flex items-center gap-1.5 ${
+          className={`p-2 sm:p-2.5 min-w-[36px] min-h-[36px] rounded-2xl border backdrop-blur-md shadow-sm transition-transform duration-150 ease-out cursor-pointer active:scale-[0.96] focus-visible:ring-2 focus-visible:ring-sky-500 focus-visible:outline-none flex items-center justify-center gap-1.5 ${
             isFollowUser
               ? 'bg-sky-50 dark:bg-sky-950/90 border-sky-500 text-sky-600 dark:text-sky-300 ring-2 ring-sky-400/40'
               : 'bg-white/85 dark:bg-zinc-900/85 border-slate-200/60 dark:border-zinc-800/60 text-slate-700 dark:text-zinc-300 hover:text-sky-600 dark:hover:text-sky-400'
@@ -230,7 +230,7 @@ export default function FloatingHud() {
         <button
           type="button"
           onClick={() => setChangelogModalOpen(true)}
-          className="relative p-2 sm:p-2.5 rounded-2xl backdrop-blur-md bg-white/85 dark:bg-zinc-900/85 border border-slate-200/60 dark:border-zinc-800/60 shadow-sm text-slate-700 dark:text-zinc-300 hover:text-amber-500 dark:hover:text-amber-400 hover:scale-105 active:scale-95 transition cursor-pointer hidden sm:flex items-center justify-center"
+          className="relative p-2 sm:p-2.5 min-w-[36px] min-h-[36px] rounded-2xl backdrop-blur-md bg-white/85 dark:bg-zinc-900/85 border border-slate-200/60 dark:border-zinc-800/60 shadow-sm text-slate-700 dark:text-zinc-300 hover:text-amber-500 dark:hover:text-amber-400 hover:scale-105 active:scale-[0.96] transition-transform duration-150 ease-out focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:outline-none cursor-pointer hidden sm:flex items-center justify-center"
           title="Apa yang Baru (Log Pembaruan Versi)"
           aria-label="Log Pembaruan Versi"
         >
@@ -247,7 +247,7 @@ export default function FloatingHud() {
         <button
           type="button"
           onClick={() => setFeedbackModalOpen(true)}
-          className="p-2 sm:p-2.5 rounded-2xl backdrop-blur-md bg-white/85 dark:bg-zinc-900/85 border border-slate-200/60 dark:border-zinc-800/60 shadow-sm text-slate-700 dark:text-zinc-300 hover:text-emerald-600 dark:hover:text-emerald-400 hover:border-emerald-500/40 hover:bg-emerald-50/50 dark:hover:bg-emerald-950/20 hover:scale-105 active:scale-95 transition cursor-pointer hidden sm:flex items-center justify-center"
+          className="p-2 sm:p-2.5 min-w-[36px] min-h-[36px] rounded-2xl backdrop-blur-md bg-white/85 dark:bg-zinc-900/85 border border-slate-200/60 dark:border-zinc-800/60 shadow-sm text-slate-700 dark:text-zinc-300 hover:text-emerald-600 dark:hover:text-emerald-400 hover:border-emerald-500/40 hover:bg-emerald-50/50 dark:hover:bg-emerald-950/20 hover:scale-105 active:scale-[0.96] transition-transform duration-150 ease-out focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:outline-none cursor-pointer hidden sm:flex items-center justify-center"
           title="Beri Masukan & Lapor Kendala"
           aria-label="Beri Masukan & Lapor Kendala"
         >
@@ -258,7 +258,7 @@ export default function FloatingHud() {
         <button
           type="button"
           onClick={openTour}
-          className="p-2 sm:p-2.5 rounded-2xl backdrop-blur-md bg-white/85 dark:bg-zinc-900/85 border border-slate-200/60 dark:border-zinc-800/60 shadow-sm text-slate-700 dark:text-zinc-300 hover:text-sky-600 dark:hover:text-sky-400 hover:scale-105 active:scale-95 transition cursor-pointer hidden sm:flex items-center justify-center"
+          className="p-2 sm:p-2.5 min-w-[36px] min-h-[36px] rounded-2xl backdrop-blur-md bg-white/85 dark:bg-zinc-900/85 border border-slate-200/60 dark:border-zinc-800/60 shadow-sm text-slate-700 dark:text-zinc-300 hover:text-sky-600 dark:hover:text-sky-400 hover:scale-105 active:scale-[0.96] transition-transform duration-150 ease-out focus-visible:ring-2 focus-visible:ring-sky-500 focus-visible:outline-none cursor-pointer hidden sm:flex items-center justify-center"
           title="Panduan Penggunaan Aplikasi"
           aria-label="Panduan Penggunaan Aplikasi"
         >
@@ -269,7 +269,7 @@ export default function FloatingHud() {
         <button
           type="button"
           onClick={() => setAboutModalOpen(true)}
-          className="relative p-2 sm:p-2.5 rounded-2xl backdrop-blur-md bg-white/85 dark:bg-zinc-900/85 border border-slate-200/60 dark:border-zinc-800/60 shadow-sm text-slate-700 dark:text-zinc-300 hover:text-sky-600 dark:hover:text-sky-400 hover:scale-105 active:scale-95 transition cursor-pointer hidden sm:flex items-center justify-center"
+          className="relative p-2 sm:p-2.5 min-w-[36px] min-h-[36px] rounded-2xl backdrop-blur-md bg-white/85 dark:bg-zinc-900/85 border border-slate-200/60 dark:border-zinc-800/60 shadow-sm text-slate-700 dark:text-zinc-300 hover:text-sky-600 dark:hover:text-sky-400 hover:scale-105 active:scale-[0.96] transition-transform duration-150 ease-out focus-visible:ring-2 focus-visible:ring-sky-500 focus-visible:outline-none cursor-pointer hidden sm:flex items-center justify-center"
           title="Tentang Pengembang & Aplikasi"
           aria-label="Tentang Pengembang & Aplikasi"
         >

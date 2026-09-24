@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useTransitStore } from '@/stores/useTransitStore';
 import { SavedPlace, SavedPlaceType } from '@/src/lib/savedPlacesService';
 import { PlaceTarget } from '@/src/lib/transitEngine';
@@ -45,6 +45,18 @@ export default function SetPlaceModal() {
   const userCoords = useTransitStore((s) => s.userCoords);
 
   const [selectedTarget, setSelectedTarget] = useState<PlaceTarget | null>(null);
+
+  // Keyboard navigation & accessibility (Anti-Slop R-32: Modal escape dismiss)
+  useEffect(() => {
+    if (!isSetPlaceModalOpen) return;
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        closeSetPlaceModal();
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [isSetPlaceModalOpen, closeSetPlaceModal]);
 
   if (!isSetPlaceModalOpen || !editingPlaceType) {
     return null;
@@ -163,7 +175,7 @@ export default function SetPlaceModal() {
           <button
             type="button"
             onClick={closeSetPlaceModal}
-            className="p-1.5 rounded-lg bg-zinc-900 border border-zinc-800 text-zinc-400 hover:text-white hover:bg-zinc-800 transition cursor-pointer"
+            className="p-1.5 rounded-lg bg-zinc-900 border border-zinc-800 text-zinc-400 hover:text-white hover:bg-zinc-800 transition-transform duration-150 ease-out active:scale-[0.96] focus-visible:ring-2 focus-visible:ring-sky-500 focus-visible:outline-none cursor-pointer"
             title="Tutup"
             aria-label="Tutup modal"
           >
@@ -187,7 +199,7 @@ export default function SetPlaceModal() {
             <button
               type="button"
               onClick={handleDelete}
-              className="p-1.5 rounded-lg text-rose-400 hover:bg-rose-500/10 transition flex items-center gap-1 text-[11px] cursor-pointer"
+              className="p-1.5 rounded-lg text-rose-400 hover:bg-rose-500/10 transition-transform duration-150 ease-out active:scale-[0.96] focus-visible:ring-2 focus-visible:ring-rose-500 focus-visible:outline-none flex items-center gap-1 text-[11px] cursor-pointer"
               title="Hapus lokasi tersimpan"
             >
               <Trash2 className="w-3.5 h-3.5" />
@@ -200,10 +212,10 @@ export default function SetPlaceModal() {
         <button
           type="button"
           onClick={handleUseCurrentLocation}
-          className="w-full p-2.5 rounded-xl bg-sky-950/40 hover:bg-sky-900/40 border border-sky-500/30 hover:border-sky-500/50 text-sky-200 text-xs font-semibold flex items-center justify-between gap-2 transition cursor-pointer group"
+          className="w-full p-2.5 rounded-xl bg-sky-950/40 hover:bg-sky-900/40 border border-sky-500/30 hover:border-sky-500/50 text-sky-200 text-xs font-semibold flex items-center justify-between gap-2 transition-all duration-150 ease-out active:scale-[0.98] focus-visible:ring-2 focus-visible:ring-sky-500 focus-visible:outline-none cursor-pointer group"
         >
           <div className="flex items-center gap-2 min-w-0">
-            <LocateFixed className="w-4 h-4 text-sky-400 shrink-0 group-hover:scale-110 transition" />
+            <LocateFixed className="w-4 h-4 text-sky-400 shrink-0 group-hover:scale-110 transition-transform duration-150" />
             <span className="truncate font-bold">Gunakan Lokasi Saat Ini</span>
           </div>
           <span className="text-[10px] text-sky-400 font-mono font-bold bg-sky-500/20 px-1.5 py-0.5 rounded shrink-0">
@@ -244,7 +256,7 @@ export default function SetPlaceModal() {
                     stationId: hub.stationId,
                   })
                 }
-                className="text-[11px] py-1 px-2 rounded-lg bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 hover:border-zinc-700 text-zinc-300 hover:text-white transition flex items-center gap-1.5 cursor-pointer active:scale-95"
+                className="text-[11px] py-1 px-2 rounded-lg bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 hover:border-zinc-700 text-zinc-300 hover:text-white transition-transform duration-150 ease-out active:scale-[0.97] focus-visible:ring-2 focus-visible:ring-cyan-500 focus-visible:outline-none flex items-center gap-1.5 cursor-pointer"
               >
                 <span>{hub.name}</span>
                 <span className="text-[9px] font-mono text-cyan-400 font-bold bg-cyan-950/60 px-1 py-0.2 rounded border border-cyan-500/30">

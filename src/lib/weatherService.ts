@@ -65,7 +65,7 @@ function interpretBmkgCode(code: number, tp: number): { icon: string; isRaining:
     return { icon: '🌦️', isRaining: true, advisoryText: 'Hujan lokal di stasiun tujuan, cek kondisi setempat.' };
   }
   if (code === 95 || code === 97) {
-    return { icon: '⛈️', isRaining: true, advisoryText: 'Waspada! Hujan petir — gunakan skybridge/terowongan stasiun.' };
+    return { icon: '⛈️', isRaining: true, advisoryText: 'Waspada! Hujan petir: gunakan skybridge atau terowongan stasiun.' };
   }
   // fallback based on precipitation amount
   if (tp > 0) {

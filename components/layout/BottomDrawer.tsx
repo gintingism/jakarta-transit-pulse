@@ -97,7 +97,7 @@ export default function BottomDrawer() {
                 e.stopPropagation();
                 toggleDrawer();
               }}
-              className="flex items-center gap-1 text-xs font-semibold px-2.5 py-1.5 rounded-lg bg-sky-50 dark:bg-sky-950/80 text-sky-700 dark:text-sky-300 border border-sky-200 dark:border-sky-800/60 hover:bg-sky-100 dark:hover:bg-sky-900/60 transition shrink-0 cursor-pointer shadow-xs active:scale-95"
+              className="flex items-center gap-1 text-xs font-semibold px-2.5 py-1.5 rounded-lg bg-sky-50 dark:bg-sky-950/80 text-sky-700 dark:text-sky-300 border border-sky-200 dark:border-sky-800/60 hover:bg-sky-100 dark:hover:bg-sky-900/60 transition-transform duration-150 ease-out shrink-0 cursor-pointer shadow-xs active:scale-[0.96] focus-visible:ring-2 focus-visible:ring-sky-500 focus-visible:outline-none"
               title="Perluas Panel Rute"
               aria-label="Perluas Panel Rute"
             >
@@ -117,7 +117,7 @@ export default function BottomDrawer() {
                   e.stopPropagation();
                   handleTabClick('planner');
                 }}
-                className={`flex-1 py-1.5 px-2 sm:px-3 rounded-lg text-xs font-semibold transition flex items-center justify-center gap-1 sm:gap-1.5 ${
+                className={`flex-1 py-1.5 px-2 sm:px-3 rounded-lg text-xs font-semibold transition-transform duration-150 ease-out active:scale-[0.98] focus-visible:ring-2 focus-visible:ring-sky-500 focus-visible:outline-none flex items-center justify-center gap-1 sm:gap-1.5 cursor-pointer ${
                   activeTab === 'planner'
                     ? 'bg-white dark:bg-zinc-800 text-slate-900 dark:text-zinc-100 shadow-sm border border-slate-200/80 dark:border-zinc-700/50'
                     : 'text-slate-600 dark:text-zinc-400 hover:text-slate-900 dark:hover:text-zinc-200'
@@ -134,7 +134,7 @@ export default function BottomDrawer() {
                   e.stopPropagation();
                   handleTabClick('alarm');
                 }}
-                className={`flex-1 py-1.5 px-2 sm:px-3 rounded-lg text-xs font-semibold transition flex items-center justify-center gap-1 sm:gap-1.5 relative ${
+                className={`flex-1 py-1.5 px-2 sm:px-3 rounded-lg text-xs font-semibold transition-transform duration-150 ease-out active:scale-[0.98] focus-visible:ring-2 focus-visible:ring-rose-500 focus-visible:outline-none flex items-center justify-center gap-1 sm:gap-1.5 relative cursor-pointer ${
                   activeTab === 'alarm'
                     ? 'bg-rose-50 dark:bg-rose-950/70 text-rose-700 dark:text-rose-300 border border-rose-200 dark:border-rose-800/60 shadow-sm'
                     : 'text-slate-600 dark:text-zinc-400 hover:text-slate-900 dark:hover:text-zinc-200'
@@ -155,7 +155,7 @@ export default function BottomDrawer() {
                 e.stopPropagation();
                 toggleDrawer();
               }}
-              className="flex items-center gap-1 py-1.5 px-2.5 text-slate-600 dark:text-zinc-400 hover:text-slate-900 dark:hover:text-white bg-slate-50 dark:bg-zinc-950 hover:bg-slate-100 dark:hover:bg-zinc-800 rounded-lg border border-slate-200 dark:border-zinc-800 transition ml-0.5 cursor-pointer shrink-0 active:scale-95"
+              className="flex items-center gap-1 py-1.5 px-2.5 text-slate-600 dark:text-zinc-400 hover:text-slate-900 dark:hover:text-white bg-slate-50 dark:bg-zinc-950 hover:bg-slate-100 dark:hover:bg-zinc-800 rounded-lg border border-slate-200 dark:border-zinc-800 transition-transform duration-150 ease-out ml-0.5 cursor-pointer shrink-0 active:scale-[0.96] focus-visible:ring-2 focus-visible:ring-zinc-400 focus-visible:outline-none"
               title={
                 isDrawerExpanded
                   ? 'Ciutkan Panel (Tampilkan Peta Penuh)'
