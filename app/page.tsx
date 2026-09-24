@@ -1,20 +1,32 @@
 'use client';
 
 import React, { useEffect } from 'react';
+import dynamic from 'next/dynamic';
 import MapWrapper from '@/components/map/MapWrapper';
 import FloatingHud from '@/components/alarm/FloatingHud';
 import BottomDrawer from '@/components/layout/BottomDrawer';
 import GeoAlarmModal from '@/components/alarm/GeoAlarmModal';
-import AboutModal from '@/components/AboutModal';
 import UrlSync from '@/components/UrlSync';
-import NavigationHUD from '@/components/navigation/NavigationHUD';
 import { useGeoAlert } from '@/hooks/useGeoAlert';
 import { useTransitStore } from '@/stores/useTransitStore';
 import { initAudioContext } from '@/lib/audio';
-import TourCoachmark from '@/components/onboarding/TourCoachmark';
-import ChangelogModal, { CHANGELOG_STORAGE_KEY } from '@/components/ChangelogModal';
-import FeedbackModal from '@/components/FeedbackModal';
-import { APP_VERSION } from '@/src/data/changelog';
+import { APP_VERSION, CHANGELOG_STORAGE_KEY } from '@/src/data/changelog';
+
+const NavigationHUD = dynamic(() => import('@/components/navigation/NavigationHUD'), {
+  ssr: false,
+});
+const AboutModal = dynamic(() => import('@/components/AboutModal'), {
+  ssr: false,
+});
+const ChangelogModal = dynamic(() => import('@/components/ChangelogModal'), {
+  ssr: false,
+});
+const FeedbackModal = dynamic(() => import('@/components/FeedbackModal'), {
+  ssr: false,
+});
+const TourCoachmark = dynamic(() => import('@/components/onboarding/TourCoachmark'), {
+  ssr: false,
+});
 
 export default function HomePage() {
   useGeoAlert();
@@ -45,7 +57,7 @@ export default function HomePage() {
     };
 
     window.addEventListener('click', handleFirstInteraction);
-    window.addEventListener('touchstart', handleFirstInteraction);
+    window.addEventListener('touchstart', handleFirstInteraction, { passive: true });
 
     return () => {
       window.removeEventListener('click', handleFirstInteraction);

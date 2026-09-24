@@ -5,6 +5,7 @@ import { useTransitStore } from '@/stores/useTransitStore';
 import {
   APP_VERSION,
   CHANGELOG_ENTRIES,
+  CHANGELOG_STORAGE_KEY,
   ChangelogChange,
 } from '@/src/data/changelog';
 import {
@@ -18,7 +19,7 @@ import {
   CheckCircle2,
 } from 'lucide-react';
 
-export const CHANGELOG_STORAGE_KEY = 'last_seen_version';
+export { CHANGELOG_STORAGE_KEY };
 
 function ChangeBadge({ type }: { type: ChangelogChange['type'] }) {
   switch (type) {

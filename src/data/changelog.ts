@@ -11,6 +11,7 @@ export interface ChangelogEntry {
 }
 
 export const APP_VERSION = 'v1.1.0';
+export const CHANGELOG_STORAGE_KEY = 'last_seen_version';
 
 export const CHANGELOG_ENTRIES: ChangelogEntry[] = [
   {
