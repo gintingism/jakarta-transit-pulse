@@ -70,7 +70,7 @@ export default function RouteFinder() {
   return (
     <div className="space-y-4 text-slate-900 dark:text-zinc-100">
       {/* Route Inputs Card */}
-      <div id="tour-route-input" className="bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-xl p-4 shadow-xl">
+      <div id="tour-route-input" className="bg-white dark:bg-zinc-900 border border-slate-200/90 dark:border-zinc-800/90 rounded-2xl p-4 shadow-card">
         <div className="flex items-center justify-between mb-3 pb-2 border-b border-slate-200 dark:border-zinc-800/80">
           <div className="flex items-center gap-1.5">
             <Navigation className="w-3.5 h-3.5 text-sky-400" />

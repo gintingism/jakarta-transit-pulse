@@ -93,7 +93,7 @@ export default function RootLayout({
       <head>
         <meta name="mobile-web-app-capable" content="yes" />
       </head>
-      <body className="h-full w-full font-sans bg-white dark:bg-[#090a0f] text-slate-900 dark:text-slate-100 antialiased overflow-hidden selection:bg-cyan-500 selection:text-black transition-colors duration-300">
+      <body className="h-full w-full font-sans bg-slate-50 dark:bg-zinc-950 text-slate-900 dark:text-zinc-100 antialiased overflow-hidden selection:bg-sky-500/25 selection:text-sky-900 dark:selection:text-sky-100 transition-colors duration-200">
         <ThemeProvider attribute="class" defaultTheme="dark" enableSystem={false}>
           {children}
         </ThemeProvider>

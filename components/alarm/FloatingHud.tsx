@@ -60,7 +60,7 @@ export default function FloatingHud() {
   return (
     <div className="absolute top-3.5 left-3.5 right-3.5 z-20 flex flex-wrap items-center justify-between gap-2.5 pointer-events-none">
       {/* Brand Identity Cockpit Badge */}
-      <div className="pointer-events-auto flex items-center gap-2 backdrop-blur-md bg-white/85 dark:bg-zinc-900/85 border border-slate-200/60 dark:border-zinc-800/60 shadow-sm rounded-2xl px-2.5 py-1.5 sm:px-3 sm:py-2 hover:border-sky-500/40 transition">
+      <div className="pointer-events-auto flex items-center gap-2 backdrop-blur-md bg-white/90 dark:bg-zinc-900/90 border border-slate-200/90 dark:border-zinc-800/90 shadow-card rounded-2xl px-2.5 py-1.5 sm:px-3 sm:py-2 hover:border-sky-500/40 transition">
         <div className="relative shrink-0 flex items-center justify-center">
           <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-xl overflow-hidden bg-white border border-slate-200/90 dark:border-zinc-700 shadow-sm p-0.5 flex items-center justify-center">
             <img
@@ -136,7 +136,7 @@ export default function FloatingHud() {
         )}
 
         {/* Network & Corridor Filter Dropdown */}
-        <div className="backdrop-blur-md bg-white/85 dark:bg-zinc-900/85 border border-slate-200/60 dark:border-zinc-800/60 shadow-sm rounded-2xl px-3 py-2 flex items-center gap-2">
+        <div className="backdrop-blur-md bg-white/90 dark:bg-zinc-900/90 border border-slate-200/80 dark:border-zinc-800/80 shadow-card rounded-2xl px-3 py-2 flex items-center gap-2">
           <div className="flex items-center gap-1.5 shrink-0">
             <Layers className="w-3.5 h-3.5 text-sky-500 dark:text-sky-400 shrink-0" />
             {selectedLineId === 'ALL' ? (
@@ -181,7 +181,7 @@ export default function FloatingHud() {
         {/* Real-time Moving Speedometer */}
         {userSpeed !== null && userSpeed >= 1.0 && (
           <div
-            className="backdrop-blur-md bg-white/85 dark:bg-zinc-900/85 border border-sky-300 dark:border-sky-800/80 rounded-2xl px-2.5 py-1.5 shadow-sm flex items-center gap-1.5 text-xs font-mono font-bold tabular-nums text-sky-600 dark:text-sky-400"
+            className="backdrop-blur-md bg-white/90 dark:bg-zinc-900/90 border border-sky-300 dark:border-sky-800/80 rounded-2xl px-2.5 py-1.5 shadow-card flex items-center gap-1.5 text-xs font-mono font-bold tabular-nums text-sky-600 dark:text-sky-400"
             title="Kecepatan Gerak Real-Time"
           >
             <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
@@ -195,10 +195,10 @@ export default function FloatingHud() {
           type="button"
           onClick={handleLocateMe}
           disabled={isLocating}
-          className={`p-2 sm:p-2.5 min-w-[36px] min-h-[36px] rounded-2xl border backdrop-blur-md shadow-sm transition-transform duration-150 ease-out cursor-pointer active:scale-[0.96] focus-visible:ring-2 focus-visible:ring-sky-500 focus-visible:outline-none flex items-center justify-center gap-1.5 ${
+          className={`p-2 sm:p-2.5 min-w-[36px] min-h-[36px] rounded-2xl border backdrop-blur-md shadow-card transition-transform duration-150 ease-out cursor-pointer active:scale-[0.96] focus-visible:ring-2 focus-visible:ring-sky-500 focus-visible:outline-none flex items-center justify-center gap-1.5 ${
             isFollowUser
               ? 'bg-sky-50 dark:bg-sky-950/90 border-sky-500 text-sky-600 dark:text-sky-300 ring-2 ring-sky-400/40'
-              : 'bg-white/85 dark:bg-zinc-900/85 border-slate-200/60 dark:border-zinc-800/60 text-slate-700 dark:text-zinc-300 hover:text-sky-600 dark:hover:text-sky-400'
+              : 'bg-white/90 dark:bg-zinc-900/90 border-slate-200/80 dark:border-zinc-800/80 text-slate-700 dark:text-zinc-300 hover:text-sky-600 dark:hover:text-sky-400'
           }`}
           title={
             isFollowUser
@@ -230,7 +230,7 @@ export default function FloatingHud() {
         <button
           type="button"
           onClick={() => setChangelogModalOpen(true)}
-          className="relative p-2 sm:p-2.5 min-w-[36px] min-h-[36px] rounded-2xl backdrop-blur-md bg-white/85 dark:bg-zinc-900/85 border border-slate-200/60 dark:border-zinc-800/60 shadow-sm text-slate-700 dark:text-zinc-300 hover:text-amber-500 dark:hover:text-amber-400 hover:scale-105 active:scale-[0.96] transition-transform duration-150 ease-out focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:outline-none cursor-pointer hidden sm:flex items-center justify-center"
+          className="relative p-2 sm:p-2.5 min-w-[36px] min-h-[36px] rounded-2xl backdrop-blur-md bg-white/90 dark:bg-zinc-900/90 border border-slate-200/80 dark:border-zinc-800/80 shadow-card text-slate-700 dark:text-zinc-300 hover:text-amber-500 dark:hover:text-amber-400 hover:scale-105 active:scale-[0.96] transition-transform duration-150 ease-out focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:outline-none cursor-pointer hidden sm:flex items-center justify-center"
           title="Apa yang Baru (Log Pembaruan Versi)"
           aria-label="Log Pembaruan Versi"
         >
@@ -247,7 +247,7 @@ export default function FloatingHud() {
         <button
           type="button"
           onClick={() => setFeedbackModalOpen(true)}
-          className="p-2 sm:p-2.5 min-w-[36px] min-h-[36px] rounded-2xl backdrop-blur-md bg-white/85 dark:bg-zinc-900/85 border border-slate-200/60 dark:border-zinc-800/60 shadow-sm text-slate-700 dark:text-zinc-300 hover:text-emerald-600 dark:hover:text-emerald-400 hover:border-emerald-500/40 hover:bg-emerald-50/50 dark:hover:bg-emerald-950/20 hover:scale-105 active:scale-[0.96] transition-transform duration-150 ease-out focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:outline-none cursor-pointer hidden sm:flex items-center justify-center"
+          className="p-2 sm:p-2.5 min-w-[36px] min-h-[36px] rounded-2xl backdrop-blur-md bg-white/90 dark:bg-zinc-900/90 border border-slate-200/80 dark:border-zinc-800/80 shadow-card text-slate-700 dark:text-zinc-300 hover:text-emerald-600 dark:hover:text-emerald-400 hover:border-emerald-500/40 hover:bg-emerald-50/50 dark:hover:bg-emerald-950/20 hover:scale-105 active:scale-[0.96] transition-transform duration-150 ease-out focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:outline-none cursor-pointer hidden sm:flex items-center justify-center"
           title="Beri Masukan & Lapor Kendala"
           aria-label="Beri Masukan & Lapor Kendala"
         >
@@ -258,7 +258,7 @@ export default function FloatingHud() {
         <button
           type="button"
           onClick={openTour}
-          className="p-2 sm:p-2.5 min-w-[36px] min-h-[36px] rounded-2xl backdrop-blur-md bg-white/85 dark:bg-zinc-900/85 border border-slate-200/60 dark:border-zinc-800/60 shadow-sm text-slate-700 dark:text-zinc-300 hover:text-sky-600 dark:hover:text-sky-400 hover:scale-105 active:scale-[0.96] transition-transform duration-150 ease-out focus-visible:ring-2 focus-visible:ring-sky-500 focus-visible:outline-none cursor-pointer hidden sm:flex items-center justify-center"
+          className="p-2 sm:p-2.5 min-w-[36px] min-h-[36px] rounded-2xl backdrop-blur-md bg-white/90 dark:bg-zinc-900/90 border border-slate-200/80 dark:border-zinc-800/80 shadow-card text-slate-700 dark:text-zinc-300 hover:text-sky-600 dark:hover:text-sky-400 hover:scale-105 active:scale-[0.96] transition-transform duration-150 ease-out focus-visible:ring-2 focus-visible:ring-sky-500 focus-visible:outline-none cursor-pointer hidden sm:flex items-center justify-center"
           title="Panduan Penggunaan Aplikasi"
           aria-label="Panduan Penggunaan Aplikasi"
         >
@@ -269,7 +269,7 @@ export default function FloatingHud() {
         <button
           type="button"
           onClick={() => setAboutModalOpen(true)}
-          className="relative p-2 sm:p-2.5 min-w-[36px] min-h-[36px] rounded-2xl backdrop-blur-md bg-white/85 dark:bg-zinc-900/85 border border-slate-200/60 dark:border-zinc-800/60 shadow-sm text-slate-700 dark:text-zinc-300 hover:text-sky-600 dark:hover:text-sky-400 hover:scale-105 active:scale-[0.96] transition-transform duration-150 ease-out focus-visible:ring-2 focus-visible:ring-sky-500 focus-visible:outline-none cursor-pointer hidden sm:flex items-center justify-center"
+          className="relative p-2 sm:p-2.5 min-w-[36px] min-h-[36px] rounded-2xl backdrop-blur-md bg-white/90 dark:bg-zinc-900/90 border border-slate-200/80 dark:border-zinc-800/80 shadow-card text-slate-700 dark:text-zinc-300 hover:text-sky-600 dark:hover:text-sky-400 hover:scale-105 active:scale-[0.96] transition-transform duration-150 ease-out focus-visible:ring-2 focus-visible:ring-sky-500 focus-visible:outline-none cursor-pointer hidden sm:flex items-center justify-center"
           title="Tentang Pengembang & Aplikasi"
           aria-label="Tentang Pengembang & Aplikasi"
         >

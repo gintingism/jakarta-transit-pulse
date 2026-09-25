@@ -42,7 +42,7 @@ export default function BottomDrawer() {
 
   return (
     <div
-      className={`fixed z-30 transition-all duration-300 ease-in-out bg-white dark:bg-zinc-900/95 backdrop-blur-xl border-slate-200 dark:border-zinc-800 shadow-2xl flex flex-col
+      className={`fixed z-30 transition-all duration-300 cubic-bezier(0.16, 1, 0.3, 1) bg-white/95 dark:bg-zinc-900/95 backdrop-blur-xl border-slate-200/90 dark:border-zinc-800/90 shadow-card md:shadow-floating dark:md:shadow-floating-dark flex flex-col
         /* Mobile: Bottom Sheet */
         bottom-0 left-0 right-0 border-t rounded-t-3xl
         /* Desktop: Spacious Left Command Sidebar */

@@ -141,7 +141,7 @@ export default function RouteCard({
   };
 
   return (
-    <div className="bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-xl p-4 shadow-xl text-slate-900 dark:text-zinc-100 space-y-3.5">
+    <div className="bg-white dark:bg-zinc-900 border border-slate-200/90 dark:border-zinc-800/90 rounded-2xl p-4 shadow-card text-slate-900 dark:text-zinc-100 space-y-3.5">
       {/* Metric Header - Two Tier Spacious Layout */}
       <div className="border-b border-slate-200 dark:border-zinc-800/90 pb-3 space-y-2">
         <div className="flex flex-wrap items-center justify-between gap-2">

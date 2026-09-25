@@ -9,6 +9,8 @@ export default defineConfig({
   test: {
     environment: 'node',
     globals: true,
+    include: ['tests/**/*.test.ts', 'src/**/*.test.ts'],
+    exclude: ['node_modules', '.agents', '.next', 'dist'],
   },
   resolve: {
     alias: {

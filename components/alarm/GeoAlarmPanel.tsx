@@ -123,7 +123,7 @@ export default function GeoAlarmPanel() {
   return (
     <div className="space-y-3.5 text-slate-900 dark:text-zinc-100">
       {/* Kartu Utama Pengingat Turun Stasiun */}
-      <div className="bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-xl p-4 shadow-xl">
+      <div className="bg-white dark:bg-zinc-900 border border-slate-200/90 dark:border-zinc-800/90 rounded-2xl p-4 shadow-card">
         <div className="flex items-center justify-between mb-3.5 pb-2.5 border-b border-slate-200 dark:border-zinc-800">
           <div className="flex items-center gap-2">
             <div
@@ -185,35 +185,35 @@ export default function GeoAlarmPanel() {
               <optgroup label="• KAI Bandara (Railink) •">
                 {STATIONS.filter((s) => s.lines.includes('kai-bandara')).map((station) => (
                   <option key={`alarm_target_${station.id}`} value={station.id}>
-                    ✈️ {station.name} {station.code ? `(${station.code})` : ''}
+                    [Bandara] {station.name} {station.code ? `(${station.code})` : ''}
                   </option>
                 ))}
               </optgroup>
               <optgroup label="• MRT Jakarta •">
                 {STATIONS.filter((s) => s.type === 'mrt').map((station) => (
                   <option key={`alarm_target_${station.id}`} value={station.id}>
-                    🚇 {station.name} {station.code ? `(${station.code})` : ''}
+                    [MRT] {station.name} {station.code ? `(${station.code})` : ''}
                   </option>
                 ))}
               </optgroup>
               <optgroup label="• LRT Jabodebek & Jakarta •">
                 {STATIONS.filter((s) => s.type === 'lrt').map((station) => (
                   <option key={`alarm_target_${station.id}`} value={station.id}>
-                    🚊 {station.name} {station.code ? `(${station.code})` : ''}
+                    [LRT] {station.name} {station.code ? `(${station.code})` : ''}
                   </option>
                 ))}
               </optgroup>
               <optgroup label="• KRL Commuterline •">
                 {STATIONS.filter((s) => s.type === 'krl').map((station) => (
                   <option key={`alarm_target_${station.id}`} value={station.id}>
-                    🚆 {station.name} {station.code ? `(${station.code})` : ''}
+                    [KRL] {station.name} {station.code ? `(${station.code})` : ''}
                   </option>
                 ))}
               </optgroup>
               <optgroup label="• TransJakarta BRT •">
                 {STATIONS.filter((s) => s.type === 'tj').map((station) => (
                   <option key={`alarm_target_${station.id}`} value={station.id}>
-                    🚌 {station.name}
+                    [TJ] {station.name}
                   </option>
                 ))}
               </optgroup>
